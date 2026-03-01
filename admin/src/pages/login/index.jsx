@@ -4,7 +4,7 @@ import UserService from '../../services/userService'
 import './login.scss'
 
 const LoginPage = () => {
-  const { setAuthToken, setRefreshToken } = useAuth()
+  const { setAuthToken, setRole } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -18,11 +18,10 @@ const LoginPage = () => {
     try {
       const response = await UserService.login({ email, password })
 
-      if (response?.authToken && response?.refreshToken) {
-        localStorage.setItem('authToken', response.authToken)
-        localStorage.setItem('refreshToken', response.refreshToken)
-        setAuthToken(response.authToken)
-        setRefreshToken(response.refreshToken)
+      if (response?.token) {
+        localStorage.setItem('authToken', response.token)
+        setAuthToken(response.token)
+        setRole(response?.user?.role || null)
       } else {
         setErrorMessage('Nieprawidlowy email lub haslo.')
       }

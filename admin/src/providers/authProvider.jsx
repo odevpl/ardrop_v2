@@ -16,44 +16,32 @@ export const useAuth = () => {
 
 const AuthProvider = ({ loggedChildren, noLoggedChildren }) => {
   const localAuthToken = localStorage.getItem('authToken')
-  const localRefreshToken = localStorage.getItem('refreshToken')
 
   const [authToken, setAuthToken] = useState(localAuthToken || null)
-  const [refreshToken, setRefreshToken] = useState(localRefreshToken || null)
   const [role, setRole] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
   const logout = () => {
     setAuthToken(null)
-    setRefreshToken(null)
     setRole(null)
     localStorage.removeItem('authToken')
-    localStorage.removeItem('refreshToken')
   }
 
   const checkUser = async () => {
     const result = await UserService.me()
     if (result?.status === 401) {
-      const refreshResult = await UserService.refresh()
-      if (refreshResult?.status === 401) {
-        logout()
-        setIsLoading(false)
-      } else {
-        if (refreshResult?.authToken) {
-          setAuthToken(refreshResult.authToken)
-          localStorage.setItem('authToken', refreshResult.authToken)
-        }
-        const refreshedUser = await UserService.me()
-        if (refreshedUser?.email) {
-          setRole(refreshedUser.role || null)
-        }
-        setIsLoading(false)
-      }
-    }
-    if (result?.email) {
-      setRole(result.role || null)
+      logout()
       setIsLoading(false)
+      return
     }
+
+    if (result?.user?.email) {
+      setRole(result.user.role || null)
+    } else {
+      logout()
+    }
+
+    setIsLoading(false)
   }
 
   useEffect(() => {
@@ -67,14 +55,12 @@ const AuthProvider = ({ loggedChildren, noLoggedChildren }) => {
   const authContextValue = useMemo(
     () => ({
       authToken,
-      refreshToken,
       setAuthToken,
-      setRefreshToken,
       setRole,
       role,
       logout,
     }),
-    [authToken, refreshToken, role],
+    [authToken, role],
   )
 
   if (isLoading) {

@@ -2,8 +2,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../config/db");
 const { getEnv } = require("../config/env");
+const validator = require("../helpers/validator");
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ALLOWED_ROLES = ["ADMIN", "SELLER", "CLIENT"];
 
 async function register({ email, password, role }) {
@@ -13,7 +13,7 @@ async function register({ email, password, role }) {
     throw error;
   }
 
-  if (!EMAIL_REGEX.test(email)) {
+  if (!validator.email(email)) {
     const error = new Error("Invalid email format");
     error.status = 400;
     throw error;
@@ -59,6 +59,9 @@ async function login({ email, password }) {
   }
 
   const user = await db("users").where({ email }).first();
+  // Temporary debug log for comparing DB values during login troubleshooting.
+  // Remove after verification.
+  console.log("auth.login user from DB:", user);
 
   if (!user) {
     const error = new Error("Invalid credentials");
@@ -66,11 +69,30 @@ async function login({ email, password }) {
     throw error;
   }
 
-  const passwordValid = await bcrypt.compare(password, user.passwordHash);
+  if (!user.passwordHash || typeof user.passwordHash !== "string") {
+    const error = new Error("Invalid credentials");
+    error.status = 401;
+    throw error;
+  }
+
+  let passwordValid = false;
+  try {
+    passwordValid = await bcrypt.compare(password, user.passwordHash);
+  } catch (compareError) {
+    const error = new Error("Invalid credentials");
+    error.status = 401;
+    throw error;
+  }
 
   if (!passwordValid) {
     const error = new Error("Invalid credentials");
     error.status = 401;
+    throw error;
+  }
+
+  if (!user.isActive) {
+    const error = new Error("User is inactive");
+    error.status = 403;
     throw error;
   }
 

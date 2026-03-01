@@ -2,7 +2,7 @@ import { apiPost, apiGet } from './api'
 
 export const login = (data) => {
   return apiPost({
-    url: 'login',
+    url: 'auth/login',
     data,
   })
 }

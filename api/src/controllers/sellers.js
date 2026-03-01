@@ -1,5 +1,5 @@
 const express = require("express");
-const sellerAdminService = require("../services/seller-admin");
+const sellerAdminService = require("../services/sellers");
 
 const router = express.Router();
 

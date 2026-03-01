@@ -2,7 +2,7 @@
 
 ## Basic information
 
-- API prefix: `/api`
+- API base URL: `http://localhost:8000` (bez `/api`)
 - Data format: `application/json` (except PDF)
 - Authorization: `Authorization: Bearer <authToken>` for protected endpoints
 - Note: JWT middleware is mounted globally after auth routes in `app.js`, so all endpoints in the "Protected" section require a valid token.

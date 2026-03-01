@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const {
   errorHandler,
   notFoundHandler,
@@ -6,10 +7,16 @@ const {
 
 const app = express();
 
+const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:5173";
+app.use(
+  cors({
+    origin: corsOrigin,
+    credentials: true,
+  })
+);
 app.use(express.json());
 
-app.use("/", require("./controllers/auth.js"));
-app.use("/", require("./controllers/seller.js"));
+app.use("/", require("./routes"));
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -1,7 +1,16 @@
 const bcrypt = require("bcryptjs");
 const db = require("../config/db");
 
-async function createSeller({ email, password, companyName, commissionRate }) {
+async function createSeller({
+  email,
+  password,
+  companyName,
+  nip = null,
+  phone = null,
+  address = null,
+  city = null,
+  postalCode = null,
+}) {
   if (!email || !password || !companyName) {
     const error = new Error("Email, password and companyName are required");
     error.status = 400;
@@ -21,22 +30,25 @@ async function createSeller({ email, password, companyName, commissionRate }) {
 
     const insertedUser = await trx("users").insert({
       email,
-      password_hash: passwordHash,
+      passwordHash,
       role: "SELLER",
-      is_active: true,
+      isActive: true,
     });
     const userId = Array.isArray(insertedUser) ? insertedUser[0] : insertedUser;
     const user = await trx("users").select("id", "email", "role").where({ id: userId }).first();
 
     const insertedSeller = await trx("sellers").insert({
-      user_id: user.id,
-      company_name: companyName,
-      commission_rate: commissionRate ?? 0.1,
-      is_active: true,
+      userId: user.id,
+      companyName,
+      nip,
+      phone,
+      address,
+      city,
+      postalCode,
     });
     const sellerId = Array.isArray(insertedSeller) ? insertedSeller[0] : insertedSeller;
     const seller = await trx("sellers")
-      .select("id", "user_id", "company_name", "commission_rate", "is_active")
+      .select("id", "userId", "companyName", "nip", "phone", "address", "city", "postalCode")
       .where({ id: sellerId })
       .first();
 
@@ -49,15 +61,19 @@ async function createSeller({ email, password, companyName, commissionRate }) {
 
 async function listSellers() {
   return db("sellers")
-    .join("users", "sellers.user_id", "users.id")
+    .join("users", "sellers.userId", "users.id")
     .select(
       "sellers.id",
-      "sellers.company_name as companyName",
-      "sellers.commission_rate as commissionRate",
-      "sellers.is_active as isActive",
+      "sellers.companyName",
+      "sellers.nip",
+      "sellers.phone",
+      "sellers.address",
+      "sellers.city",
+      "sellers.postalCode",
       "users.id as userId",
       "users.email",
-      "users.role"
+      "users.role",
+      "users.isActive"
     )
     .orderBy("sellers.id", "asc");
 }

@@ -2,7 +2,7 @@ const express = require("express");
 const authMiddleware = require("../middlewares/auth.middleware");
 const roleMiddleware = require("../middlewares/role.middleware");
 const authController = require("../controllers/auth");
-const sellerAdminController = require("../controllers/seller-admin");
+const sellerController = require("../controllers/sellers");
 
 const router = express.Router();
 
@@ -11,6 +11,6 @@ router.get("/health", (req, res) => {
 });
 
 router.use("/auth", authController);
-router.use("/admin", authMiddleware, roleMiddleware("SUPER_ADMIN"), sellerAdminController);
+router.use("/admin", authMiddleware, roleMiddleware("ADMIN"), sellerController);
 
 module.exports = router;

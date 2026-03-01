@@ -1,0 +1,56 @@
+.appLayout {
+  display: flex;
+  align-items: stretch;
+  min-height: 100vh;
+}
+
+.app {
+  flex: 1;
+  padding: 20px;
+}
+
+.appHeader {
+  padding: 18px 22px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #d9e3e9;
+  box-shadow: 0 8px 18px rgba(22, 41, 56, 0.08);
+  margin-bottom: 14px;
+}
+
+.appKicker {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5a7282;
+}
+
+.appTitle {
+  margin: 8px 0 6px;
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+  line-height: 1.1;
+  color: #0f1720;
+  font-weight: 700;
+}
+
+.appMeta {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #516b7c;
+}
+
+.appTableWrap {
+  overflow: auto;
+  border-radius: 12px;
+}
+
+@media (max-width: 760px) {
+  .appLayout {
+    display: block;
+  }
+
+  .app {
+    padding: 14px 12px 92px;
+  }
+}

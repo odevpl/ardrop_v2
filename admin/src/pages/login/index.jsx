@@ -1,0 +1,77 @@
+import { useState } from 'react'
+import { useAuth } from '../../providers/authProvider'
+import UserService from '../../services/userService'
+import './login.scss'
+
+const LoginPage = () => {
+  const { setAuthToken, setRefreshToken } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    setErrorMessage('')
+    setIsSubmitting(true)
+
+    try {
+      const response = await UserService.login({ email, password })
+
+      if (response?.authToken && response?.refreshToken) {
+        localStorage.setItem('authToken', response.authToken)
+        localStorage.setItem('refreshToken', response.refreshToken)
+        setAuthToken(response.authToken)
+        setRefreshToken(response.refreshToken)
+      } else {
+        setErrorMessage('Nieprawidlowy email lub haslo.')
+      }
+    } catch (error) {
+      setErrorMessage('Logowanie nie powiodlo sie.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <main className="loginPage">
+      <form className="loginCard" onSubmit={handleSubmit}>
+        <h1 className="loginTitle">Logowanie</h1>
+
+        <label className="loginLabel" htmlFor="email">
+          Email
+        </label>
+        <input
+          id="email"
+          className="loginInput"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          required
+          autoComplete="email"
+        />
+
+        <label className="loginLabel" htmlFor="password">
+          Haslo
+        </label>
+        <input
+          id="password"
+          className="loginInput"
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+          autoComplete="current-password"
+        />
+
+        {errorMessage ? <p className="loginError">{errorMessage}</p> : null}
+
+        <button className="loginButton" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Logowanie...' : 'Zaloguj'}
+        </button>
+      </form>
+    </main>
+  )
+}
+
+export default LoginPage

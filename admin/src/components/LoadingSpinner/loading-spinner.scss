@@ -1,0 +1,22 @@
+.loadingSpinner {
+  width: 100%;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingSpinnerDot {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 4px solid #c7d8e1;
+  border-top-color: #117f9a;
+  animation: loadingSpinnerRotate 0.8s linear infinite;
+}
+
+@keyframes loadingSpinnerRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,50 @@
+{
+    "PAYMENT_METHODS": {
+        "CASH": 1,
+        "TRANSFER": 2,
+        "CARD": 3
+    },
+    "PAYMENT_METHODS_DICT": {
+        "1": "Gotówka",
+        "2": "Przelew",
+        "3": "Karta"
+    },
+    "PAYMENT_STATUS": {
+        "UNPAID": 1,
+        "PAID": 2
+    },
+    "PAYMENT_STATUS_DICT": {
+        "1": "Nieopłacona",
+        "2": "Opłacona"
+    },
+    "UNITS": {
+        "KILOGRAMS": 1,
+        "LITERS": 2,
+        "CARD": 3
+    },
+    "UNITS_DICT": {
+        "1": "kg",
+        "2": "l",
+        "3": "szt."
+    },
+    "ORDER_STATUS": {
+        "ACCEPTED": 1,
+        "IN_PROGRESS": 2,
+        "PAYMENT": 3,
+        "SENDED": 4,
+        "FINISHED": 5
+    },
+    "ORDER_STATUS_DICT": {
+        "1": "Przyjęte",
+        "2": "W trakcie",
+        "3": "Płatność",
+        "4": "Wysłane",
+        "5": "Zakończone"
+    },
+    "DELIVERY_METHODS": {
+        "INPOST": 1
+    },
+    "DELIVERY_METHODS_DICT": {
+        "1": "InPost"
+    }
+}

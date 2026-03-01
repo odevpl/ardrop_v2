@@ -1,0 +1,54 @@
+.tableCard {
+  background: #ffffff;
+  border: 1px solid #d9e3e9;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(22, 41, 56, 0.08);
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+.table thead th {
+  padding: 13px 12px;
+  text-align: left;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: #117f9a;
+  white-space: nowrap;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid #e5edf2;
+}
+
+.table tbody tr:nth-child(even) {
+  background: #f8fbfd;
+}
+
+.table tbody tr:hover {
+  background: #eaf4f8;
+}
+
+.table td,
+.tableCell {
+  padding: 11px 12px;
+  color: #213541;
+  font-size: 0.87rem;
+  white-space: nowrap;
+}
+
+.tableCellClickable {
+  cursor: pointer;
+}
+
+.tableEmpty {
+  padding: 20px 12px;
+  color: #5a7282;
+  text-align: center;
+}

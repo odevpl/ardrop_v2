@@ -59,9 +59,6 @@ async function login({ email, password }) {
   }
 
   const user = await db("users").where({ email }).first();
-  // Temporary debug log for comparing DB values during login troubleshooting.
-  // Remove after verification.
-  console.log("auth.login user from DB:", user);
 
   if (!user) {
     const error = new Error("Invalid credentials");

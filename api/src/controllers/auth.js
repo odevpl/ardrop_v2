@@ -1,6 +1,7 @@
 const express = require("express");
 const authService = require("../services/auth");
 const authMiddleware = require("../middlewares/auth.middleware");
+const roleMiddleware = require("../middlewares/role.middleware");
 
 const router = express.Router();
 
@@ -22,10 +23,15 @@ router.post("/login", async (req, res) => {
   res.status(200).json(result);
 });
 
-router.get("/me", authMiddleware, async (req, res) => {
+router.get(
+  "/me",
+  authMiddleware,
+  roleMiddleware("ADMIN", "SELLER", "CLIENT"),
+  async (req, res) => {
   const user = await authService.me(req.user.userId);
 
   res.status(200).json({ user });
-});
+  }
+);
 
 module.exports = router;

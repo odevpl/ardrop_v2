@@ -1,42 +1,124 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+.sellerLayout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 240px 1fr;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.sellerMain {
+  padding: 14px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.sellerHeader {
+  background: #ffffff;
+  border: 1px solid #d9e3e9;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(22, 41, 56, 0.08);
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.sellerKicker {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.sellerTitle {
+  margin: 4px 0;
+  color: #111827;
+  font-size: 1.5rem;
+}
+
+.sellerMeta {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.sellerHeaderActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sellerRoleBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #312e81;
+  background: #eef2ff;
+  border-radius: 999px;
+  padding: 6px 10px;
+}
+
+.sellerHeaderActions button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.sellerPageSection {
+  background: #ffffff;
+  border: 1px solid #d9e3e9;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(22, 41, 56, 0.08);
+  padding: 12px;
+}
+
+.sellerToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.sellerToolbar h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.sellerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.sellerActions button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.sellerActions .sellerPrimaryButton {
+  background: #0a64c9;
+  color: #ffffff;
+  border-color: #0a64c9;
+}
+
+@media (max-width: 900px) {
+  .sellerLayout {
+    grid-template-columns: 1fr;
   }
-  to {
-    transform: rotate(360deg);
+
+  .sellerMain {
+    padding-bottom: 90px;
   }
-}
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  .sellerHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
-}
 
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+  .sellerToolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
 }

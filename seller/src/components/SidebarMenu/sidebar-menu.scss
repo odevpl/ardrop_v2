@@ -1,0 +1,180 @@
+.sidebarMenu {
+  width: 240px;
+  min-height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid #d3dde3;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 14px 12px;
+  position: sticky;
+  top: 0;
+}
+
+.sidebarMenuBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px 14px;
+  margin-bottom: 18px;
+}
+
+.sidebarMenuLogo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #111827;
+  color: #facc15;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
+.sidebarMenuBrandTitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.sidebarMenuBrandSubtitle {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.sidebarMenuSectionLabel {
+  margin: 0 0 8px;
+  padding: 0 6px;
+  color: #6b7280;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.sidebarMenuNav {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebarMenuItem {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #3d5464;
+  padding: 10px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.sidebarMenuItem i {
+  width: 18px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.sidebarMenuItemText {
+  flex: 1;
+  text-align: left;
+}
+
+.sidebarMenuItem:hover {
+  background: #f3f6f9;
+}
+
+.sidebarMenuItemActive {
+  background: #eef2ff;
+  color: #312e81;
+}
+
+.sidebarMenuItemActive i {
+  color: #312e81;
+}
+
+.sidebarLogoutButton {
+  margin-top: auto;
+  width: 100%;
+  border: 0;
+  background: #f5f9fb;
+  color: #3d5464;
+  padding: 10px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.sidebarLogoutButton i {
+  width: 18px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #0a64c9;
+}
+
+.sidebarLogoutButton:hover {
+  background: #edf4f7;
+}
+
+@media (max-width: 760px) {
+  .sidebarMenu {
+    width: 100%;
+    min-height: auto;
+    height: 74px;
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    flex-direction: row;
+    justify-content: space-between;
+    border-right: 0;
+    border-top: 1px solid #d3dde3;
+    padding: 8px 10px;
+    box-shadow: 0 -6px 14px rgba(28, 44, 55, 0.1);
+  }
+
+  .sidebarMenuBrand {
+    display: none;
+  }
+
+  .sidebarMenuSectionLabel {
+    display: none;
+  }
+
+  .sidebarMenuNav {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sidebarMenuItem {
+    padding: 6px 4px;
+    font-size: 0.65rem;
+    gap: 6px;
+  }
+
+  .sidebarLogoutButton {
+    margin-top: 0;
+    width: auto;
+    min-width: 64px;
+    padding: 6px 4px;
+    font-size: 0.65rem;
+    gap: 6px;
+    background: transparent;
+  }
+
+  .sidebarMenuItemText {
+    text-align: center;
+  }
+}

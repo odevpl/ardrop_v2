@@ -1,0 +1,33 @@
+.select-input-wrapper {
+  .ant-select-selector,
+  .ant-select,
+  input {
+    cursor: pointer !important;
+  }
+}
+
+.fetch-list-input-wrapper {
+  width: 100%;
+  max-width: 270px;
+  margin-bottom: 5px;
+  button {
+    width: 100%;
+    text-align: left;
+    span {
+      width: 100%;
+    }
+  }
+}
+
+.checkbox-input-wrapper {
+  width: 100%;
+  max-width: 270px;
+  height: 33px;
+  margin-top: 23px;
+  border: 1px solid #d9d9d9;
+  border-radius: 5px;
+  label {
+    padding: 4px 2px;
+    margin-left: 10px;
+  }
+}

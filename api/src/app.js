@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const authMiddleware = require("./middlewares/auth.middleware");
 const authController = require("./controllers/auth");
 const sellerController = require("./controllers/sellers");
@@ -42,6 +43,7 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use("/uploads", express.static(path.resolve(__dirname, "../uploads")));
 
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });

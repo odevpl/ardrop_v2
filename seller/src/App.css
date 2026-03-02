@@ -101,6 +101,109 @@
   border-color: #0a64c9;
 }
 
+.sellerFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sellerForm input,
+.sellerForm textarea,
+.sellerForm select {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+
+.sellerForm label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.sellerFormError,
+.validation-error-description {
+  color: #b42318;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.sellerFormActions {
+  margin-top: 12px;
+}
+
+.sellerImageUpload {
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.sellerDropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.sellerDropzoneActive {
+  border-color: #0a64c9;
+  background: #eff6ff;
+}
+
+.sellerDropzone p {
+  margin: 4px 0;
+}
+
+.sellerHiddenFileInput {
+  display: none;
+}
+
+.sellerImageGrid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.sellerImageTile {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+}
+
+.sellerImageTile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sellerImageDelete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.75);
+  color: #ffffff;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.sellerImageHint {
+  margin: 8px 0 0;
+  color: #6b7280;
+}
+
 @media (max-width: 900px) {
   .sellerLayout {
     grid-template-columns: 1fr;
@@ -120,5 +223,9 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+
+  .sellerFormGrid {
+    grid-template-columns: 1fr;
   }
 }

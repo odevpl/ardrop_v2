@@ -49,9 +49,32 @@
 .topMenuIcon {
   display: inline-flex;
   align-items: center;
-  font-size: 2em;
+  font-size: 1.4em;
   line-height: 1;
   color: #005ec7;
+}
+
+.topMenuCartIconWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topMenuCartBadge {
+  position: absolute;
+  top: -9px;
+  right: -12px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #d31515;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
 }
 
 .topMenuLabel {

@@ -5,7 +5,9 @@ import { getClientsTableConfig } from "./table.config";
 
 const Clients = ({ payload }) => {
   return (
-    <Table config={getClientsTableConfig()} data={payload?.data ?? payload} />
+    <section className="adminPageSection">
+      <Table config={getClientsTableConfig()} data={payload?.data ?? payload} />
+    </section>
   );
 };
 

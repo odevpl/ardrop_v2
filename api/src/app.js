@@ -6,6 +6,7 @@ const authController = require("./controllers/auth");
 const sellerController = require("./controllers/sellers");
 const usersController = require("./controllers/users");
 const productsController = require("./controllers/products");
+const cartsController = require("./controllers/carts");
 const {
   errorHandler,
   notFoundHandler,
@@ -65,6 +66,7 @@ app.use("/auth", authController);
 app.use("/", sellerController);
 app.use("/", usersController);
 app.use("/", productsController);
+app.use("/", cartsController);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

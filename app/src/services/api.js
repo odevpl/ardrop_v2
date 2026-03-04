@@ -19,7 +19,7 @@ export const apiRequest = async ({ method, url, params = null, data = null }) =>
     const response = await http({
       method,
       url: `/${url}${stringifyParams}`,
-      data: method !== 'DELETE' ? data : undefined,
+      data,
     })
 
     return response.data
@@ -30,8 +30,12 @@ export const apiRequest = async ({ method, url, params = null, data = null }) =>
 
 export const apiGet = (config) => apiRequest({ method: 'GET', ...config })
 export const apiPost = (config) => apiRequest({ method: 'POST', ...config })
+export const apiPatch = (config) => apiRequest({ method: 'PATCH', ...config })
+export const apiDelete = (config) => apiRequest({ method: 'DELETE', ...config })
 
 export default {
   apiGet,
   apiPost,
+  apiPatch,
+  apiDelete,
 }

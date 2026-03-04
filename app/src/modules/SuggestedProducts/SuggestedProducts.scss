@@ -8,6 +8,12 @@
   color: #0f1720;
 }
 
+.suggestedProductsMessage {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  color: #005ec7;
+}
+
 .suggestedProductsGrid {
   width: 100%;
   display: flex;
@@ -60,6 +66,24 @@
   margin: 0;
   font-size: 0.95rem;
   color: #0f1720;
+}
+
+.suggestedProductsAddButton {
+  margin-top: 10px;
+  border: 0;
+  border-radius: 8px;
+  background: #005ec7;
+  color: #ffffff;
+  padding: 8px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.suggestedProductsAddButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @media (max-width: 1399px) {

@@ -19,12 +19,14 @@ const Orders = ({ payload }) => {
   };
 
   return (
-    <Table
-      config={getOrdersTableConfig()}
-      data={(payload?.data ?? payload)
-        ?.map?.(mapOrderIdsToLabels)
-        ?.map?.(withFormattedDate)}
-    />
+    <section className="adminPageSection">
+      <Table
+        config={getOrdersTableConfig()}
+        data={(payload?.data ?? payload)
+          ?.map?.(mapOrderIdsToLabels)
+          ?.map?.(withFormattedDate)}
+      />
+    </section>
   );
 };
 

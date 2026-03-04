@@ -8,15 +8,17 @@ const Sellers = ({ payload, filters, setFilters }) => {
   const pagination = payload?.meta?.pagination
 
   return (
-    <Table
-      config={getSellersTableConfig()}
-      data={sellers}
-      searchValue={filters?.search || ''}
-      onSearchChange={(value) => setFilters({ ...filters, search: value, page: 1 })}
-      pagination={pagination}
-      onPageChange={(page) => setFilters({ ...filters, page })}
-      onLimitChange={(limit) => setFilters({ ...filters, limit, page: 1 })}
-    />
+    <section className="adminPageSection">
+      <Table
+        config={getSellersTableConfig()}
+        data={sellers}
+        searchValue={filters?.search || ''}
+        onSearchChange={(value) => setFilters({ ...filters, search: value, page: 1 })}
+        pagination={pagination}
+        onPageChange={(page) => setFilters({ ...filters, page })}
+        onLimitChange={(limit) => setFilters({ ...filters, limit, page: 1 })}
+      />
+    </section>
   )
 }
 

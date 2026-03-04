@@ -1,9 +1,12 @@
-import { NavLink } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { useAuth } from "./providers/authProvider";
 import SidebarMenu from "./components/SidebarMenu";
 import TopMenu from "./components/TopMenu";
 import { SIDEBAR_MENU_CONFIG } from "./components/SidebarMenu/sidebar.config";
 import HomePage from "pages/home";
+import CartPage from "pages/cart";
+import CartsService from "services/carts";
 import "./App.scss";
 
 const renderTopMenuItem = ({ item, key, className, content }) =>
@@ -32,6 +35,31 @@ const renderTopMenuItem = ({ item, key, className, content }) =>
 
 function App() {
   const { logout } = useAuth();
+  const [cartItemsCount, setCartItemsCount] = useState(0);
+
+  const refreshCartCount = async () => {
+    const response = await CartsService.getCurrentCart();
+    if (response?.status && response.status >= 400) {
+      setCartItemsCount(0);
+      return;
+    }
+
+    const items = response?.data?.items || response?.cart?.items || [];
+    const count = items.reduce(
+      (acc, item) => acc + (Number(item.quantity) || 0),
+      0,
+    );
+    setCartItemsCount(count);
+  };
+
+  useEffect(() => {
+    refreshCartCount();
+    const onCartUpdated = () => refreshCartCount();
+    window.addEventListener("cart:updated", onCartUpdated);
+    return () => window.removeEventListener("cart:updated", onCartUpdated);
+  }, []);
+
+  const cartBadge = cartItemsCount > 9 ? "9+" : String(cartItemsCount);
 
   const topMenuConfig = [
     { key: "promo", label: "Promocje", path: "/promocje" },
@@ -42,7 +70,14 @@ function App() {
       path: "/koszyk",
       align: "right",
       ariaLabel: "Koszyk",
-      icon: <i className="fa-solid fa-cart-shopping" aria-hidden="true" />,
+      icon: (
+        <span className="topMenuCartIconWrap">
+          <i className="fa-solid fa-cart-shopping" aria-hidden="true" />
+          {cartItemsCount > 0 ? (
+            <span className="topMenuCartBadge">{cartBadge}</span>
+          ) : null}
+        </span>
+      ),
       // label: "Koszyk",
     },
     {
@@ -66,7 +101,14 @@ function App() {
 
       <main className="clientMain">
         <TopMenu config={topMenuConfig} renderItem={renderTopMenuItem} />
-        <HomePage />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/koszyk" element={<CartPage />} />
+          <Route path="/promocje" element={<HomePage />} />
+          <Route path="/nowosci" element={<HomePage />} />
+          <Route path="/bestsellery" element={<HomePage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
     </div>
   );

@@ -1,5 +1,6 @@
 import FetchWrapper from "components/FetchWrapper";
 import { useEffect, useState } from "react";
+import CartsService from "services/carts";
 import ProductsService from "services/products";
 import "./SuggestedProducts.scss";
 
@@ -31,6 +32,8 @@ const SuggestedProductsView = ({ payload }) => {
   const [visibleLimit, setVisibleLimit] = useState(() =>
     getVisibleLimit(window.innerWidth),
   );
+  const [pendingId, setPendingId] = useState(null);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const updateLimit = () =>
@@ -41,9 +44,29 @@ const SuggestedProductsView = ({ payload }) => {
 
   const visibleProducts = products.slice(0, visibleLimit);
 
+  const addToCart = async (productId) => {
+    setPendingId(productId);
+    setMessage("");
+    const response = await CartsService.addItemToCart({
+      productId,
+      quantity: 1,
+    });
+
+    if (response?.status && response.status >= 400) {
+      setMessage(response?.data?.error || "Nie udalo sie dodac do koszyka.");
+      setPendingId(null);
+      return;
+    }
+
+    setMessage("Produkt dodany do koszyka.");
+    window.dispatchEvent(new Event("cart:updated"));
+    setPendingId(null);
+  };
+
   return (
     <section className="suggestedProducts">
       <h2 className="suggestedProductsTitle">Polecane produkty</h2>
+      {message ? <p className="suggestedProductsMessage">{message}</p> : null}
 
       <div className="suggestedProductsGrid">
         {visibleProducts.map((product) => {
@@ -66,6 +89,16 @@ const SuggestedProductsView = ({ payload }) => {
                 {formatPrice(product.grossPrice)}
               </p>
               <h3 className="suggestedProductsName">{product.name}</h3>
+              <button
+                type="button"
+                className="suggestedProductsAddButton"
+                onClick={() => addToCart(product.id)}
+                disabled={pendingId === product.id}
+                aria-label={`Dodaj ${product.name} do koszyka`}
+              >
+                <i className="fa-solid fa-cart-shopping" aria-hidden="true" />
+                <i className="fa-solid fa-plus" aria-hidden="true" />
+              </button>
             </article>
           );
         })}

@@ -21,7 +21,9 @@ const FormikWrapper = ({
         onChange={onChange}
         onReset={onReset}
       >
-        {(formikProps) => <Form>{typeof children === "function" ? children(formikProps) : children}</Form>}
+        {(formikProps) => (
+          <Form>{typeof children === "function" ? children(formikProps) : children}</Form>
+        )}
       </Formik>
     </div>
   );

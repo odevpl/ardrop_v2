@@ -45,6 +45,172 @@
   border-radius: 12px;
 }
 
+.adminPageSection {
+  background: #ffffff;
+  border: 1px solid #d9e3e9;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(22, 41, 56, 0.08);
+  padding: 12px;
+}
+
+.adminToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.adminToolbar h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.adminActions {
+  display: flex;
+  gap: 8px;
+}
+
+.adminActions button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.adminActions .adminPrimaryButton {
+  background: #0a64c9;
+  color: #ffffff;
+  border-color: #0a64c9;
+}
+
+.adminFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.adminProductForm input,
+.adminProductForm textarea,
+.adminProductForm select {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+
+.adminProductForm label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.adminFormError,
+.validation-error-description {
+  color: #b42318;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.adminFormActions {
+  margin-top: 12px;
+}
+
+.adminImageUpload {
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.adminDropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.adminDropzoneActive {
+  border-color: #0a64c9;
+  background: #eff6ff;
+}
+
+.adminDropzone p {
+  margin: 4px 0;
+}
+
+.adminHiddenFileInput {
+  display: none;
+}
+
+.adminImageGrid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.adminImageTile {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+}
+
+.adminImageTile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.adminImageDelete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.75);
+  color: #ffffff;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.adminImageMainBadge {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  background: rgba(10, 100, 201, 0.9);
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+}
+
+.adminImageMainButton {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  border: 0;
+  background: rgba(17, 24, 39, 0.8);
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.adminImageHint {
+  margin: 8px 0 0;
+  color: #6b7280;
+}
+
 @media (max-width: 760px) {
   .appLayout {
     display: block;
@@ -52,5 +218,15 @@
 
   .app {
     padding: 14px 12px 92px;
+  }
+
+  .adminToolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .adminFormGrid {
+    grid-template-columns: 1fr;
   }
 }

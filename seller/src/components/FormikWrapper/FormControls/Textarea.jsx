@@ -13,6 +13,7 @@ const TextareaInput = ({ id, placeholder }) => {
       <label htmlFor={id}>{placeholder}</label>
       <textarea
         id={id}
+        maxLength={200}
         rows={4}
         onChange={handleChange}
         value={value ?? ""}

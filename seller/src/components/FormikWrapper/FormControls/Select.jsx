@@ -3,24 +3,28 @@ import { useFormikContext, getIn } from "formik";
 const SelectInput = ({ id, placeholder, config }) => {
   const formikContext = useFormikContext();
   const value = getIn(formikContext.values, id);
+  const allKeysAreNumeric = Object.keys(config || {}).every((key) =>
+    /^-?\d+(\.\d+)?$/.test(String(key)),
+  );
 
-  const parseOptionValue = (rawValue) => {
-    if (rawValue === "") return "";
-    return /^-?\d+(\.\d+)?$/.test(rawValue) ? Number(rawValue) : rawValue;
-  };
+  const handleChange = (nextValue) => {
+    if (nextValue === "") {
+      formikContext.setFieldValue(id, "");
+      return;
+    }
 
-  const handleChange = (value) => {
-    formikContext.setFieldValue(id, value);
+    if (allKeysAreNumeric) {
+      formikContext.setFieldValue(id, Number(nextValue));
+      return;
+    }
+
+    formikContext.setFieldValue(id, nextValue);
   };
 
   return (
     <div className="select-input-wrapper">
       <label htmlFor={id}>{placeholder}</label>
-      <select
-        id={id}
-        onChange={(e) => handleChange(parseOptionValue(e.target.value))}
-        value={value ?? ""}
-      >
+      <select id={id} onChange={(e) => handleChange(e.target.value)} value={value ?? ""}>
         <option value="" disabled>
           {placeholder}
         </option>

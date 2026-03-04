@@ -8,9 +8,14 @@ const SidebarMenu = ({ config }) => {
   return (
     <aside className="sidebarMenu">
       <div className="sidebarMenuBrand">
-        <i className="fa-solid fa-chart-simple" aria-hidden="true" />
+        <span className="sidebarMenuLogo">A</span>
+        <div>
+          <p className="sidebarMenuBrandTitle">AR DROP</p>
+          <p className="sidebarMenuBrandSubtitle">Seller</p>
+        </div>
       </div>
 
+      <p className="sidebarMenuSectionLabel">Menu</p>
       <nav className="sidebarMenuNav" aria-label="Main navigation">
         {config.map((item) => (
           <NavLink
@@ -21,14 +26,14 @@ const SidebarMenu = ({ config }) => {
             }
           >
             <i className={`fa-solid ${item.icon}`} aria-hidden="true" />
-            <span>{item.title}</span>
+            <span className="sidebarMenuItemText">{item.title}</span>
           </NavLink>
         ))}
       </nav>
 
       <button type="button" className="sidebarLogoutButton" onClick={logout}>
         <i className="fa-solid fa-right-from-bracket" aria-hidden="true" />
-        <span>Wyloguj</span>
+        <span className="sidebarMenuItemText">Wyloguj</span>
       </button>
     </aside>
   )

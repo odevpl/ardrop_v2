@@ -107,23 +107,35 @@ const ProductFormView = ({
   loading = false,
 }) => {
   if (loading) {
-    return <p>Ladowanie...</p>
+    return (
+      <section className="adminPageSection">
+        <div className="adminToolbar">
+          <h2>{title}</h2>
+        </div>
+        <p>Ladowanie...</p>
+      </section>
+    )
   }
 
   return (
-    <section>
+    <section className="adminPageSection">
+      <div className="adminToolbar">
+        <h2>{title}</h2>
+      </div>
+
       <FormikWrapper className="adminProductForm" initialValues={initialValues} onSubmit={onSubmit}>
         {({ isSubmitting, status, values, setFieldValue }) => (
           <>
-            <h2>{title}</h2>
             <PriceSync values={values} setFieldValue={setFieldValue} />
 
-            <Input id="name" placeholder="Nazwa" />
-            <Select id="sellerId" placeholder="Sprzedawca" config={sellerOptions} />
-            <Input id="netPrice" placeholder="Cena netto" type="decimal" />
-            <Input id="grossPrice" placeholder="Cena brutto" type="decimal" />
-            <Input id="vatRate" placeholder="Stawka VAT (%)" type="decimal" />
-            <Select id="status" placeholder="Status" config={STATUS_OPTIONS} />
+            <div className="adminFormGrid">
+              <Input id="name" placeholder="Nazwa" />
+              <Select id="sellerId" placeholder="Sprzedawca" config={sellerOptions} />
+              <Input id="netPrice" placeholder="Cena netto" type="decimal" />
+              <Input id="grossPrice" placeholder="Cena brutto" type="decimal" />
+              <Input id="vatRate" placeholder="Stawka VAT (%)" type="decimal" />
+              <Select id="status" placeholder="Status" config={STATUS_OPTIONS} />
+            </div>
             <Textarea id="description" placeholder="Opis" />
 
             <ImageDropzone
@@ -136,10 +148,10 @@ const ProductFormView = ({
               disabled={isSubmitting}
             />
 
-            {status ? <p>{status}</p> : null}
+            {status ? <p className="adminFormError">{status}</p> : null}
 
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button type="submit" disabled={isSubmitting}>
+            <div className="adminActions adminFormActions">
+              <button type="submit" className="adminPrimaryButton" disabled={isSubmitting}>
                 Zapisz
               </button>
               <button type="button" onClick={onCancel} disabled={isSubmitting}>

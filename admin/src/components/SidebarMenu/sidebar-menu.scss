@@ -1,33 +1,60 @@
 .sidebarMenu {
-  width: 96px;
+  width: 240px;
   min-height: 100vh;
   background: #ffffff;
   border-right: 1px solid #d3dde3;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 14px 10px;
+  align-items: stretch;
+  padding: 14px 12px;
   position: sticky;
   top: 0;
 }
 
 .sidebarMenuBrand {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #0a64c9;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px 14px;
+  margin-bottom: 18px;
+}
+
+.sidebarMenuLogo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #111827;
+  color: #facc15;
+  font-weight: 800;
   display: grid;
   place-items: center;
-  font-size: 1.25rem;
-  color: #ffffff;
-  margin-bottom: 18px;
+}
+
+.sidebarMenuBrandTitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.sidebarMenuBrandSubtitle {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.sidebarMenuSectionLabel {
+  margin: 0 0 8px;
+  padding: 0 6px;
+  color: #6b7280;
+  font-size: 0.72rem;
+  text-transform: uppercase;
 }
 
 .sidebarMenuNav {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .sidebarMenuItem {
@@ -35,36 +62,40 @@
   border: 0;
   background: transparent;
   color: #3d5464;
-  padding: 10px 6px;
+  padding: 10px 10px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  text-transform: uppercase;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
   text-decoration: none;
   border-radius: 8px;
 }
 
 .sidebarMenuItem i {
-  font-size: 1rem;
-  color: #0a64c9;
+  width: 18px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.sidebarMenuItemText {
+  flex: 1;
+  text-align: left;
 }
 
 .sidebarMenuItem:hover {
-  background: #edf4f7;
+  background: #f3f6f9;
 }
 
 .sidebarMenuItemActive {
-  background: #0a64c9;
-  color: #ffffff;
+  background: #eef2ff;
+  color: #312e81;
 }
 
 .sidebarMenuItemActive i {
-  color: #ffffff;
+  color: #312e81;
 }
 
 .sidebarLogoutButton {
@@ -73,21 +104,20 @@
   border: 0;
   background: #f5f9fb;
   color: #3d5464;
-  padding: 10px 6px;
+  padding: 10px 10px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  text-transform: uppercase;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
   border-radius: 8px;
 }
 
 .sidebarLogoutButton i {
-  font-size: 1rem;
+  width: 18px;
+  text-align: center;
+  font-size: 0.9rem;
   color: #0a64c9;
 }
 
@@ -106,7 +136,7 @@
     left: 0;
     z-index: 20;
     flex-direction: row;
-    justify-content: center;
+    justify-content: space-between;
     border-right: 0;
     border-top: 1px solid #d3dde3;
     padding: 8px 10px;
@@ -114,6 +144,10 @@
   }
 
   .sidebarMenuBrand {
+    display: none;
+  }
+
+  .sidebarMenuSectionLabel {
     display: none;
   }
 
@@ -126,8 +160,8 @@
 
   .sidebarMenuItem {
     padding: 6px 4px;
-    font-size: 0.55rem;
-    gap: 4px;
+    font-size: 0.65rem;
+    gap: 6px;
   }
 
   .sidebarLogoutButton {
@@ -135,8 +169,12 @@
     width: auto;
     min-width: 64px;
     padding: 6px 4px;
-    font-size: 0.55rem;
-    gap: 4px;
+    font-size: 0.65rem;
+    gap: 6px;
     background: transparent;
+  }
+
+  .sidebarMenuItemText {
+    text-align: center;
   }
 }

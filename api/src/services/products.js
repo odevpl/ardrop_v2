@@ -128,6 +128,41 @@ const getProductById = async ({ productId }) => {
   };
 };
 
+const getSuggestedProducts = async ({ limit = 10 }) => {
+  const normalizedLimit = Number(limit) > 0 ? Math.min(Number(limit), 20) : 10;
+
+  const products = await db("products")
+    .select("products.*", "sellers.companyName as sellerCompanyName")
+    .leftJoin("sellers", "products.sellerId", "sellers.id")
+    .orderBy("products.id", "asc")
+    .limit(normalizedLimit);
+
+  if (products.length === 0) {
+    return [];
+  }
+
+  const productIds = products.map((product) => Number(product.id));
+  const images = await db("products_image")
+    .select("id", "productId", "fileName", "alt", "isMain", "position", "createdAt")
+    .whereIn("productId", productIds)
+    .orderBy("position", "asc")
+    .orderBy("id", "asc");
+
+  const imagesByProductId = images.reduce((acc, image) => {
+    const key = Number(image.productId);
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+    acc[key].push(image);
+    return acc;
+  }, {});
+
+  return products.map((product) => ({
+    ...product,
+    images: imagesByProductId[Number(product.id)] || [],
+  }));
+};
+
 const createProduct = async ({
   userId,
   role,
@@ -184,6 +219,7 @@ const deleteProduct = async ({ productId }) => {
 
 module.exports = {
   getProducts,
+  getSuggestedProducts,
   getProductById,
   createProduct,
   updateProduct,

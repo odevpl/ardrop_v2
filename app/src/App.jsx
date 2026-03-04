@@ -1,17 +1,23 @@
-import { useAuth } from './providers/authProvider'
+import SidebarMenu from './components/SidebarMenu'
+import { SIDEBAR_MENU_CONFIG } from './components/SidebarMenu/sidebar.config'
+import HomePage from 'pages/home'
+import './App.scss'
 
 function App() {
-  const { role, logout } = useAuth()
-
   return (
-    <main style={{ padding: 24 }}>
-      <h1>Panel klienta</h1>
-      <p>Zalogowano jako: {role || 'CLIENT'}</p>
-      <button type="button" onClick={logout}>
-        Wyloguj
-      </button>
-    </main>
+    <div className="clientLayout">
+      <aside className="clientSidebarColumn">
+        <div className="clientLogoWrap" aria-label="Logo aplikacji">
+          <img className="clientLogoImage" src="/logo.png" alt="Airdrop" />
+        </div>
+        <SidebarMenu config={SIDEBAR_MENU_CONFIG} />
+      </aside>
+      <main className="clientMain">
+        <HomePage />
+      </main>
+    </div>
   )
 }
 
 export default App
+

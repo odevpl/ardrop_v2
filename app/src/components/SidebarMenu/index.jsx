@@ -7,10 +7,6 @@ const SidebarMenu = ({ config }) => {
 
   return (
     <aside className="sidebarMenu">
-      <div className="sidebarMenuBrand">
-        <i className="fa-solid fa-chart-simple" aria-hidden="true" />
-      </div>
-
       <nav className="sidebarMenuNav" aria-label="Main navigation">
         {config.map((item) => (
           <NavLink

@@ -1,0 +1,129 @@
+:root {
+  --client-sidebar-width: 250px;
+}
+
+.clientLayout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: var(--client-sidebar-width) 1fr;
+}
+
+.clientSidebarColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding-top: 20px;
+}
+
+.clientLogoWrap {
+  height: 70px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+}
+
+.clientLogoImage {
+  width: min(150px, calc(var(--client-sidebar-width) - 24px));
+  height: auto;
+  display: block;
+}
+
+.clientMain {
+  padding: 20px 24px 28px;
+}
+
+.homePage {
+  display: block;
+}
+
+.clientHeader {
+  background: #ffffff;
+  border: 1px solid #d9e3e9;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(22, 41, 56, 0.08);
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.clientKicker {
+  margin: 0;
+  color: #4b6375;
+  font-size: 0.82rem;
+}
+
+.clientTitle {
+  margin: 4px 0;
+  color: #0f1720;
+  font-size: 1.45rem;
+}
+
+.clientMeta {
+  margin: 0;
+  color: #5a7282;
+  font-size: 0.86rem;
+}
+
+.clientLogoutButton {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.clientPageSection {
+  background: #ffffff;
+  border: 1px solid #d9e3e9;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(22, 41, 56, 0.08);
+  padding: 14px;
+}
+
+.clientToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.clientToolbar h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+@media (max-width: 760px) {
+  .clientLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .clientSidebarColumn {
+    padding-top: 0;
+  }
+
+  .clientLogoWrap {
+    height: 64px;
+    margin-bottom: 0;
+  }
+
+  .clientMain {
+    padding: 12px 12px 94px;
+  }
+
+  .clientHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.homePage {
+  .suggestedProducts {
+    width: calc(100vw);
+    @media (min-width: 786px) {
+      width: calc(100vw - 370px);
+    }
+  }
+}

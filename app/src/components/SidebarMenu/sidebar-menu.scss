@@ -1,66 +1,54 @@
 .sidebarMenu {
-  width: 96px;
-  min-height: 100vh;
-  background: #ffffff;
-  border-right: 1px solid #d3dde3;
+  width: var(--client-sidebar-width);
+  height: calc(100vh - 90px);
+  border-radius: 0 32px 0 0;
+  background: #00a6f7;
+  background: linear-gradient(180deg, #00a6f7, #005ec7);
+  box-shadow: 0 6px 14.9px #00000040 inset;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 14px 10px;
-  position: sticky;
-  top: 0;
-}
-
-.sidebarMenuBrand {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #0a64c9;
-  display: grid;
-  place-items: center;
-  font-size: 1.25rem;
+  align-items: stretch;
+  padding: 16px 12px;
+  position: static;
   color: #ffffff;
-  margin-bottom: 18px;
 }
 
 .sidebarMenuNav {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .sidebarMenuItem {
   width: 100%;
   border: 0;
   background: transparent;
-  color: #3d5464;
-  padding: 10px 6px;
+  color: #ffffff;
+  padding: 10px 8px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 6px;
-  text-transform: uppercase;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .sidebarMenuItem i {
-  font-size: 1rem;
-  color: #0a64c9;
+  width: 20px;
+  font-size: 1.1rem;
+  color: #ffffff;
 }
 
 .sidebarMenuItem:hover {
-  background: #edf4f7;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .sidebarMenuItemActive {
-  background: #0a64c9;
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .sidebarMenuItemActive i {
@@ -71,72 +59,83 @@
   margin-top: auto;
   width: 100%;
   border: 0;
-  background: #f5f9fb;
-  color: #3d5464;
-  padding: 10px 6px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  padding: 10px 8px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 6px;
-  text-transform: uppercase;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .sidebarLogoutButton i {
-  font-size: 1rem;
-  color: #0a64c9;
+  width: 20px;
+  font-size: 1.1rem;
+  color: #ffffff;
 }
 
 .sidebarLogoutButton:hover {
-  background: #edf4f7;
+  background: rgba(255, 255, 255, 0.25);
 }
 
 @media (max-width: 760px) {
   .sidebarMenu {
-    width: 100%;
-    min-height: auto;
-    height: 74px;
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    width: calc(100% - 20px);
+    height: 61px;
+    min-height: 0;
+    border-radius: 25px;
+    background: #0955aa;
+    box-shadow: none;
+    box-sizing: border-box;
+    padding: 5px 10px 10px;
+    color: #fff;
+    display: flex;
+    justify-content: space-evenly;
     position: fixed;
     top: auto;
-    bottom: 0;
-    left: 0;
     z-index: 20;
     flex-direction: row;
-    justify-content: center;
-    border-right: 0;
-    border-top: 1px solid #d3dde3;
-    padding: 8px 10px;
-    box-shadow: 0 -6px 14px rgba(28, 44, 55, 0.1);
-  }
-
-  .sidebarMenuBrand {
-    display: none;
+    align-items: center;
   }
 
   .sidebarMenuNav {
     flex-direction: row;
-    justify-content: space-around;
+    justify-content: space-evenly;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    width: auto;
   }
 
   .sidebarMenuItem {
-    padding: 6px 4px;
-    font-size: 0.55rem;
+    padding: 4px;
+    font-size: 0.6rem;
     gap: 4px;
+    flex-direction: column;
+    min-width: 54px;
   }
 
   .sidebarLogoutButton {
     margin-top: 0;
     width: auto;
-    min-width: 64px;
-    padding: 6px 4px;
-    font-size: 0.55rem;
+    min-width: 54px;
+    padding: 4px;
+    font-size: 0.6rem;
     gap: 4px;
     background: transparent;
+    flex-direction: column;
+  }
+
+  .sidebarMenuItem i,
+  .sidebarLogoutButton i {
+    width: auto;
+    font-size: 0.95rem;
   }
 }

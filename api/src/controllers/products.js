@@ -60,6 +60,16 @@ router.get(
 );
 
 router.get(
+  "/products/suggested",
+  roleMiddleware("ADMIN", "SELLER", "CLIENT"),
+  async (req, res) => {
+    const result = await productsService.getSuggestedProducts({ limit: 10 });
+    const data = result.map((product) => withImageUrls(req, product));
+    res.status(200).json({ data });
+  },
+);
+
+router.get(
   "/products/:id",
   roleMiddleware("ADMIN", "SELLER", "CLIENT"),
   async (req, res) => {

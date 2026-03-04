@@ -7,7 +7,7 @@ import AddProductPage from './pages/products/AddProduct'
 import ProductDetailsPage from './pages/products/Details'
 import OrdersPage from './pages/orders'
 import { useAuth } from './providers/authProvider'
-import './App.css'
+import './App.scss'
 
 function App() {
   const { role, logout } = useAuth()
@@ -49,3 +49,4 @@ function App() {
 }
 
 export default App
+

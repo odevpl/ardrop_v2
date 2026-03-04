@@ -14,7 +14,7 @@ import ProductsPage from "pages/products";
 import AddProductPage from "pages/products/AddProduct";
 import ProductDetailsPage from "pages/products/Details";
 import SellersPage from "pages/sellers";
-import "./App.css";
+import "./App.scss";
 
 const AppContent = () => {
   const nowLabel = dayjs().format("DD.MM.YYYY HH:mm");
@@ -60,3 +60,4 @@ const App = () => {
 };
 
 export default App;
+

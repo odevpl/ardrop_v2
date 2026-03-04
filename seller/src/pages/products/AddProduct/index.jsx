@@ -1,4 +1,4 @@
-import ProductForm from 'modules/AddProduct'
+import ProductForm from 'modules/ProductForm'
 
 const AddProductPage = () => <ProductForm />
 

@@ -1,4 +1,4 @@
-import ProductForm from 'modules/AddProduct'
+import ProductForm from 'modules/ProductForm'
 import { useParams } from 'react-router-dom'
 
 const ProductDetailsPage = () => {

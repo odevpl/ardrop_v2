@@ -1,10 +1,7 @@
 import { NavLink } from 'react-router-dom'
-import { useAuth } from '../../providers/authProvider'
 import './sidebar-menu.scss'
 
 const SidebarMenu = ({ config }) => {
-  const { logout } = useAuth()
-
   return (
     <aside className="sidebarMenu">
       <nav className="sidebarMenuNav" aria-label="Main navigation">
@@ -21,11 +18,6 @@ const SidebarMenu = ({ config }) => {
           </NavLink>
         ))}
       </nav>
-
-      <button type="button" className="sidebarLogoutButton" onClick={logout}>
-        <i className="fa-solid fa-right-from-bracket" aria-hidden="true" />
-        <span>Wyloguj</span>
-      </button>
     </aside>
   )
 }

@@ -34,13 +34,18 @@
 
 .homePage {
   display: block;
+  width: calc(100vw - 320px);
+
+  .suggestedProducts {
+    width: calc(100vw);
+
+    @media (min-width: 786px) {
+      width: calc(100vw - 320px);
+    }
+  }
 }
 
 .clientHeader {
-  background: #ffffff;
-  border: 1px solid #d9e3e9;
-  border-radius: 12px;
-  box-shadow: 0 8px 18px rgba(22, 41, 56, 0.08);
   padding: 16px 18px;
   display: flex;
   justify-content: space-between;
@@ -68,18 +73,14 @@
 }
 
 .clientLogoutButton {
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
   padding: 8px 12px;
   cursor: pointer;
 }
 
 .clientPageSection {
-  background: #ffffff;
-  border: 1px solid #d9e3e9;
-  border-radius: 12px;
-  box-shadow: 0 8px 18px rgba(22, 41, 56, 0.08);
   padding: 14px;
 }
 
@@ -116,14 +117,5 @@
   .clientHeader {
     flex-direction: column;
     align-items: flex-start;
-  }
-}
-
-.homePage {
-  .suggestedProducts {
-    width: calc(100vw);
-    @media (min-width: 786px) {
-      width: calc(100vw - 320px);
-    }
   }
 }

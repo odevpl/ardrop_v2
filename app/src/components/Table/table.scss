@@ -6,6 +6,32 @@
   overflow: auto;
 }
 
+.tableToolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #e5edf2;
+}
+
+.tableSearchInput {
+  width: min(360px, 100%);
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #c3d4df;
+  border-radius: 8px;
+  color: #213541;
+  background: #ffffff;
+}
+
+.tablePaginationInfo {
+  display: flex;
+  gap: 12px;
+  color: #5a7282;
+  font-size: 0.85rem;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -35,6 +61,10 @@
   background: #eaf4f8;
 }
 
+.tableRowClickable {
+  cursor: pointer;
+}
+
 .table td,
 .tableCell {
   padding: 11px 12px;
@@ -52,3 +82,70 @@
   color: #5a7282;
   text-align: center;
 }
+
+.tablePagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-top: 1px solid #e5edf2;
+}
+
+.tablePaginationControls {
+  display: flex;
+  gap: 8px;
+}
+
+.tablePaginationButton {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #c3d4df;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #213541;
+  cursor: pointer;
+}
+
+.tablePaginationButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tableLimit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #5a7282;
+  font-size: 0.85rem;
+}
+
+.tableLimitSelect {
+  height: 34px;
+  border: 1px solid #c3d4df;
+  border-radius: 8px;
+  padding: 0 8px;
+}
+
+.tableGoToPage {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.tablePageInput {
+  width: 72px;
+  height: 34px;
+  border: 1px solid #c3d4df;
+  border-radius: 8px;
+  padding: 0 8px;
+}
+
+.tablePageSelect {
+  width: 90px;
+  height: 34px;
+  border: 1px solid #c3d4df;
+  border-radius: 8px;
+  padding: 0 8px;
+}
+

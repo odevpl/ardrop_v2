@@ -1,12 +1,12 @@
 import { apiGet } from './api'
 
-export const getUsers = (params = {}) => {
+export const getSellers = (params = {}) => {
   return apiGet({
-    url: 'users',
+    url: 'sellers',
     params,
   })
 }
 
 export default {
-  getUsers,
+  getSellers,
 }

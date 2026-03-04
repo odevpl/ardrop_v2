@@ -5,7 +5,9 @@ import { SIDEBAR_MENU_CONFIG } from 'components/SidebarMenu/sidebar.config'
 import ClientsPage from 'pages/clients'
 import OrdersPage from 'pages/orders'
 import ProductsPage from 'pages/products'
-import UsersPage from 'pages/users'
+import AddProductPage from 'pages/products/AddProduct'
+import ProductDetailsPage from 'pages/products/Details'
+import SellersPage from 'pages/sellers'
 import './App.css'
 
 const AppContent = () => {
@@ -29,8 +31,11 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={<Navigate to="/clients" replace />} />
             <Route path="/clients" element={<ClientsPage />} />
-            <Route path="/users" element={<UsersPage />} />
+            <Route path="/users" element={<Navigate to="/sellers" replace />} />
+            <Route path="/sellers" element={<SellersPage />} />
             <Route path="/products" element={<ProductsPage />} />
+            <Route path="/products/add" element={<AddProductPage />} />
+            <Route path="/products/:id" element={<ProductDetailsPage />} />
             <Route path="/orders" element={<OrdersPage />} />
           </Routes>
         </section>

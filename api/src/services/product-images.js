@@ -3,66 +3,100 @@ const path = require("path");
 const db = require("../config/db");
 
 const uploadsDir = path.resolve(__dirname, "../../uploads/images");
-const manifestPath = path.join(uploadsDir, "manifest.json");
-
-const ensureManifest = async () => {
-  await fs.mkdir(uploadsDir, { recursive: true });
-  try {
-    await fs.access(manifestPath);
-  } catch (error) {
-    await fs.writeFile(manifestPath, JSON.stringify([], null, 2), "utf8");
-  }
-};
-
-const readManifest = async () => {
-  await ensureManifest();
-  const content = await fs.readFile(manifestPath, "utf8");
-  const parsed = JSON.parse(content || "[]");
-  return Array.isArray(parsed) ? parsed : [];
-};
-
-const writeManifest = async (items) => {
-  await fs.writeFile(manifestPath, JSON.stringify(items, null, 2), "utf8");
-};
 
 const ensureProductExists = async (productId) => {
-  const product = await db("products").select("id").where({ id: productId }).first();
+  const product = await db("products")
+    .select("id", "sellerId")
+    .where({ id: productId })
+    .first();
   if (!product) {
     const error = new Error("Product not found");
     error.status = 404;
     throw error;
   }
+
+  return product;
 };
 
-const saveProductImage = async ({ productId, file, userId }) => {
-  await ensureProductExists(productId);
-  const items = await readManifest();
-  const image = {
-    productId: Number(productId),
-    filename: file.filename,
-    originalName: file.originalname,
-    mimeType: file.mimetype,
-    size: file.size,
-    ownerUserId: Number(userId),
-    createdAt: new Date().toISOString(),
-  };
-  items.push(image);
-  await writeManifest(items);
-  return image;
+const ensureSellerOwnsProduct = async ({ productId, userId }) => {
+  const product = await ensureProductExists(productId);
+  const seller = await db("sellers").select("id").where({ userId }).first();
+
+  if (!seller || Number(seller.id) !== Number(product.sellerId)) {
+    const error = new Error("Forbidden");
+    error.status = 403;
+    throw error;
+  }
 };
 
-const listProductImages = async ({ productId }) => {
+const saveProductImage = async ({ productId, file, role, userId }) => {
+  await fs.mkdir(uploadsDir, { recursive: true });
+
+  try {
+    if (role === "SELLER") {
+      await ensureSellerOwnsProduct({ productId, userId });
+    } else {
+      await ensureProductExists(productId);
+    }
+
+    const inserted = await db("products_image").insert({
+      productId: Number(productId),
+      fileName: file.filename,
+      alt: null,
+      isMain: 0,
+      position: 0,
+    });
+
+    const imageId = Array.isArray(inserted) ? inserted[0] : inserted;
+
+    return db("products_image")
+      .select(
+        "id",
+        "productId",
+        "fileName",
+        "alt",
+        "isMain",
+        "position",
+        "createdAt",
+      )
+      .where({ id: imageId })
+      .first();
+  } catch (error) {
+    const filePath = path.join(uploadsDir, file.filename);
+    try {
+      await fs.unlink(filePath);
+    } catch (unlinkError) {
+      if (unlinkError.code !== "ENOENT") {
+        throw unlinkError;
+      }
+    }
+    throw error;
+  }
+};
+
+const getProductImages = async ({ productId }) => {
   await ensureProductExists(productId);
-  const items = await readManifest();
-  return items.filter((item) => Number(item.productId) === Number(productId));
+
+  return db("products_image")
+    .select(
+      "id",
+      "productId",
+      "fileName",
+      "alt",
+      "isMain",
+      "position",
+      "createdAt",
+    )
+    .where({ productId: Number(productId) })
+    .orderBy("position", "asc")
+    .orderBy("id", "asc");
 };
 
 const deleteProductImage = async ({ productId, filename, role, userId }) => {
-  const items = await readManifest();
-  const item = items.find(
-    (entry) =>
-      Number(entry.productId) === Number(productId) && entry.filename === filename,
-  );
+  const item = await db("products_image")
+    .select("id", "productId", "fileName")
+    .where({ productId: Number(productId), fileName: filename })
+    .first();
 
   if (!item) {
     const error = new Error("Image not found");
@@ -70,17 +104,11 @@ const deleteProductImage = async ({ productId, filename, role, userId }) => {
     throw error;
   }
 
-  if (role === "SELLER" && Number(item.ownerUserId) !== Number(userId)) {
-    const error = new Error("Forbidden");
-    error.status = 403;
-    throw error;
+  if (role === "SELLER") {
+    await ensureSellerOwnsProduct({ productId, userId });
   }
 
-  const nextItems = items.filter(
-    (entry) =>
-      !(Number(entry.productId) === Number(productId) && entry.filename === filename),
-  );
-  await writeManifest(nextItems);
+  await db("products_image").where({ id: item.id }).del();
 
   const filePath = path.join(uploadsDir, filename);
   try {
@@ -92,8 +120,51 @@ const deleteProductImage = async ({ productId, filename, role, userId }) => {
   }
 };
 
+const setMainProductImage = async ({ productId, imageId, role, userId }) => {
+  const item = await db("products_image")
+    .select("id", "productId")
+    .where({ id: Number(imageId), productId: Number(productId) })
+    .first();
+
+  if (!item) {
+    const error = new Error("Image not found");
+    error.status = 404;
+    throw error;
+  }
+
+  if (role === "SELLER") {
+    await ensureSellerOwnsProduct({ productId, userId });
+  } else {
+    await ensureProductExists(productId);
+  }
+
+  await db.transaction(async (trx) => {
+    await trx("products_image")
+      .where({ productId: Number(productId) })
+      .update({ isMain: 0 });
+
+    await trx("products_image")
+      .where({ id: Number(imageId), productId: Number(productId) })
+      .update({ isMain: 1 });
+  });
+
+  return db("products_image")
+    .select(
+      "id",
+      "productId",
+      "fileName",
+      "alt",
+      "isMain",
+      "position",
+      "createdAt",
+    )
+    .where({ id: Number(imageId) })
+    .first();
+};
+
 module.exports = {
   saveProductImage,
-  listProductImages,
+  getProductImages,
   deleteProductImage,
+  setMainProductImage,
 };

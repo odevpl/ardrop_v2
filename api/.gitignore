@@ -3,3 +3,4 @@ node_modules/
 npm-debug.log*
 API_BACKLOG.md
 DB_STRUCTURE.md
+uploads

@@ -4,6 +4,7 @@ import SidebarMenu from './components/SidebarMenu'
 import { SIDEBAR_MENU_CONFIG } from './components/SidebarMenu/sidebar.config'
 import ProductsPage from './pages/products'
 import AddProductPage from './pages/products/AddProduct'
+import ProductDetailsPage from './pages/products/Details'
 import OrdersPage from './pages/orders'
 import { useAuth } from './providers/authProvider'
 import './App.css'
@@ -38,6 +39,7 @@ function App() {
           <Route path="/" element={<Navigate to="/products" replace />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/add" element={<AddProductPage />} />
+          <Route path="/products/:id" element={<ProductDetailsPage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="*" element={<Navigate to="/products" replace />} />
         </Routes>

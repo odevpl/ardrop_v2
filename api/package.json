@@ -4,8 +4,9 @@
   "description": "AR DROP API",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "nodemon --legacy-watch app.js",
+    "start:prod": "node app.js",
+    "dev": "nodemon --legacy-watch app.js"
   },
   "keywords": [],
   "author": "",

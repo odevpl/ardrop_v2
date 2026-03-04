@@ -49,10 +49,10 @@ const ImageDropzone = ({
   }, [imagePreviews])
 
   return (
-    <div className="sellerImageUpload">
+    <div className="adminImageUpload">
       <label htmlFor="product-images">Zdjecia produktu</label>
       <div
-        className={`sellerDropzone ${isDragOver ? 'sellerDropzoneActive' : ''}`}
+        className={`adminDropzone ${isDragOver ? 'adminDropzoneActive' : ''}`}
         role="button"
         tabIndex={0}
         onClick={() => fileInputRef.current?.click()}
@@ -78,23 +78,23 @@ const ImageDropzone = ({
           multiple
           onChange={handleImagesChange}
           disabled={disabled}
-          className="sellerHiddenFileInput"
+          className="adminHiddenFileInput"
         />
       </div>
 
       {existingImages.length > 0 ? (
         <>
-          <p className="sellerImageHint">Aktualne zdjecia</p>
-          <div className="sellerImageGrid">
+          <p className="adminImageHint">Aktualne zdjecia</p>
+          <div className="adminImageGrid">
             {existingImages.map((image) => (
-              <div key={`existing-${image.id}`} className="sellerImageTile">
+              <div key={`existing-${image.id}`} className="adminImageTile">
                 <img src={image.url} alt={image.alt || image.fileName || 'Zdjecie produktu'} />
                 {image.isMain ? (
-                  <span className="sellerImageMainBadge">Glowne</span>
+                  <span className="adminImageMainBadge">Glowne</span>
                 ) : (
                   <button
                     type="button"
-                    className="sellerImageMainButton"
+                    className="adminImageMainButton"
                     onClick={() => onSetMainExistingImage?.(image)}
                     disabled={disabled || isExistingActionLoading}
                   >
@@ -103,7 +103,7 @@ const ImageDropzone = ({
                 )}
                 <button
                   type="button"
-                  className="sellerImageDelete"
+                  className="adminImageDelete"
                   onClick={() => onDeleteExistingImage?.(image)}
                   disabled={disabled || isExistingActionLoading}
                   aria-label={`Usun ${image.fileName}`}
@@ -118,14 +118,14 @@ const ImageDropzone = ({
 
       {imagePreviews.length > 0 ? (
         <>
-          <p className="sellerImageHint">Nowe zdjecia do dodania</p>
-          <div className="sellerImageGrid">
+          <p className="adminImageHint">Nowe zdjecia do dodania</p>
+          <div className="adminImageGrid">
             {imagePreviews.map((preview, index) => (
-              <div key={preview.id} className="sellerImageTile">
+              <div key={preview.id} className="adminImageTile">
                 <img src={preview.url} alt={preview.file.name} />
                 <button
                   type="button"
-                  className="sellerImageDelete"
+                  className="adminImageDelete"
                   onClick={() => removeImage(index)}
                   aria-label={`Usun ${preview.file.name}`}
                 >
@@ -136,7 +136,7 @@ const ImageDropzone = ({
           </div>
         </>
       ) : (
-        existingImages.length === 0 ? <p className="sellerImageHint">Brak wybranych zdjec</p> : null
+        existingImages.length === 0 ? <p className="adminImageHint">Brak wybranych zdjec</p> : null
       )}
     </div>
   )

@@ -2,28 +2,52 @@ import { useMemo } from 'react'
 import FetchWrapper from 'components/FetchWrapper'
 import Table from 'components/Table'
 import ProductsService from 'services/products'
+import { useNavigate } from 'react-router-dom'
+import { getProductsTableConfig } from './table.config.jsx'
 
-const tableConfig = [
-  { key: 'id', title: 'ID' },
-  { key: 'name', title: 'Produkt' },
-  { key: 'netPrice', title: 'Cena netto' },
-  { key: 'grossPrice', title: 'Cena brutto' },
-  { key: 'vatRate', title: 'VAT' },
-  { key: 'status', title: 'Status' },
-]
+const normalizeImageUrl = (url) => {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
 
-const ProductListView = ({ payload }) => {
-  const products = payload?.products || []
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+  const normalizedBase = String(baseUrl).replace(/\/+$/, '')
+  const normalizedPath = String(url).startsWith('/') ? url : `/${url}`
+  return `${normalizedBase}${normalizedPath}`
+}
+
+const ProductListView = ({ payload, filters, setFilters }) => {
+  const navigate = useNavigate()
+  const products = payload?.data || payload?.products || []
+  const pagination = payload?.meta?.pagination
+  const searchValue = filters?.search || ''
   const preparedProducts = useMemo(() => {
-    return products.map((product) => ({
-      ...product,
-      netPrice: `${product.netPrice} zl`,
-      grossPrice: `${product.grossPrice} zl`,
-      vatRate: `${product.vatRate}%`,
-    }))
+    return products.map((product) => {
+      const mainImage = Array.isArray(product.images)
+        ? product.images.find((image) => image.isMain) || product.images[0]
+        : null
+
+      return {
+        ...product,
+        thumbnailUrl: normalizeImageUrl(mainImage?.url),
+        netPrice: `${product.netPrice} zl`,
+        grossPrice: `${product.grossPrice} zl`,
+        vatRate: `${product.vatRate}%`,
+      }
+    })
   }, [products])
 
-  return <Table config={tableConfig} data={preparedProducts} />
+  return (
+    <Table
+      config={getProductsTableConfig()}
+      data={preparedProducts}
+      onRowClick={(row) => navigate(`/products/${row.id}`)}
+      searchValue={searchValue}
+      onSearchChange={(value) => setFilters({ ...filters, search: value, page: 1 })}
+      pagination={pagination}
+      onPageChange={(page) => setFilters({ ...filters, page })}
+      onLimitChange={(limit) => setFilters({ ...filters, limit, page: 1 })}
+    />
+  )
 }
 
 const ProductList = () => {
@@ -32,6 +56,7 @@ const ProductList = () => {
       name="ProductList"
       component={ProductListView}
       connector={ProductsService.getProducts}
+      filters={{ page: 1, limit: 20, search: '' }}
     />
   )
 }

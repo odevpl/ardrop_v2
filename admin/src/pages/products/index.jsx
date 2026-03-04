@@ -1,21 +1,25 @@
 import FetchWrapper from "components/FetchWrapper";
-import Table from "components/Table";
+import ProductList from "modules/ProductList";
+import { useNavigate } from "react-router-dom";
 import { getProducts } from "../../services/products";
-import { getProductsTableConfig } from "./table.config";
-
-const Products = ({ payload }) => {
-  return (
-    <Table config={getProductsTableConfig()} data={payload?.data ?? payload} />
-  );
-};
 
 const ProductsWrapper = () => {
+  const navigate = useNavigate();
+
   return (
-    <FetchWrapper
-      component={Products}
-      name="Produkty"
-      connector={getProducts}
-    />
+    <>
+      <div style={{ marginBottom: "12px", display: "flex", justifyContent: "flex-end" }}>
+        <button type="button" onClick={() => navigate("/products/add")}>
+          Dodaj produkt
+        </button>
+      </div>
+      <FetchWrapper
+        component={ProductList}
+        name="Produkty"
+        connector={getProducts}
+        filters={{ page: 1, limit: 20, search: "" }}
+      />
+    </>
   );
 };
 

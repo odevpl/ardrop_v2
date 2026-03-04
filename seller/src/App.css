@@ -199,6 +199,30 @@
   line-height: 1;
 }
 
+.sellerImageMainBadge {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  background: rgba(10, 100, 201, 0.9);
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+}
+
+.sellerImageMainButton {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  border: 0;
+  background: rgba(17, 24, 39, 0.8);
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
 .sellerImageHint {
   margin: 8px 0 0;
   color: #6b7280;

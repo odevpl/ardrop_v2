@@ -1,10 +1,8 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import FetchWrapper from "components/FetchWrapper";
-import FormikWrapper from "components/FormikWrapper";
-import Input from "components/FormikWrapper/FormControls/Input";
 import Popup from "components/Popup";
-import DeliveriesService from "services/deliveries";
-import "./Deliveries.scss";
+import DeliveryAdressessService from "services/deliveryAdressess";
+import "./DeliveryAdressess.scss";
 
 const EMPTY_ADDRESS = {
   label: "",
@@ -55,8 +53,8 @@ const DeliveryAddressPopupForm = ({ mode = "create", addressId = null, initialAd
 
     const isEditMode = mode === "edit" && addressId !== undefined && addressId !== null && String(addressId).trim() !== "";
     const response = isEditMode
-      ? await DeliveriesService.updateDeliveryAddress(addressId, payload)
-      : await DeliveriesService.createDeliveryAddress(payload);
+      ? await DeliveryAdressessService.updateDeliveryAdressess(addressId, payload)
+      : await DeliveryAdressessService.createDeliveryAdressess(payload);
 
     if (response?.status && response.status >= 400) {
       setError(response?.data?.error || "Nie udalo sie zapisac adresu.");
@@ -130,49 +128,12 @@ const DeliveryAddressPopupForm = ({ mode = "create", addressId = null, initialAd
   );
 };
 
-const DeliveriesView = ({ payload, refetch }) => {
-  const [isSaving, setIsSaving] = useState(false);
+const DeliveryAdressessView = ({ payload, refetch }) => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const addresses = Array.isArray(payload?.data || payload?.addresses)
     ? (payload?.data || payload?.addresses)
     : [];
-
-  const primaryAddress = useMemo(
-    () => addresses.find((item) => item.isDefault) || addresses[0] || null,
-    [addresses],
-  );
-
-  const initialValues = useMemo(
-    () => ({
-      label: primaryAddress?.label || "",
-      recipientName: primaryAddress?.recipientName || "",
-      phone: primaryAddress?.phone || "",
-      addressLine1: primaryAddress?.addressLine1 || "",
-      addressLine2: primaryAddress?.addressLine2 || "",
-      city: primaryAddress?.city || "",
-      postalCode: primaryAddress?.postalCode || "",
-      countryCode: primaryAddress?.countryCode || "PL",
-    }),
-    [primaryAddress],
-  );
-
-  const handleSubmit = async (values) => {
-    setIsSaving(true);
-    setMessage("");
-    setError("");
-
-    const response = await DeliveriesService.saveCurrentDelivery(values);
-    if (response?.status && response.status >= 400) {
-      setError(response?.data?.error || "Nie udalo sie zapisac danych dostawy.");
-      setIsSaving(false);
-      return;
-    }
-
-    await refetch();
-    setMessage("Dane dostawy zostaly zapisane.");
-    setIsSaving(false);
-  };
 
   const handleAddressSaved = async (mode) => {
     await refetch();
@@ -188,7 +149,7 @@ const DeliveriesView = ({ payload, refetch }) => {
 
     setError("");
     setMessage("");
-    const response = await DeliveriesService.deleteDeliveryAddress(id);
+    const response = await DeliveryAdressessService.deleteDeliveryAdressess(id);
     if (response?.status && response.status >= 400) {
       setError(response?.data?.error || "Nie udalo sie usunac adresu.");
       return;
@@ -207,29 +168,6 @@ const DeliveriesView = ({ payload, refetch }) => {
 
       {error ? <p className="deliveriesError">{error}</p> : null}
       {message ? <p className="deliveriesSuccess">{message}</p> : null}
-
-      <FormikWrapper
-        className="deliveriesFormWrap"
-        initialValues={initialValues}
-        onSubmit={handleSubmit}
-      >
-        <div className="deliveriesFormGrid">
-          <Input id="label" placeholder="Etykieta" />
-          <Input id="recipientName" placeholder="Odbiorca" />
-          <Input id="phone" placeholder="Telefon" />
-          <Input id="addressLine1" placeholder="Ulica i numer" />
-          <Input id="addressLine2" placeholder="Dodatkowe informacje" />
-          <Input id="city" placeholder="Miasto" />
-          <Input id="postalCode" placeholder="Kod pocztowy" />
-          <Input id="countryCode" placeholder="Kraj (PL)" />
-        </div>
-
-        <div className="deliveriesActions">
-          <button type="submit" className="deliveriesSaveButton" disabled={isSaving}>
-            {isSaving ? "Zapisywanie..." : "Zapisz glowny adres"}
-          </button>
-        </div>
-      </FormikWrapper>
 
       <section className="deliveriesListSection">
         <div className="deliveriesListHeader">
@@ -295,12 +233,12 @@ const DeliveriesView = ({ payload, refetch }) => {
   );
 };
 
-const Deliveries = () => (
+const DeliveryAdressess = () => (
   <FetchWrapper
-    name="Deliveries"
-    component={DeliveriesView}
-    connector={DeliveriesService.getDeliveryAddresses}
+    name="DeliveryAdressess"
+    component={DeliveryAdressessView}
+    connector={DeliveryAdressessService.getDeliveryAdressess}
   />
 );
 
-export default Deliveries;
+export default DeliveryAdressess;

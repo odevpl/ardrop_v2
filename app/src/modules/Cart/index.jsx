@@ -305,7 +305,7 @@ const Cart = () => {
           <section className="cartDeliverySection">
             <div className="cartDeliveryHead">
               <h2>Adres dostawy</h2>
-              <NavLink to="/konto" className="cartGhostButton">
+              <NavLink to="/adresy-dostawy" className="cartGhostButton">
                 Zmien dane
               </NavLink>
             </div>

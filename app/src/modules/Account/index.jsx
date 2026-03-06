@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { NavLink } from "react-router-dom";
 import FormikWrapper from "components/FormikWrapper";
 import Input from "components/FormikWrapper/FormControls/Input";
 import AccountService from "services/account";
@@ -95,6 +96,9 @@ const Account = () => {
       <header className="accountHeader">
         <h1>Konto</h1>
         <p>Zarzadzaj danymi swojego konta klienta.</p>
+        <NavLink to="/adresy-dostawy" className="accountLinkButton">
+          Przejdz do danych dostawy
+        </NavLink>
       </header>
 
       {error ? <p className="accountError">{error}</p> : null}

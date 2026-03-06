@@ -10,6 +10,7 @@ const cartsController = require("./controllers/carts");
 const accountController = require("./controllers/account");
 const clientDeliveryAddressesController = require("./controllers/client-delivery-addresses");
 const deliveriesController = require("./controllers/deliveries");
+const ordersController = require("./controllers/orders");
 const {
   errorHandler,
   notFoundHandler,
@@ -73,6 +74,7 @@ app.use("/", cartsController);
 app.use("/", accountController);
 app.use("/", clientDeliveryAddressesController);
 app.use("/", deliveriesController);
+app.use("/", ordersController);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

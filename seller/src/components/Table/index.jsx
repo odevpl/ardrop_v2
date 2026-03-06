@@ -1,4 +1,5 @@
 import './table.scss'
+import Pagination from 'components/Pagination'
 
 const Table = ({
   config,
@@ -30,7 +31,7 @@ const Table = ({
 
   return (
     <div className="tableCard">
-      {(typeof onSearchChange === 'function' || paginationEnabled) && (
+      {typeof onSearchChange === 'function' && (
         <div className="tableToolbar">
           {typeof onSearchChange === 'function' && (
             <input
@@ -40,13 +41,6 @@ const Table = ({
               placeholder={searchPlaceholder}
               onChange={(event) => onSearchChange(event.target.value)}
             />
-          )}
-
-          {paginationEnabled && (
-            <div className="tablePaginationInfo">
-              <span>{`Strona ${currentPage} z ${Math.max(totalPages, 1)}`}</span>
-              <span>{`Rekordy: ${total}`}</span>
-            </div>
           )}
         </div>
       )}
@@ -105,56 +99,15 @@ const Table = ({
       </table>
 
       {paginationEnabled && (
-        <div className="tablePagination">
-          <div className="tablePaginationControls">
-            <button
-              type="button"
-              className="tablePaginationButton"
-              disabled={currentPage <= 1}
-              onClick={() => onPageChange(currentPage - 1)}
-            >
-              Poprzednia
-            </button>
-            <button
-              type="button"
-              className="tablePaginationButton"
-              disabled={currentPage >= totalPages}
-              onClick={() => onPageChange(currentPage + 1)}
-            >
-              Nastepna
-            </button>
-            <div className="tableGoToPage">
-              <select
-                className="tablePageSelect"
-                value={currentPage}
-                onChange={(event) => onPageChange(Number(event.target.value))}
-              >
-                {Array.from({ length: Math.max(totalPages, 1) }, (_, index) => index + 1).map((page) => (
-                  <option key={page} value={page}>
-                    {page}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {typeof onLimitChange === 'function' && (
-            <label className="tableLimit">
-              Na stronie:
-              <select
-                className="tableLimitSelect"
-                value={currentLimit}
-                onChange={(event) => onLimitChange(Number(event.target.value))}
-              >
-                {safeLimitOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-        </div>
+        <Pagination
+          page={currentPage}
+          totalPages={totalPages}
+          total={total}
+          limit={currentLimit}
+          limitOptions={safeLimitOptions}
+          onPageChange={onPageChange}
+          onLimitChange={onLimitChange}
+        />
       )}
     </div>
   )

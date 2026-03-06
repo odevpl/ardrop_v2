@@ -8,7 +8,8 @@ import { SIDEBAR_MENU_CONFIG } from "./components/SidebarMenu/sidebar.config";
 import HomePage from "pages/home";
 import CartPage from "pages/cart";
 import AccountPage from "pages/account";
-import DeliveriesPage from "pages/deliveries";
+import DeliveryAdressessPage from "pages/deliveryAdressess";
+import DeliveriesListPage from "pages/deliveriesList";
 import CartsService from "services/carts";
 import "./App.scss";
 
@@ -69,7 +70,7 @@ function App() {
     { key: "news", label: "Nowosci", path: "/nowosci" },
     { key: "bestsellers", label: "Bestsellery", path: "/bestsellery" },
     {
-      key: "deliveries",
+      key: "deliveryAdressess",
       path: "/dostawy",
       align: "right",
       ariaLabel: "Dostawy",
@@ -77,7 +78,7 @@ function App() {
     },
     {
       key: "account",
-      path: "/konto",
+      path: "/klient",
       align: "right",
       ariaLabel: "Konto",
       icon: <i className="fa-solid fa-user" aria-hidden="true" />,
@@ -126,7 +127,9 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/koszyk" element={<CartPage />} />
               <Route path="/konto" element={<AccountPage />} />
-              <Route path="/dostawy" element={<DeliveriesPage />} />
+              <Route path="/klient" element={<AccountPage />} />
+              <Route path="/dostawy" element={<DeliveriesListPage />} />
+              <Route path="/adresy-dostawy" element={<DeliveryAdressessPage />} />
               <Route path="/promocje" element={<HomePage />} />
               <Route path="/nowosci" element={<HomePage />} />
               <Route path="/bestsellery" element={<HomePage />} />

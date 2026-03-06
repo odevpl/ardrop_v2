@@ -1,33 +1,33 @@
 import { apiDelete, apiGet, apiPatch, apiPost, apiRequest } from "./api";
 
-export const getCurrentDelivery = () =>
+export const getCurrentDeliveryAdressess = () =>
   apiGet({
     url: "deliveries/current",
   });
 
-export const getDeliveryAddresses = () =>
+export const getDeliveryAdressess = () =>
   apiGet({
     url: "account/delivery-addresses",
   });
 
-export const createDeliveryAddress = (data) =>
+export const createDeliveryAdressess = (data) =>
   apiPost({
     url: "account/delivery-addresses",
     data,
   });
 
-export const updateDeliveryAddress = (id, data) =>
+export const updateDeliveryAdressess = (id, data) =>
   apiPatch({
     url: `account/delivery-addresses/${id}`,
     data,
   });
 
-export const deleteDeliveryAddress = (id) =>
+export const deleteDeliveryAdressess = (id) =>
   apiDelete({
     url: `account/delivery-addresses/${id}`,
   });
 
-export const saveCurrentDelivery = (data) =>
+export const saveCurrentDeliveryAdressess = (data) =>
   apiRequest({
     method: "PUT",
     url: "deliveries/current",
@@ -35,10 +35,10 @@ export const saveCurrentDelivery = (data) =>
   });
 
 export default {
-  getCurrentDelivery,
-  getDeliveryAddresses,
-  createDeliveryAddress,
-  updateDeliveryAddress,
-  deleteDeliveryAddress,
-  saveCurrentDelivery,
+  getCurrentDeliveryAdressess,
+  getDeliveryAdressess,
+  createDeliveryAdressess,
+  updateDeliveryAdressess,
+  deleteDeliveryAdressess,
+  saveCurrentDeliveryAdressess,
 };

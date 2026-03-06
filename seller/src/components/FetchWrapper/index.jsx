@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import LoadingSpinner from '../LoadingSpinner'
+
+const PAGINATION_FILTER_KEYS = ['page', 'limit']
 
 const FetchWrapper = ({
   component,
@@ -9,8 +12,31 @@ const FetchWrapper = ({
   filters: defaultFilters = {},
   ...props
 }) => {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const getInitialFilters = () => {
+    const mergedFilters = { ...defaultFilters }
+
+    PAGINATION_FILTER_KEYS.forEach((key) => {
+      if (!Object.prototype.hasOwnProperty.call(defaultFilters, key)) {
+        return
+      }
+
+      const paramValue = searchParams.get(key)
+      if (paramValue === null) {
+        return
+      }
+
+      const parsedValue = Number(paramValue)
+      if (!Number.isNaN(parsedValue)) {
+        mergedFilters[key] = parsedValue
+      }
+    })
+
+    return mergedFilters
+  }
+
   const [isLoading, setIsLoading] = useState(false)
-  const [filters, setFilters] = useState(defaultFilters)
+  const [filters, setFilters] = useState(getInitialFilters)
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
 
@@ -48,6 +74,33 @@ const FetchWrapper = ({
   useEffect(() => {
     fetchElement(filters)
   }, [fetchElement, filters])
+
+  useEffect(() => {
+    const hasPaginationFilters = PAGINATION_FILTER_KEYS.some((key) =>
+      Object.prototype.hasOwnProperty.call(defaultFilters, key),
+    )
+
+    if (!hasPaginationFilters) {
+      return
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams)
+    PAGINATION_FILTER_KEYS.forEach((key) => {
+      if (!Object.prototype.hasOwnProperty.call(defaultFilters, key)) {
+        return
+      }
+
+      const value = filters?.[key]
+      if (value === undefined || value === null || value === '') {
+        nextSearchParams.delete(key)
+      } else {
+        nextSearchParams.set(key, String(value))
+      }
+    })
+    if (nextSearchParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextSearchParams, { replace: true })
+    }
+  }, [defaultFilters, filters, searchParams, setSearchParams])
 
   if (isLoading && !data) {
     return <LoadingSpinner />

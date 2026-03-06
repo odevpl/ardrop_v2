@@ -1,0 +1,202 @@
+.deliveriesModule {
+  width: calc(100vw - 320px);
+  color: #071a33;
+}
+
+.deliveriesHeader {
+  margin-bottom: 14px;
+}
+
+.deliveriesHeader h1 {
+  margin: 0 0 6px;
+  font-size: 1.45rem;
+}
+
+.deliveriesHeader p {
+  margin: 0;
+  color: #4b6375;
+}
+
+.deliveriesError {
+  color: #b42318;
+}
+
+.deliveriesSuccess {
+  color: #067647;
+}
+
+.deliveriesFormWrap form {
+  background: #ffffff;
+  border: 1px solid #d7e7f9;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.deliveriesFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.deliveriesFormGrid .text-input-wrapper {
+  display: grid;
+  gap: 6px;
+}
+
+.deliveriesFormGrid label {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.deliveriesFormGrid input {
+  border: 1px solid #0a64c9;
+  border-radius: 14px;
+  height: 38px;
+  padding: 0 12px;
+}
+
+.deliveriesActions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.deliveriesSaveButton {
+  border: 0;
+  background: #0a64c9;
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.deliveriesSaveButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.deliveriesListSection {
+  margin-top: 18px;
+  background: #ffffff;
+  border: 1px solid #d7e7f9;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.deliveriesListHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.deliveriesListHeader h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.deliveriesList {
+  display: grid;
+  gap: 10px;
+}
+
+.deliveriesCard {
+  border: 1px solid #d7e7f9;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.deliveriesCard p {
+  margin: 0 0 4px;
+}
+
+.deliveriesCardActions {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.deliveriesMiniButton {
+  border: 1px solid #0a64c9;
+  background: #ffffff;
+  color: #0a64c9;
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.deliveriesMiniButtonDanger {
+  border-color: #b42318;
+  color: #b42318;
+}
+
+.deliveriesAddressPopupForm h3 {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+}
+
+.deliveriesAddressGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.deliveriesAddressGrid label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.deliveriesAddressGrid input {
+  border: 1px solid #0a64c9;
+  border-radius: 12px;
+  height: 38px;
+  padding: 0 12px;
+}
+
+.deliveriesDefaultCheck {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.deliveriesCancelButton {
+  border: 1px solid #0a64c9;
+  color: #0a64c9;
+  background: transparent;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 786px) {
+  .deliveriesModule {
+    width: 100%;
+  }
+
+  .deliveriesFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .deliveriesAddressGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .deliveriesCard {
+    flex-direction: column;
+  }
+
+  .deliveriesListHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

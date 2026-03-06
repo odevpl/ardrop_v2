@@ -4,6 +4,12 @@
 
 .clientLayout {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.clientContent {
+  flex: 1;
   display: grid;
   grid-template-columns: var(--client-sidebar-width) 1fr;
 }
@@ -30,6 +36,13 @@
 
 .clientMain {
   padding: 20px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.clientMainContent {
+  flex: 1;
 }
 
 .homePage {
@@ -97,7 +110,7 @@
 }
 
 @media (max-width: 760px) {
-  .clientLayout {
+  .clientContent {
     grid-template-columns: 1fr;
   }
 

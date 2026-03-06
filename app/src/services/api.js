@@ -16,10 +16,11 @@ const objectToQueryString = (params) => {
 export const apiRequest = async ({ method, url, params = null, data = null }) => {
   try {
     const stringifyParams = params ? objectToQueryString(params) : ''
+    const payload = data === null || data === undefined ? undefined : data
     const response = await http({
       method,
       url: `/${url}${stringifyParams}`,
-      data,
+      data: payload,
     })
 
     return response.data

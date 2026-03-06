@@ -1,0 +1,81 @@
+.clientFooter {
+  background: linear-gradient(90deg, #004470 0%, #0071c5 100%);
+  color: #e9f0ff;
+  width: 100%;
+  overflow: hidden;
+}
+
+.clientFooterTop {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 28px;
+  padding: 32px 30px 28px;
+  border-bottom: 1px solid rgba(205, 219, 255, 0.2);
+}
+
+.clientFooterLogoImage {
+  width: 180px;
+  height: auto;
+  display: block;
+  margin-bottom: 14px;
+}
+
+.clientFooterBrand p {
+  margin: 0;
+  max-width: 420px;
+  font-size: 16px;
+  line-height: 1.45;
+  color: #d3ddf7;
+}
+
+.clientFooterCol h4 {
+  margin: 0 0 14px;
+  font-size: 20px;
+  text-transform: uppercase;
+}
+
+.clientFooterCol ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.clientFooterCol li {
+  color: #d3ddf7;
+  font-size: 16px;
+}
+
+.clientFooterBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 22px 30px 24px;
+}
+
+.clientFooterContact,
+.clientFooterRights {
+  margin: 0;
+  font-size: 16px;
+  color: #d3ddf7;
+}
+
+.clientFooterContact {
+  color: #ff5ca1;
+}
+
+@media (max-width: 760px) {
+  .clientFooterTop {
+    grid-template-columns: 1fr;
+    padding: 24px 16px;
+  }
+
+  .clientFooterBottom {
+    padding: 18px 16px 22px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

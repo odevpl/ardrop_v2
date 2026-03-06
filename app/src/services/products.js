@@ -6,6 +6,13 @@ export const getSuggestedProducts = () => {
   })
 }
 
+export const getProductById = (id) => {
+  return apiGet({
+    url: `products/${id}`,
+  })
+}
+
 export default {
   getSuggestedProducts,
+  getProductById,
 }

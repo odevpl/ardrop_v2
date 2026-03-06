@@ -59,7 +59,7 @@ router.delete(
     const cart = await cartsService.removeItemFromCurrentCart({
       userId: req.user.userId,
       role: req.user.role,
-      clientId: req.body.clientId || req.query.clientId,
+      clientId: req.body?.clientId || req.query.clientId,
       itemId: Number(req.params.itemId),
     });
 
@@ -74,7 +74,7 @@ router.delete(
     const cart = await cartsService.clearCurrentCart({
       userId: req.user.userId,
       role: req.user.role,
-      clientId: req.body.clientId || req.query.clientId,
+      clientId: req.body?.clientId || req.query.clientId,
     });
 
     res.status(200).json({ data: cart, cart, meta: { cleared: true } });

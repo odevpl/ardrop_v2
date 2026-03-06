@@ -3,9 +3,12 @@ import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { useAuth } from "./providers/authProvider";
 import SidebarMenu from "./components/SidebarMenu";
 import TopMenu from "./components/TopMenu";
+import Footer from "./components/Footer";
 import { SIDEBAR_MENU_CONFIG } from "./components/SidebarMenu/sidebar.config";
 import HomePage from "pages/home";
 import CartPage from "pages/cart";
+import AccountPage from "pages/account";
+import DeliveriesPage from "pages/deliveries";
 import CartsService from "services/carts";
 import "./App.scss";
 
@@ -66,6 +69,20 @@ function App() {
     { key: "news", label: "Nowosci", path: "/nowosci" },
     { key: "bestsellers", label: "Bestsellery", path: "/bestsellery" },
     {
+      key: "deliveries",
+      path: "/dostawy",
+      align: "right",
+      ariaLabel: "Dostawy",
+      icon: <i className="fa-solid fa-truck" aria-hidden="true" />,
+    },
+    {
+      key: "account",
+      path: "/konto",
+      align: "right",
+      ariaLabel: "Konto",
+      icon: <i className="fa-solid fa-user" aria-hidden="true" />,
+    },
+    {
       key: "cart",
       path: "/koszyk",
       align: "right",
@@ -92,24 +109,33 @@ function App() {
 
   return (
     <div className="clientLayout">
-      <aside className="clientSidebarColumn">
-        <div className="clientLogoWrap" aria-label="Logo aplikacji">
-          <img className="clientLogoImage" src="/logo.png" alt="Airdrop" />
-        </div>
-        <SidebarMenu config={SIDEBAR_MENU_CONFIG} />
-      </aside>
+      <div className="clientContent">
+        <aside className="clientSidebarColumn">
+          <div className="clientLogoWrap" aria-label="Logo aplikacji">
+            <NavLink to="/" aria-label="Przejdz do strony glownej">
+              <img className="clientLogoImage" src="/logo.png" alt="Airdrop" />
+            </NavLink>
+          </div>
+          <SidebarMenu config={SIDEBAR_MENU_CONFIG} />
+        </aside>
 
-      <main className="clientMain">
-        <TopMenu config={topMenuConfig} renderItem={renderTopMenuItem} />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/koszyk" element={<CartPage />} />
-          <Route path="/promocje" element={<HomePage />} />
-          <Route path="/nowosci" element={<HomePage />} />
-          <Route path="/bestsellery" element={<HomePage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
+        <main className="clientMain">
+          <TopMenu config={topMenuConfig} renderItem={renderTopMenuItem} />
+          <div className="clientMainContent">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/koszyk" element={<CartPage />} />
+              <Route path="/konto" element={<AccountPage />} />
+              <Route path="/dostawy" element={<DeliveriesPage />} />
+              <Route path="/promocje" element={<HomePage />} />
+              <Route path="/nowosci" element={<HomePage />} />
+              <Route path="/bestsellery" element={<HomePage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+        </main>
+      </div>
+      <Footer />
     </div>
   );
 }

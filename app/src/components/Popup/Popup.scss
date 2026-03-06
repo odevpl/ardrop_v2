@@ -1,0 +1,38 @@
+.popupOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(7, 26, 51, 0.46);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.popupDialog {
+  width: min(640px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  background: #ffffff;
+  border: 1px solid #d7e7f9;
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  box-shadow: 0 22px 50px rgba(8, 23, 43, 0.24);
+}
+
+.popupCloseButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #0a64c9;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0a64c9;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  line-height: 1;
+}

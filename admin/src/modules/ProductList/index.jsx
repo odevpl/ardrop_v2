@@ -27,7 +27,7 @@ const ProductList = ({ payload, filters, setFilters }) => {
       return {
         ...product,
         vat: product.vat ?? product.vatRate,
-        thumbnailUrl: normalizeImageUrl(mainImage?.url),
+        thumbnailUrl: normalizeImageUrl(mainImage?.thumbUrl),
       };
     });
   }, [products]);
@@ -36,7 +36,14 @@ const ProductList = ({ payload, filters, setFilters }) => {
     <Table
       config={getProductsTableConfig()}
       data={preparedProducts}
-      onRowClick={(row) => navigate(`/products/${row.id}`)}
+      onRowClick={(row, options) => {
+        const targetPath = `/products/${row.id}`
+        if (options?.openInNewTab) {
+          window.open(targetPath, "_blank", "noopener,noreferrer")
+          return
+        }
+        navigate(targetPath)
+      }}
       searchValue={filters?.search || ""}
       onSearchChange={(value) => setFilters({ ...filters, search: value, page: 1 })}
       pagination={pagination}

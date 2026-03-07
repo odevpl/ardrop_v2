@@ -96,7 +96,7 @@ const Cart = () => {
         const mainImage = Array.isArray(product.images)
           ? product.images.find((image) => Number(image.isMain) === 1) || product.images[0]
           : null;
-        nextThumbMap[Number(product.id)] = mainImage?.url || "";
+        nextThumbMap[Number(product.id)] = mainImage?.thumbUrl || "";
       });
 
       setThumbByProductId(nextThumbMap);
@@ -230,6 +230,7 @@ const Cart = () => {
                               <img
                                 src={thumbByProductId[Number(item.productId)]}
                                 alt={item.productNameSnapshot}
+                                loading="lazy"
                               />
                             ) : (
                               <div className="cartThumbPlaceholder">Brak</div>

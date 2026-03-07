@@ -1,6 +1,7 @@
 import FetchWrapper from "components/FetchWrapper";
 import Pagination from "components/Pagination";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CartsService from "services/carts";
 import ProductsService from "services/products";
 import "./AllProducts.scss";
@@ -17,6 +18,7 @@ const getMainImage = (product) => {
 };
 
 const AllProductsView = ({ payload, filters, setFilters }) => {
+  const navigate = useNavigate();
   const products = Array.isArray(payload?.data) ? payload.data : [];
   const pagination = payload?.meta?.pagination || {};
   const page = Number(pagination.page || filters?.page || 1);
@@ -66,10 +68,18 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
         {products.map((product) => {
           const mainImage = getMainImage(product);
           return (
-            <article key={product.id} className="allProductsCard">
+            <article
+              key={product.id}
+              className="allProductsCard"
+              onClick={() => navigate(`/products/${product.id}`)}
+            >
               <div className="allProductsImageWrap">
-                {mainImage?.url ? (
-                  <img src={mainImage.url} alt={mainImage.alt || product.name} />
+                {mainImage?.thumbUrl ? (
+                  <img
+                    src={mainImage.thumbUrl}
+                    alt={mainImage.alt || product.name}
+                    loading="lazy"
+                  />
                 ) : (
                   <div className="allProductsImagePlaceholder">Brak zdjecia</div>
                 )}
@@ -79,7 +89,10 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
               <button
                 type="button"
                 className="allProductsAddButton"
-                onClick={() => addToCart(product.id)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  addToCart(product.id);
+                }}
                 disabled={pendingId === product.id}
                 aria-label={`Dodaj ${product.name} do koszyka`}
               >

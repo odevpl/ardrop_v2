@@ -28,7 +28,7 @@ const ProductListView = ({ payload, filters, setFilters }) => {
 
       return {
         ...product,
-        thumbnailUrl: normalizeImageUrl(mainImage?.url),
+        thumbnailUrl: normalizeImageUrl(mainImage?.thumbUrl),
         netPrice: `${product.netPrice} zl`,
         grossPrice: `${product.grossPrice} zl`,
         vatRate: `${product.vatRate}%`,
@@ -40,7 +40,14 @@ const ProductListView = ({ payload, filters, setFilters }) => {
     <Table
       config={getProductsTableConfig()}
       data={preparedProducts}
-      onRowClick={(row) => navigate(`/products/${row.id}`)}
+      onRowClick={(row, options) => {
+        const targetPath = `/products/${row.id}`
+        if (options?.openInNewTab) {
+          window.open(targetPath, '_blank', 'noopener,noreferrer')
+          return
+        }
+        navigate(targetPath)
+      }}
       searchValue={searchValue}
       onSearchChange={(value) => setFilters({ ...filters, search: value, page: 1 })}
       pagination={pagination}

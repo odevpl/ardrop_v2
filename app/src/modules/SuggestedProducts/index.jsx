@@ -1,5 +1,6 @@
 import FetchWrapper from "components/FetchWrapper";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CartsService from "services/carts";
 import ProductsService from "services/products";
 import "./SuggestedProducts.scss";
@@ -28,6 +29,7 @@ const getVisibleLimit = (width) => {
 };
 
 const SuggestedProductsView = ({ payload }) => {
+  const navigate = useNavigate();
   const products = Array.isArray(payload?.data) ? payload.data : [];
   const [visibleLimit, setVisibleLimit] = useState(() =>
     getVisibleLimit(window.innerWidth),
@@ -72,12 +74,17 @@ const SuggestedProductsView = ({ payload }) => {
         {visibleProducts.map((product) => {
           const mainImage = getMainImage(product);
           return (
-            <article key={product.id} className="suggestedProductsCard">
+            <article
+              key={product.id}
+              className="suggestedProductsCard"
+              onClick={() => navigate(`/products/${product.id}`)}
+            >
               <div className="suggestedProductsImageWrap">
-                {mainImage?.url ? (
+                {mainImage?.thumbUrl ? (
                   <img
-                    src={mainImage.url}
+                    src={mainImage.thumbUrl}
                     alt={mainImage.alt || product.name}
+                    loading="lazy"
                   />
                 ) : (
                   <div className="suggestedProductsImagePlaceholder">
@@ -92,7 +99,10 @@ const SuggestedProductsView = ({ payload }) => {
               <button
                 type="button"
                 className="suggestedProductsAddButton"
-                onClick={() => addToCart(product.id)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  addToCart(product.id);
+                }}
                 disabled={pendingId === product.id}
                 aria-label={`Dodaj ${product.name} do koszyka`}
               >

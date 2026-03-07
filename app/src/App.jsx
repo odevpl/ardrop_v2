@@ -10,6 +10,7 @@ import CartPage from "pages/cart";
 import AccountPage from "pages/account";
 import DeliveryAdressessPage from "pages/deliveryAdressess";
 import DeliveriesListPage from "pages/deliveriesList";
+import ProductPreviewPage from "pages/productPreview";
 import CartsService from "services/carts";
 import "./App.scss";
 
@@ -133,6 +134,7 @@ function App() {
               <Route path="/promocje" element={<HomePage />} />
               <Route path="/nowosci" element={<HomePage />} />
               <Route path="/bestsellery" element={<HomePage />} />
+              <Route path="/products/:id" element={<ProductPreviewPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>

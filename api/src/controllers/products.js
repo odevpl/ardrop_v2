@@ -14,6 +14,14 @@ const getBaseUrl = (req) => {
   return `${protocol}://${host}`;
 };
 
+const getThumbFileName = (fileName) => {
+  const dotIndex = String(fileName || "").lastIndexOf(".");
+  if (dotIndex <= 0) {
+    return `${fileName}.webp`;
+  }
+  return `${String(fileName).slice(0, dotIndex)}.webp`;
+};
+
 const withImageUrls = (req, product) => {
   if (!product) return product;
   const baseUrl = getBaseUrl(req);
@@ -24,6 +32,7 @@ const withImageUrls = (req, product) => {
     images: images.map((image) => ({
       ...image,
       url: `${baseUrl}/uploads/images/${image.fileName}`,
+      thumbUrl: `${baseUrl}/uploads/images/thumbs/${getThumbFileName(image.fileName)}`,
     })),
   };
 };
@@ -142,6 +151,7 @@ router.get(
     const normalized = images.map((image) => ({
       ...image,
       url: `${baseUrl}/uploads/images/${image.fileName}`,
+      thumbUrl: `${baseUrl}/uploads/images/thumbs/${getThumbFileName(image.fileName)}`,
     }));
     res.status(200).json({
       data: normalized,
@@ -171,6 +181,7 @@ router.post(
     const normalizedImage = {
       ...image,
       url: `${getBaseUrl(req)}/uploads/images/${image.fileName}`,
+      thumbUrl: `${getBaseUrl(req)}/uploads/images/thumbs/${getThumbFileName(image.fileName)}`,
     };
     res.status(201).json({ data: normalizedImage, image: normalizedImage });
   },
@@ -218,6 +229,7 @@ router.post(
     const normalizedImage = {
       ...image,
       url: `${getBaseUrl(req)}/uploads/images/${image.fileName}`,
+      thumbUrl: `${getBaseUrl(req)}/uploads/images/thumbs/${getThumbFileName(image.fileName)}`,
     };
     res.status(200).json({ data: normalizedImage, image: normalizedImage });
   },

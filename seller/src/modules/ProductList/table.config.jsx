@@ -10,6 +10,7 @@ export const getProductsTableConfig = () => {
           <img
             src={row.thumbnailUrl}
             alt={row.name || 'Miniatura produktu'}
+            loading="lazy"
             style={{
               width: '44px',
               height: '44px',

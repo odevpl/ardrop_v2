@@ -68,7 +68,29 @@ const Table = ({
                 <tr
                   key={rowId}
                   className={typeof onRowClick === 'function' ? 'tableRowClickable' : undefined}
-                  onClick={typeof onRowClick === 'function' ? () => onRowClick(row) : undefined}
+                  onMouseDown={
+                    typeof onRowClick === 'function'
+                      ? (event) => {
+                          if (event.button === 1) {
+                            event.preventDefault()
+                          }
+                        }
+                      : undefined
+                  }
+                  onClick={
+                    typeof onRowClick === 'function'
+                      ? () => onRowClick(row, { openInNewTab: false })
+                      : undefined
+                  }
+                  onAuxClick={
+                    typeof onRowClick === 'function'
+                      ? (event) => {
+                          if (event.button !== 1) return
+                          event.preventDefault()
+                          onRowClick(row, { openInNewTab: true })
+                        }
+                      : undefined
+                  }
                 >
                   {safeConfig.map((column) => {
                     const isClickable = typeof column.onClick === 'function'
@@ -78,11 +100,31 @@ const Table = ({
                       <td
                         key={column.key}
                         className={isClickable ? 'tableCell tableCellClickable' : 'tableCell'}
+                        onMouseDown={
+                          isClickable
+                            ? (event) => {
+                                if (event.button === 1) {
+                                  event.preventDefault()
+                                  event.stopPropagation()
+                                }
+                              }
+                            : undefined
+                        }
                         onClick={
                           isClickable
                             ? (event) => {
                                 event.stopPropagation()
-                                column.onClick(value, row)
+                                column.onClick(value, row, { openInNewTab: false })
+                              }
+                            : undefined
+                        }
+                        onAuxClick={
+                          isClickable
+                            ? (event) => {
+                                if (event.button !== 1) return
+                                event.preventDefault()
+                                event.stopPropagation()
+                                column.onClick(value, row, { openInNewTab: true })
                               }
                             : undefined
                         }

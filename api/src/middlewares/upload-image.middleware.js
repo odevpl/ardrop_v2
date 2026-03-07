@@ -11,9 +11,8 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const extension = path.extname(file.originalname || "").toLowerCase();
     const hash = crypto.randomBytes(24).toString("hex");
-    cb(null, `${hash}${extension}`);
+    cb(null, `${hash}.jpg`);
   },
 });
 

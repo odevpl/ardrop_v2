@@ -1,16 +1,17 @@
 const fs = require("fs/promises");
 const path = require("path");
-const sharp = require("sharp");
+const { Jimp } = require("jimp");
 const db = require("../config/db");
 
 const uploadsDir = path.resolve(__dirname, "../../uploads/images");
 const thumbsDir = path.resolve(__dirname, "../../uploads/images/thumbs");
 const THUMB_SIZE = 400;
-const MAIN_MAX_SIZE = 1000;
+const MAIN_MAX_SIZE = 700;
+const JPEG_QUALITY = 70;
 
 const getThumbFileName = (fileName) => {
   const parsed = path.parse(String(fileName || ""));
-  return `${parsed.name}.webp`;
+  return `${parsed.name}.jpg`;
 };
 
 const safeUnlink = async (targetPath) => {
@@ -65,30 +66,17 @@ const saveProductImage = async ({ productId, file, role, userId }) => {
       await ensureProductExists(productId);
     }
 
-    // Normalize main image to max 1000x1000 while preserving aspect ratio.
-    const inputBuffer = await fs.readFile(filePath);
+    const image = await Jimp.read(filePath);
+    image.scaleToFit({ w: MAIN_MAX_SIZE, h: MAIN_MAX_SIZE });
+    await image.write(filePath, { quality: JPEG_QUALITY });
 
-    const normalizedMainBuffer = await sharp(inputBuffer)
-      .rotate()
-      .resize(MAIN_MAX_SIZE, MAIN_MAX_SIZE, {
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .toBuffer();
-
-    await fs.writeFile(filePath, normalizedMainBuffer);
-
-    const thumbBuffer = await sharp(normalizedMainBuffer)
-      .rotate()
-      .resize(THUMB_SIZE, THUMB_SIZE, {
-        fit: "contain",
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
-        withoutEnlargement: true,
-      })
-      .webp({ quality: 80 })
-      .toBuffer();
-
-    await fs.writeFile(thumbPath, thumbBuffer);
+    const thumb = image.clone();
+    thumb.contain({
+      w: THUMB_SIZE,
+      h: THUMB_SIZE,
+      color: 0xffffffff,
+    });
+    await thumb.write(thumbPath, { quality: JPEG_QUALITY });
 
     const inserted = await db("products_image").insert({
       productId: Number(productId),

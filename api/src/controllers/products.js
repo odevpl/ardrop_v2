@@ -17,9 +17,9 @@ const getBaseUrl = (req) => {
 const getThumbFileName = (fileName) => {
   const dotIndex = String(fileName || "").lastIndexOf(".");
   if (dotIndex <= 0) {
-    return `${fileName}.webp`;
+    return `${fileName}.jpg`;
   }
-  return `${String(fileName).slice(0, dotIndex)}.webp`;
+  return `${String(fileName).slice(0, dotIndex)}.jpg`;
 };
 
 const withImageUrls = (req, product) => {

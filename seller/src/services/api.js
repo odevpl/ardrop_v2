@@ -31,9 +31,11 @@ export const apiRequest = async ({ method, url, params = null, data = null }) =>
 export const apiGet = (config) => apiRequest({ method: 'GET', ...config })
 export const apiPost = (config) => apiRequest({ method: 'POST', ...config })
 export const apiPut = (config) => apiRequest({ method: 'PUT', ...config })
+export const apiDelete = (config) => apiRequest({ method: 'DELETE', ...config })
 
 export default {
   apiGet,
   apiPost,
   apiPut,
+  apiDelete,
 }

@@ -13,7 +13,19 @@ const SORT_FIELD_MAP = {
   sellerCompanyName: "sellers.companyName",
 };
 
+const resolveSellerIdByUserId = async (userId) => {
+  const seller = await db("sellers").select("id").where({ userId: Number(userId) }).first();
+  if (!seller) {
+    const error = new Error("Seller profile not found");
+    error.status = 404;
+    throw error;
+  }
+  return Number(seller.id);
+};
+
 const getProducts = async ({
+  userId,
+  role,
   search,
   status,
   sellerId,
@@ -30,7 +42,10 @@ const getProducts = async ({
   const baseQuery = db("products")
     .leftJoin("sellers", "products.sellerId", "sellers.id");
 
-  if (sellerId !== undefined) {
+  if (role === "SELLER") {
+    const currentSellerId = await resolveSellerIdByUserId(userId);
+    baseQuery.where("products.sellerId", currentSellerId);
+  } else if (sellerId !== undefined) {
     baseQuery.where({ sellerId: Number(sellerId) });
   }
 
@@ -110,10 +125,21 @@ const getProducts = async ({
   };
 };
 
-const getProductById = async ({ productId }) => {
+const getProductById = async ({ userId, role, productId }) => {
   const product = await db("products").select("*").where({ id: productId }).first();
   if (!product) {
-    return null;
+    const error = new Error("Product not found");
+    error.status = 404;
+    throw error;
+  }
+
+  if (role === "SELLER") {
+    const currentSellerId = await resolveSellerIdByUserId(userId);
+    if (Number(product.sellerId) !== currentSellerId) {
+      const error = new Error("Forbidden");
+      error.status = 403;
+      throw error;
+    }
   }
 
   const images = await db("products_image")
@@ -206,14 +232,56 @@ const createProduct = async ({
   return getProductById({ productId });
 };
 
-const updateProduct = async ({ productId, payload }) => {
+const updateProduct = async ({ userId, role, productId, payload }) => {
+  const existing = await db("products").select("id", "sellerId").where({ id: productId }).first();
+  if (!existing) {
+    const error = new Error("Product not found");
+    error.status = 404;
+    throw error;
+  }
+
+  if (role === "SELLER") {
+    const currentSellerId = await resolveSellerIdByUserId(userId);
+    if (Number(existing.sellerId) !== currentSellerId) {
+      const error = new Error("Forbidden");
+      error.status = 403;
+      throw error;
+    }
+  }
+
   const updates = { ...payload, updatedAt: db.fn.now() };
   await db("products").where({ id: productId }).update(updates);
-  return getProductById({ productId });
+  return getProductById({ userId, role, productId });
 };
 
-const deleteProduct = async ({ productId }) => {
-  await db("products").where({ id: productId }).del();
+const deleteProduct = async ({ userId, role, productId }) => {
+  const existing = await db("products").select("id", "sellerId").where({ id: productId }).first();
+  if (!existing) {
+    const error = new Error("Product not found");
+    error.status = 404;
+    throw error;
+  }
+
+  if (role === "SELLER") {
+    const currentSellerId = await resolveSellerIdByUserId(userId);
+    if (Number(existing.sellerId) !== currentSellerId) {
+      const error = new Error("Forbidden");
+      error.status = 403;
+      throw error;
+    }
+  }
+
+  try {
+    await db("products").where({ id: productId }).del();
+  } catch (dbError) {
+    if (dbError && (dbError.code === "ER_ROW_IS_REFERENCED_2" || dbError.code === "ER_ROW_IS_REFERENCED")) {
+      const error = new Error("Nie mozna usunac produktu, bo jest powiazany z zamowieniem lub koszykiem");
+      error.status = 409;
+      throw error;
+    }
+    throw dbError;
+  }
+
   return { id: productId };
 };
 

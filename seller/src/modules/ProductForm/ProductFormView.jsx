@@ -98,6 +98,7 @@ const ProductFormView = ({
   onSetMainExistingImage,
   isImagesActionLoading = false,
   onCancel,
+  onDelete,
   loading = false,
 }) => {
   if (loading) {
@@ -153,6 +154,11 @@ const ProductFormView = ({
               <button type="submit" className="sellerPrimaryButton" disabled={isSubmitting}>
                 Zapisz
               </button>
+              {typeof onDelete === 'function' ? (
+                <button type="button" onClick={onDelete} disabled={isSubmitting}>
+                  Usun produkt
+                </button>
+              ) : null}
               <button type="button" onClick={onCancel} disabled={isSubmitting}>
                 Anuluj
               </button>

@@ -17,9 +17,7 @@ const ProductPreviewView = ({ payload }) => {
     () => images.find((image) => Number(image.isMain) === 1) || images[0] || null,
     [images],
   );
-  const additionalImages = useMemo(() => {
-    return images.filter((image) => Number(image.isMain) !== 1);
-  }, [images]);
+  const galleryImages = useMemo(() => images, [images]);
 
   const [selectedImageUrl, setSelectedImageUrl] = useState(mainImage?.url || "");
   const [quantity, setQuantity] = useState(1);
@@ -72,9 +70,9 @@ const ProductPreviewView = ({ payload }) => {
               )}
             </div>
 
-            {additionalImages.length > 0 ? (
+            {galleryImages.length > 0 ? (
               <div className="productPreviewThumbList">
-                {additionalImages.map((image) => (
+                {galleryImages.map((image) => (
                   <button
                     key={image.id || image.url}
                     type="button"

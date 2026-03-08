@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut } from './api'
+import { apiDelete, apiGet, apiPost, apiPut } from './api'
 import http from './http'
 
 export const getProducts = (params = {}) => {
@@ -60,11 +60,18 @@ export const setMainProductImage = async ({ productId, imageId }) => {
   }
 }
 
+export const deleteProduct = (id) => {
+  return apiDelete({
+    url: `products/${id}`,
+  })
+}
+
 export default {
   getProducts,
   createProduct,
   getProductById,
   updateProduct,
+  deleteProduct,
   uploadProductImage,
   deleteProductImage,
   setMainProductImage,

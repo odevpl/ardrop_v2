@@ -112,6 +112,21 @@ const EditProduct = ({ id }) => {
     setIsImagesActionLoading(false)
   }
 
+  const handleDeleteProduct = async () => {
+    const confirmed = window.confirm('Czy na pewno chcesz usunac ten produkt?')
+    if (!confirmed) {
+      return
+    }
+
+    const response = await ProductsService.deleteProduct(id)
+    if (response?.status && response.status >= 400) {
+      window.alert(response?.data?.error || 'Nie udalo sie usunac produktu')
+      return
+    }
+
+    navigate('/products')
+  }
+
   return (
     <ProductFormView
       title="Edytuj produkt"
@@ -123,6 +138,7 @@ const EditProduct = ({ id }) => {
       onDeleteExistingImage={handleDeleteExistingImage}
       onSetMainExistingImage={handleSetMainExistingImage}
       isImagesActionLoading={isImagesActionLoading}
+      onDelete={handleDeleteProduct}
       onCancel={() => navigate(-1)}
       loading={loading}
     />

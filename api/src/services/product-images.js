@@ -70,19 +70,31 @@ const saveProductImage = async ({ productId, file, role, userId }) => {
     image.scaleToFit({ w: MAIN_MAX_SIZE, h: MAIN_MAX_SIZE });
     await image.write(filePath, { quality: JPEG_QUALITY });
 
-    const thumb = image.clone();
-    thumb.contain({
+    const thumbSource = image.clone();
+    thumbSource.contain({
       w: THUMB_SIZE,
       h: THUMB_SIZE,
+    });
+    const thumb = new Jimp({
+      width: THUMB_SIZE,
+      height: THUMB_SIZE,
       color: 0xffffffff,
     });
+    thumb.composite(thumbSource, 0, 0);
     await thumb.write(thumbPath, { quality: JPEG_QUALITY });
+
+    const existingImagesCountRow = await db("products_image")
+      .count({ total: "id" })
+      .where({ productId: Number(productId) })
+      .first();
+    const existingImagesCount = Number(existingImagesCountRow?.total || 0);
+    const isFirstImage = existingImagesCount === 0;
 
     const inserted = await db("products_image").insert({
       productId: Number(productId),
       fileName: file.filename,
       alt: null,
-      isMain: 0,
+      isMain: isFirstImage ? 1 : 0,
       position: 0,
     });
 

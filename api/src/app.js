@@ -11,6 +11,7 @@ const accountController = require("./controllers/account");
 const clientDeliveryAddressesController = require("./controllers/client-delivery-addresses");
 const deliveriesController = require("./controllers/deliveries");
 const ordersController = require("./controllers/orders");
+
 const {
   errorHandler,
   notFoundHandler,
@@ -28,7 +29,10 @@ const defaultOrigins = [
 ];
 const envOrigins = process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || "";
 const allowedOrigins = envOrigins
-  ? envOrigins.split(",").map((origin) => origin.trim()).filter(Boolean)
+  ? envOrigins
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)
   : defaultOrigins;
 
 app.use(

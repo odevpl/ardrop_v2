@@ -25,7 +25,11 @@ const DeliveriesListView = ({ payload }) => {
     {
       key: "id",
       title: "Nr zamowienia",
-      onRender: (row) => `#${row.id}`,
+      onRender: (row) => (
+        <NavLink to={`/dostawy/${row.id}`} className="deliveriesListOrderLink">
+          #{row.id}
+        </NavLink>
+      ),
     },
     {
       key: "createdAt",

@@ -10,6 +10,7 @@ import SidebarMenu from "components/SidebarMenu";
 import { SIDEBAR_MENU_CONFIG } from "components/SidebarMenu/sidebar.config";
 import ClientsPage from "pages/clients";
 import OrdersPage from "pages/orders";
+import OrderDetailsPage from "pages/orders/Details";
 import ProductsPage from "pages/products";
 import AddProductPage from "pages/products/AddProduct";
 import ProductDetailsPage from "pages/products/Details";
@@ -44,6 +45,7 @@ const AppContent = () => {
             <Route path="/products/add" element={<AddProductPage />} />
             <Route path="/products/:id" element={<ProductDetailsPage />} />
             <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/orders/:id" element={<OrderDetailsPage />} />
           </Routes>
         </section>
       </main>

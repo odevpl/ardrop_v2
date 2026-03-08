@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPut } from 'services/api'
+import { apiGet, apiPut } from './api'
 
 export const getOrders = (params = {}) => {
   return apiGet({
@@ -18,14 +18,8 @@ export const updateOrder = ({ id, payload }) =>
     data: payload,
   })
 
-export const deleteOrder = (id) =>
-  apiDelete({
-    url: `orders/${id}`,
-  })
-
 export default {
   getOrders,
   getOrderById,
   updateOrder,
-  deleteOrder,
 }

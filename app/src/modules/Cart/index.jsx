@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import AccountService from "services/account";
 import CartsService from "services/carts";
+import OrdersService from "services/orders";
 import ProductsService from "services/products";
 import "./Cart.scss";
 
@@ -19,6 +21,7 @@ const formatDate = (date) => {
 };
 
 const Cart = () => {
+  const navigate = useNavigate();
   const [cart, setCart] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -28,6 +31,7 @@ const Cart = () => {
   const [deliveryAddresses, setDeliveryAddresses] = useState([]);
   const [selectedDeliveryAddressId, setSelectedDeliveryAddressId] = useState(null);
   const [deliveryError, setDeliveryError] = useState("");
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   const fetchCart = async () => {
     setIsLoading(true);
@@ -173,13 +177,35 @@ const Cart = () => {
     });
   }, [selectedDeliveryAddress]);
 
-  const handleSubmitOrder = () => {
+  const handleSubmitOrder = async () => {
     if (!isDeliveryAddressValid) {
       setDeliveryError("Uzupelnij dane dostawy i wybierz poprawny adres.");
       return;
     }
 
     setDeliveryError("");
+    setIsSubmittingOrder(true);
+    const response = await OrdersService.createOrder({
+      deliveryAddressId: selectedDeliveryAddressId,
+      note: note || null,
+    });
+
+    if (response?.status && response.status >= 400) {
+      setDeliveryError(response?.data?.error || "Nie udalo sie wyslac zamowienia.");
+      setIsSubmittingOrder(false);
+      return;
+    }
+
+    const orderId = response?.data?.primaryOrderId || response?.primaryOrderId;
+    window.dispatchEvent(new Event("cart:updated"));
+    setIsSubmittingOrder(false);
+
+    if (orderId) {
+      navigate(`/dostawy/${orderId}`);
+      return;
+    }
+
+    navigate("/dostawy");
   };
 
   if (isLoading) {
@@ -395,10 +421,10 @@ const Cart = () => {
               <button
                 type="button"
                 className="cartSubmitButton"
-                disabled={items.length === 0}
+                disabled={items.length === 0 || isSubmittingOrder}
                 onClick={handleSubmitOrder}
               >
-                Wyslij zamowienie
+                {isSubmittingOrder ? "Wysylanie..." : "Wyslij zamowienie"}
               </button>
             </div>
           </section>

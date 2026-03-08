@@ -30,6 +30,11 @@
   font-weight: 700;
 }
 
+.deliveriesListOrderLink {
+  color: inherit;
+  text-decoration: underline;
+}
+
 @media (max-width: 786px) {
   .deliveriesListModule {
     width: 100%;

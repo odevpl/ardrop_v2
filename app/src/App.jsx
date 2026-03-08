@@ -10,6 +10,7 @@ import CartPage from "pages/cart";
 import AccountPage from "pages/account";
 import DeliveryAdressessPage from "pages/deliveryAdressess";
 import DeliveriesListPage from "pages/deliveriesList";
+import OrderDetailsPage from "pages/orderDetails";
 import ProductPreviewPage from "pages/productPreview";
 import CartsService from "services/carts";
 import "./App.scss";
@@ -130,6 +131,7 @@ function App() {
               <Route path="/konto" element={<AccountPage />} />
               <Route path="/klient" element={<AccountPage />} />
               <Route path="/dostawy" element={<DeliveriesListPage />} />
+              <Route path="/dostawy/:id" element={<OrderDetailsPage />} />
               <Route path="/adresy-dostawy" element={<DeliveryAdressessPage />} />
               <Route path="/promocje" element={<HomePage />} />
               <Route path="/nowosci" element={<HomePage />} />

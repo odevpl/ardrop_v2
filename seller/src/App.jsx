@@ -6,6 +6,7 @@ import ProductsPage from './pages/products'
 import AddProductPage from './pages/products/AddProduct'
 import ProductDetailsPage from './pages/products/Details'
 import OrdersPage from './pages/orders'
+import OrderDetailsPage from './pages/orders/Details'
 import { useAuth } from './providers/authProvider'
 import './App.scss'
 
@@ -41,6 +42,7 @@ function App() {
           <Route path="/products/add" element={<AddProductPage />} />
           <Route path="/products/:id" element={<ProductDetailsPage />} />
           <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/orders/:id" element={<OrderDetailsPage />} />
           <Route path="*" element={<Navigate to="/products" replace />} />
         </Routes>
       </main>

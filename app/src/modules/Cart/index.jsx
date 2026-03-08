@@ -201,11 +201,11 @@ const Cart = () => {
     setIsSubmittingOrder(false);
 
     if (orderId) {
-      navigate(`/dostawy/${orderId}`);
+      navigate(`/zamowienia/${orderId}`);
       return;
     }
 
-    navigate("/dostawy");
+    navigate("/zamowienia");
   };
 
   if (isLoading) {

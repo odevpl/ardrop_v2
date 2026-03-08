@@ -44,11 +44,13 @@ export const apiRequest = async ({
 export const apiGet = (config) => apiRequest({ method: 'GET', ...config })
 export const apiPost = (config) => apiRequest({ method: 'POST', ...config })
 export const apiPut = (config) => apiRequest({ method: 'PUT', ...config })
+export const apiPatch = (config) => apiRequest({ method: 'PATCH', ...config })
 export const apiDelete = (config) => apiRequest({ method: 'DELETE', ...config })
 
 export default {
   apiGet,
   apiPost,
   apiPut,
+  apiPatch,
   apiDelete,
 }

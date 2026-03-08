@@ -1,0 +1,100 @@
+import FetchWrapper from 'components/FetchWrapper'
+import FormikWrapper from 'components/FormikWrapper'
+import Checkbox from 'components/FormikWrapper/FormControls/Checkbox'
+import Input from 'components/FormikWrapper/FormControls/Input'
+import { useNavigate } from 'react-router-dom'
+import { getClientById, updateClient } from 'services/clients'
+
+const ClientViewForm = ({ payload, refetch, clientId }) => {
+  const navigate = useNavigate()
+  const client = payload?.data || payload?.client || {}
+  const initialValues = {
+    email: client.email || '',
+    name: client.name || '',
+    phone: client.phone || '',
+    companyName: client.companyName || '',
+    nip: client.nip || '',
+    address: client.address || '',
+    city: client.city || '',
+    postalCode: client.postalCode || '',
+    isActive: Boolean(client.isActive),
+  }
+
+  return (
+    <section className="adminPageSection">
+      <div className="adminToolbar">
+        <h2>Edycja klienta #{clientId}</h2>
+      </div>
+
+      <FormikWrapper
+        className="adminProductForm"
+        initialValues={initialValues}
+        onSubmit={async (values, { setSubmitting, setStatus }) => {
+          setStatus(null)
+          const payloadToUpdate = {
+            ...values,
+            email: values.email?.trim(),
+            name: values.name?.trim(),
+            phone: values.phone?.trim() || null,
+            companyName: values.companyName?.trim() || null,
+            nip: values.nip?.trim() || null,
+            address: values.address?.trim() || null,
+            city: values.city?.trim() || null,
+            postalCode: values.postalCode?.trim() || null,
+          }
+
+          const result = await updateClient(clientId, payloadToUpdate)
+          if (result?.status && result.status >= 400) {
+            setStatus(result?.data?.error || 'Nie udalo sie zapisac klienta')
+            setSubmitting(false)
+            return
+          }
+
+          setStatus('Dane klienta zostaly zapisane')
+          setSubmitting(false)
+          await refetch()
+        }}
+      >
+        {({ isSubmitting, status }) => (
+          <>
+            <div className="adminFormGrid">
+              <Input id="email" placeholder="Email" />
+              <Input id="name" placeholder="Nazwa" />
+              <Input id="phone" placeholder="Telefon" />
+              <Input id="companyName" placeholder="Firma" />
+              <Input id="nip" placeholder="NIP" />
+              <Input id="city" placeholder="Miasto" />
+              <Input id="address" placeholder="Adres" />
+              <Input id="postalCode" placeholder="Kod pocztowy" />
+            </div>
+            <Checkbox id="isActive" placeholder="Aktywny" />
+
+            {status ? <p className="adminFormError">{status}</p> : null}
+
+            <div className="adminActions adminFormActions">
+              <button type="submit" className="adminPrimaryButton" disabled={isSubmitting}>
+                Zapisz
+              </button>
+              <button type="button" onClick={() => navigate('/clients')} disabled={isSubmitting}>
+                Wroc do listy
+              </button>
+            </div>
+          </>
+        )}
+      </FormikWrapper>
+    </section>
+  )
+}
+
+const ClientView = ({ id }) => {
+  return (
+    <FetchWrapper
+      component={(props) => <ClientViewForm {...props} clientId={id} />}
+      id={id}
+      name="Klient"
+      connector={() => getClientById(id)}
+    />
+  )
+}
+
+export default ClientView

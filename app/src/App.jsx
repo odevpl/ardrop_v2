@@ -72,11 +72,11 @@ function App() {
     { key: "news", label: "Nowosci", path: "/nowosci" },
     { key: "bestsellers", label: "Bestsellery", path: "/bestsellery" },
     {
-      key: "deliveryAdressess",
-      path: "/dostawy",
+      key: "orders",
+      path: "/zamowienia",
       align: "right",
-      ariaLabel: "Dostawy",
-      icon: <i className="fa-solid fa-truck" aria-hidden="true" />,
+      ariaLabel: "Zamowienia",
+      icon: <i className="fa-solid fa-box" aria-hidden="true" />,
     },
     {
       key: "account",
@@ -130,7 +130,9 @@ function App() {
               <Route path="/koszyk" element={<CartPage />} />
               <Route path="/konto" element={<AccountPage />} />
               <Route path="/klient" element={<AccountPage />} />
-              <Route path="/dostawy" element={<DeliveriesListPage />} />
+              <Route path="/zamowienia" element={<DeliveriesListPage />} />
+              <Route path="/zamowienia/:id" element={<OrderDetailsPage />} />
+              <Route path="/dostawy" element={<Navigate to="/zamowienia" replace />} />
               <Route path="/dostawy/:id" element={<OrderDetailsPage />} />
               <Route path="/adresy-dostawy" element={<DeliveryAdressessPage />} />
               <Route path="/promocje" element={<HomePage />} />

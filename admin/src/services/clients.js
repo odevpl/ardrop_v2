@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from './api'
+import { apiDelete, apiGet, apiPatch, apiPost } from './api'
 
 export const getClients = (params = {}) => {
   return apiGet({
@@ -14,6 +14,25 @@ export const setClient = (client) => {
   })
 }
 
+export const getClientById = (id) => {
+  return apiGet({
+    url: `clients/${id}`,
+  })
+}
+
+export const updateClient = (id, client) => {
+  return apiPatch({
+    url: `clients/${id}`,
+    data: client,
+  })
+}
+
+export const deleteClient = (id) => {
+  return apiDelete({
+    url: `clients/${id}`,
+  })
+}
+
 export const setDeliveryAddress = (deliveryAddress) => {
   return apiPost({
     url: 'clients/delivery-address',
@@ -24,5 +43,8 @@ export const setDeliveryAddress = (deliveryAddress) => {
 export default {
   getClients,
   setClient,
+  getClientById,
+  updateClient,
+  deleteClient,
   setDeliveryAddress,
 }

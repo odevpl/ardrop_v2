@@ -1,21 +1,19 @@
-import FetchWrapper from 'components/FetchWrapper'
 import Table from 'components/Table'
 import { useNavigate } from 'react-router-dom'
-import { getSellers } from 'services/sellers'
-import { getSellersTableConfig } from './table.config'
+import { getClientsTableConfig } from './table.config'
 
-const Sellers = ({ payload, filters, setFilters }) => {
+const ClientsList = ({ payload, filters, setFilters }) => {
   const navigate = useNavigate()
-  const sellers = payload?.data ?? []
+  const clients = payload?.data ?? []
   const pagination = payload?.meta?.pagination
 
   return (
     <section className="adminPageSection">
       <Table
-        config={getSellersTableConfig()}
-        data={sellers}
+        config={getClientsTableConfig()}
+        data={clients}
         onRowClick={(row, options) => {
-          const targetPath = `/sellers/${row.id}`
+          const targetPath = `/clients/${row.id}`
           if (options?.openInNewTab) {
             window.open(targetPath, '_blank', 'noopener,noreferrer')
             return
@@ -32,15 +30,4 @@ const Sellers = ({ payload, filters, setFilters }) => {
   )
 }
 
-const SellersWrapper = () => {
-  return (
-    <FetchWrapper
-      component={Sellers}
-      name="Sprzedawcy"
-      connector={getSellers}
-      filters={{ page: 1, limit: 20, search: '' }}
-    />
-  )
-}
-
-export default SellersWrapper
+export default ClientsList

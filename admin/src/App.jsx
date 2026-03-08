@@ -9,12 +9,14 @@ import {
 import SidebarMenu from "components/SidebarMenu";
 import { SIDEBAR_MENU_CONFIG } from "components/SidebarMenu/sidebar.config";
 import ClientsPage from "pages/clients";
+import ClientDetailsPage from "pages/clients/Details";
 import OrdersPage from "pages/orders";
 import OrderDetailsPage from "pages/orders/Details";
 import ProductsPage from "pages/products";
 import AddProductPage from "pages/products/AddProduct";
 import ProductDetailsPage from "pages/products/Details";
 import SellersPage from "pages/sellers";
+import SellerDetailsPage from "pages/sellers/Details";
 import "./App.scss";
 
 const AppContent = () => {
@@ -40,7 +42,9 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={<Navigate to="/clients" replace />} />
             <Route path="/clients" element={<ClientsPage />} />
+            <Route path="/clients/:id" element={<ClientDetailsPage />} />
             <Route path="/sellers" element={<SellersPage />} />
+            <Route path="/sellers/:id" element={<SellerDetailsPage />} />
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/products/add" element={<AddProductPage />} />
             <Route path="/products/:id" element={<ProductDetailsPage />} />

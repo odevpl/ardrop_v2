@@ -1,11 +1,18 @@
 export const getClientsTableConfig = () => {
   return [
     { key: 'id', title: 'ID' },
-    { key: 'userId', title: 'User ID' },
+    { key: 'userId', title: 'Uzytkownik' },
     { key: 'name', title: 'Nazwa' },
+    { key: 'email', title: 'Email' },
+    { key: 'phone', title: 'Telefon' },
     { key: 'nip', title: 'NIP' },
     { key: 'city', title: 'Miasto' },
-    { key: 'street', title: 'Ulica' },
-    { key: 'postcode', title: 'Kod pocztowy' },
+    { key: 'address', title: 'Adres' },
+    { key: 'postalCode', title: 'Kod pocztowy' },
+    {
+      key: 'isActive',
+      title: 'Aktywny',
+      onRender: (row) => (row.isActive ? 'Tak' : 'Nie'),
+    },
   ]
 }

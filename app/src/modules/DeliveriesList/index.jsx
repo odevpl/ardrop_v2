@@ -1,6 +1,6 @@
 import FetchWrapper from "components/FetchWrapper";
 import Table from "components/Table";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import OrdersService from "services/orders";
 import "./DeliveriesList.scss";
 
@@ -17,6 +17,7 @@ const formatDate = (rawDate) => {
 };
 
 const DeliveriesListView = ({ payload }) => {
+  const navigate = useNavigate();
   const orders = Array.isArray(payload?.data || payload?.orders)
     ? payload?.data || payload?.orders
     : [];
@@ -25,11 +26,7 @@ const DeliveriesListView = ({ payload }) => {
     {
       key: "id",
       title: "Nr zamowienia",
-      onRender: (row) => (
-        <NavLink to={`/dostawy/${row.id}`} className="deliveriesListOrderLink">
-          #{row.id}
-        </NavLink>
-      ),
+      onRender: (row) => `#${row.id}`,
     },
     {
       key: "createdAt",
@@ -61,20 +58,24 @@ const DeliveriesListView = ({ payload }) => {
   return (
     <section className="deliveriesListModule">
       <header className="deliveriesListHeader">
-        <h1>Dostawy</h1>
+        <h1>Zamowienia</h1>
         <NavLink to="/adresy-dostawy" className="deliveriesListLinkButton">
-          Przejdz do danych dostawy
+          Przejdz do adresow dostawy
         </NavLink>
       </header>
 
-      <Table config={tableConfig} data={orders} />
+      <Table
+        config={tableConfig}
+        data={orders}
+        onRowClick={(row) => navigate(`/zamowienia/${row.id}`)}
+      />
     </section>
   );
 };
 
 const DeliveriesList = () => (
   <FetchWrapper
-    name="DeliveriesList"
+    name="OrdersList"
     component={DeliveriesListView}
     connector={OrdersService.getOrders}
   />

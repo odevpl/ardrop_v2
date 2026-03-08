@@ -2,10 +2,14 @@ const express = require("express");
 const authService = require("../services/auth");
 const authMiddleware = require("../middlewares/auth.middleware");
 const roleMiddleware = require("../middlewares/role.middleware");
+const rateLimit = require("../middlewares/rate-limit.middleware");
 
 const router = express.Router();
 
-router.post("/register", async (req, res) => {
+router.post(
+  "/register",
+  rateLimit({ keyPrefix: "auth:register", limit: 5, windowMs: 60 * 60 * 1000 }),
+  async (req, res) => {
   const user = await authService.register(req.body);
 
   res.status(201).json({
@@ -15,13 +19,45 @@ router.post("/register", async (req, res) => {
     isActive: Boolean(user.isActive),
     createdAt: user.createdAt,
   });
-});
+  },
+);
 
-router.post("/login", async (req, res) => {
+router.post(
+  "/activate",
+  rateLimit({ keyPrefix: "auth:activate", limit: 10, windowMs: 60 * 60 * 1000 }),
+  async (req, res) => {
+  const result = await authService.activate(req.body || {});
+  res.status(200).json(result);
+  },
+);
+
+router.post(
+  "/forgot-password",
+  rateLimit({ keyPrefix: "auth:forgot", limit: 5, windowMs: 60 * 60 * 1000 }),
+  async (req, res) => {
+  const result = await authService.forgotPassword(req.body || {});
+  res.status(200).json(result);
+  },
+);
+
+router.post(
+  "/reset-password",
+  rateLimit({ keyPrefix: "auth:reset", limit: 10, windowMs: 60 * 60 * 1000 }),
+  async (req, res) => {
+  const result = await authService.resetPassword(req.body || {});
+  res.status(200).json(result);
+  },
+);
+
+router.post(
+  "/login",
+  rateLimit({ keyPrefix: "auth:login", limit: 10, windowMs: 15 * 60 * 1000 }),
+  async (req, res) => {
   const result = await authService.login(req.body);
 
   res.status(200).json(result);
-});
+  },
+);
 
 router.get(
   "/me",

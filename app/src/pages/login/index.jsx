@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../providers/authProvider'
 import UserService from '../../services/userService'
 import './login.scss'
@@ -74,6 +75,11 @@ function LoginPage() {
         <button className="loginButton" type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Logowanie...' : 'Zaloguj'}
         </button>
+
+        <div className="loginLinks">
+          <Link to="/register">Zaloz konto</Link>
+          <Link to="/forgot-password">Nie pamietasz hasla?</Link>
+        </div>
       </form>
     </main>
   )

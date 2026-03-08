@@ -5,6 +5,7 @@ const authMiddleware = require("./middlewares/auth.middleware");
 const authController = require("./controllers/auth");
 const sellerController = require("./controllers/sellers");
 const usersController = require("./controllers/users");
+const clientsController = require("./controllers/clients");
 const productsController = require("./controllers/products");
 const cartsController = require("./controllers/carts");
 const accountController = require("./controllers/account");
@@ -61,9 +62,23 @@ app.get("/health", (req, res) => {
 app.use((req, res, next) => {
   const isPublicHealth = req.method === "GET" && req.path === "/health";
   const isPublicLogin = req.method === "POST" && req.path === "/auth/login";
+  const isPublicRegister = req.method === "POST" && req.path === "/auth/register";
+  const isPublicActivate = req.method === "POST" && req.path === "/auth/activate";
+  const isPublicForgotPassword =
+    req.method === "POST" && req.path === "/auth/forgot-password";
+  const isPublicResetPassword =
+    req.method === "POST" && req.path === "/auth/reset-password";
   const isPublicMe = req.method === "GET" && req.path === "/auth/me";
 
-  if (isPublicHealth || isPublicLogin || isPublicMe) {
+  if (
+    isPublicHealth ||
+    isPublicLogin ||
+    isPublicRegister ||
+    isPublicActivate ||
+    isPublicForgotPassword ||
+    isPublicResetPassword ||
+    isPublicMe
+  ) {
     return next();
   }
 
@@ -73,6 +88,7 @@ app.use((req, res, next) => {
 app.use("/auth", authController);
 app.use("/", sellerController);
 app.use("/", usersController);
+app.use("/", clientsController);
 app.use("/", productsController);
 app.use("/", cartsController);
 app.use("/", accountController);

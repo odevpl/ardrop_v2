@@ -25,8 +25,8 @@ const AuthProvider = ({ loggedChildren, noLoggedChildren }) => {
     setAuthToken(null)
     setRole(null)
     localStorage.removeItem('authToken')
-    if (window.location.pathname !== '/') {
-      window.history.replaceState({}, '', '/')
+    if (window.location.pathname !== '/login') {
+      window.history.replaceState({}, '', '/login')
     }
   }
 
@@ -51,9 +51,6 @@ const AuthProvider = ({ loggedChildren, noLoggedChildren }) => {
     if (authToken) {
       checkUser()
     } else {
-      if (window.location.pathname !== '/') {
-        window.history.replaceState({}, '', '/')
-      }
       setIsLoading(false)
     }
   }, [authToken])

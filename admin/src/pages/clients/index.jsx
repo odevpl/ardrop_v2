@@ -1,20 +1,16 @@
-import FetchWrapper from "components/FetchWrapper";
-import Table from "components/Table";
-import { getClients } from "../../services/clients";
-import { getClientsTableConfig } from "./table.config";
+import FetchWrapper from 'components/FetchWrapper'
+import { getClients } from 'services/clients'
+import ClientsList from './ClientsList'
 
-const Clients = ({ payload }) => {
+const ClientsPage = () => {
   return (
-    <section className="adminPageSection">
-      <Table config={getClientsTableConfig()} data={payload?.data ?? payload} />
-    </section>
-  );
-};
+    <FetchWrapper
+      component={ClientsList}
+      name="Klienci"
+      connector={getClients}
+      filters={{ page: 1, limit: 20, search: '' }}
+    />
+  )
+}
 
-const ClientsWrapper = () => {
-  return (
-    <FetchWrapper component={Clients} name="Klienci" connector={getClients} />
-  );
-};
-
-export default ClientsWrapper;
+export default ClientsPage

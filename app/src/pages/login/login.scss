@@ -57,3 +57,16 @@
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+.loginLinks {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.loginLinks a {
+  color: #0a64c9;
+  font-size: 0.9rem;
+  text-decoration: none;
+}

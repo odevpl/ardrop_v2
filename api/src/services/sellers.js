@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const db = require("../config/db");
+const validator = require("../helpers/validator");
 
 async function createSeller({
   email,
@@ -181,8 +182,175 @@ async function getSellersList({
   };
 }
 
+const SELLER_FIELDS = [
+  "companyName",
+  "nip",
+  "phone",
+  "address",
+  "city",
+  "postalCode",
+];
+
+const selectSellerColumns = (query) =>
+  query.select(
+    "sellers.id",
+    "sellers.userId",
+    "sellers.companyName",
+    "sellers.nip",
+    "sellers.phone",
+    "sellers.address",
+    "sellers.city",
+    "sellers.postalCode",
+    "sellers.createdAt",
+    "sellers.updatedAt",
+    "users.email",
+    "users.role",
+    "users.isActive",
+  );
+
+const mapSellerRow = (row) => ({
+  id: Number(row.id),
+  userId: Number(row.userId),
+  companyName: row.companyName,
+  nip: row.nip,
+  phone: row.phone,
+  address: row.address,
+  city: row.city,
+  postalCode: row.postalCode,
+  email: row.email,
+  role: row.role,
+  isActive: Boolean(row.isActive),
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+});
+
+async function getSellerById(id) {
+  const normalizedId = Number(id);
+  if (!normalizedId) {
+    const error = new Error("Invalid seller id");
+    error.status = 400;
+    throw error;
+  }
+
+  const row = await selectSellerColumns(
+    db("sellers").innerJoin("users", "sellers.userId", "users.id"),
+  )
+    .where("sellers.id", normalizedId)
+    .first();
+
+  if (!row) {
+    const error = new Error("Seller not found");
+    error.status = 404;
+    throw error;
+  }
+
+  return mapSellerRow(row);
+}
+
+async function updateSeller(id, payload = {}) {
+  const normalizedId = Number(id);
+  if (!normalizedId) {
+    const error = new Error("Invalid seller id");
+    error.status = 400;
+    throw error;
+  }
+
+  return db.transaction(async (trx) => {
+    const existing = await selectSellerColumns(
+      trx("sellers").innerJoin("users", "sellers.userId", "users.id"),
+    )
+      .where("sellers.id", normalizedId)
+      .first();
+
+    if (!existing) {
+      const error = new Error("Seller not found");
+      error.status = 404;
+      throw error;
+    }
+
+    const userUpdates = {};
+    if (payload.email !== undefined) {
+      const nextEmail = String(payload.email || "").trim();
+      if (!validator.email(nextEmail)) {
+        const error = new Error("Invalid email format");
+        error.status = 400;
+        throw error;
+      }
+
+      if (nextEmail !== existing.email) {
+        const occupied = await trx("users")
+          .where("email", nextEmail)
+          .andWhereNot("id", Number(existing.userId))
+          .first();
+        if (occupied) {
+          const error = new Error("Email already in use");
+          error.status = 409;
+          throw error;
+        }
+      }
+
+      userUpdates.email = nextEmail;
+    }
+
+    if (payload.isActive !== undefined) {
+      userUpdates.isActive = Boolean(payload.isActive);
+    }
+
+    if (Object.keys(userUpdates).length > 0) {
+      userUpdates.updatedAt = trx.fn.now();
+      await trx("users").where({ id: Number(existing.userId) }).update(userUpdates);
+    }
+
+    const sellerUpdates = {};
+    SELLER_FIELDS.forEach((field) => {
+      if (payload[field] !== undefined) {
+        sellerUpdates[field] = payload[field] === null ? null : String(payload[field]).trim();
+      }
+    });
+
+    if (Object.keys(sellerUpdates).length > 0) {
+      sellerUpdates.updatedAt = trx.fn.now();
+      await trx("sellers").where({ id: normalizedId }).update(sellerUpdates);
+    }
+
+    const updated = await selectSellerColumns(
+      trx("sellers").innerJoin("users", "sellers.userId", "users.id"),
+    )
+      .where("sellers.id", normalizedId)
+      .first();
+
+    return mapSellerRow(updated);
+  });
+}
+
+async function deleteSeller(id) {
+  const normalizedId = Number(id);
+  if (!normalizedId) {
+    const error = new Error("Invalid seller id");
+    error.status = 400;
+    throw error;
+  }
+
+  return db.transaction(async (trx) => {
+    const seller = await trx("sellers").select("id", "userId").where({ id: normalizedId }).first();
+    if (!seller) {
+      const error = new Error("Seller not found");
+      error.status = 404;
+      throw error;
+    }
+
+    await trx("sellers").where({ id: normalizedId }).del();
+    await trx("users").where({ id: Number(seller.userId) }).del();
+
+    return { deleted: true, id: normalizedId };
+  });
+}
+
 module.exports = {
   createSeller,
   getSellers,
   getSellersList,
+  getSellerById,
+  updateSeller,
+  deleteSeller,
 };

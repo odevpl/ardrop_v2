@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Ardrop - platforma zakupow i narzedzi dla HoReCa</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <body>
+    <header>
+      <img class="logo" src="images/logo.png" />
+      <nav>
+        <ul>
+          <li><a class="js-scroll" href="#hero">Start</a></li>
+          <li><a class="js-scroll" href="#dlaczego">Dlaczego Ardrop</a></li>
+          <li><a class="js-scroll" href="#jak-dziala">Jak dziala</a></li>
+          <li><a href="./app">Zaloguj sie</a></li>
+          <li><a href="./partner">Zostan partnerem</a></li>
+          <li><a class="js-scroll" href="#kontakt">Kontakt</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <section class="about" id="hero">
+      <img class="block" src="./images/block.png" />
+      <h1><b>Ardrop.pl</b> - platforma zakupow i narzedzi dla HoReCa - <span>wszystko w jednym miejscu.</span></h1>
+      <img class="block-phone" src="./images/block-phone.png" />
+      <ul class="custom-list">
+        <li><strong>Kupuj od wielu producentow</strong> - Jedno konto, wiele ofert i jedna historia zamowien.</li>
+        <li><strong>Zarzadzaj fakturami</strong> - Dokumenty automatycznie trafiaja do panelu restauracji.</li>
+        <li><strong>Dzialaj szybciej</strong> - Zamowienia i dostawy pod kontrola bez rozproszonych narzedzi.</li>
+      </ul>
+    </section>
+
+    <section class="application" id="dlaczego">
+      <img src="./images/przyprawy2.png" class="przyprawy2" />
+      <h2><strong>Dlaczego ardrop?</strong> Marketplace i zaplecze operacyjne gastronomii.</h2>
+      <p>
+        Ardrop laczy zakupy B2B z funkcjami, ktore realnie wspieraja codzienna prace lokalu.
+      </p>
+
+      <div class="points">
+        <h3>Marketplace HoReCa.</h3>
+        <h3>Automatyczne faktury.</h3>
+        <h3>Narzedzia dla restauracji.</h3>
+        <img src="./images/laptop.png" class="laptop" />
+      </div>
+    </section>
+
+    <section class="about">
+      <img class="block" src="./images/block.png" />
+      <h1><b>Funkcje platformy</b> - dla restauracji, ktore chca kupowac i zarzadzac madrzej.</h1>
+      <img class="block-phone" src="./images/block-phone.png" />
+      <ul class="custom-list">
+        <li><strong>Marketplace HoReCa</strong> - Produkty od wielu producentow w jednym panelu.</li>
+        <li><strong>Automatyczne faktury</strong> - Rozliczenia i dokumenty gotowe po kazdym zamowieniu.</li>
+        <li><strong>Narzedzia operacyjne</strong> - Lepsze planowanie, kontrola kosztow i organizacja zakupow.</li>
+        <li><strong>Baza wiedzy</strong> - Webinary i poradniki dla zespolow gastronomicznych.</li>
+      </ul>
+    </section>
+
+    <section class="aromatycznie" id="partnerzy">
+      <img src="./images/aromatycznie-logo.jpg" class="aromatycznie-logo" />
+      <p>
+        Pierwsi partnerzy Ardrop juz wspoltworza platforme. To sygnal, ze model zakupowy dla HoReCa dziala i skaluje
+        sie wraz z kolejnymi producentami.
+      </p>
+      <img class="przyprawy" src="./images/przyprawy.png" />
+    </section>
+
+    <section class="application" id="jak-dziala">
+      <img src="./images/przyprawy2.png" class="przyprawy2" />
+      <h2><strong>Jak dziala ardrop?</strong> Prosty proces od rejestracji do dostawy.</h2>
+      <p>
+        W kilku krokach przechodzisz od uruchomienia konta do kompletnego zamowienia z faktura.
+      </p>
+
+      <div class="points">
+        <h3>1. Rejestrujesz konto restauracji.</h3>
+        <h3>2. Przegladasz oferte producentow.</h3>
+        <h3>3. Skladasz zamowienie i odbierasz dostawe.</h3>
+        <img src="./images/laptop.png" class="laptop" />
+      </div>
+    </section>
+
+    <section class="about" id="wizja">
+      <img class="block" src="./images/block.png" />
+      <h1><b>Wiecej niz marketplace</b> - Ardrop rozwija sie jako platforma SaaS dla gastronomii.</h1>
+      <img class="block-phone" src="./images/block-phone.png" />
+      <ul class="custom-list">
+        <li><strong>Webinary i szkolenia</strong> - Praktyczna wiedza dla zespolow i managerow.</li>
+        <li><strong>Kalkulatory food cost</strong> - Szybsze decyzje zakupowe i lepsza marza.</li>
+        <li><strong>Cyfrowe menu restauracji</strong> - Narzedzia wspierajace codzienna obsluge gosci.</li>
+        <li><strong>Zarzadzanie zamowieniami</strong> - Wieksza kontrola procesow i dokumentow.</li>
+      </ul>
+    </section>
+
+    <footer id="kontakt">
+      <div>
+        <div class="link">Tel: <a href="tel:+48510462291">+48 510 462 291</a></div>
+        <div class="link">Tel2: <a href="tel:+48509043258">+48 509 043 258</a></div>
+        <div class="link">Mail: <a href="mailto:kontakt@ardrop.pl">kontakt@ardrop.pl</a></div>
+      </div>
+      <img src="./images/logo.png" />
+      <div class="copyright">Copyright by <b>Odev.pl</b></div>
+    </footer>
+
+    <script>
+      const HEADER_HEIGHT = 100;
+
+      document.querySelectorAll('.js-scroll').forEach((link) => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+
+          const target = document.querySelector(link.getAttribute('href'));
+          if (!target) return;
+
+          const y = target.getBoundingClientRect().top + window.pageYOffset - HEADER_HEIGHT;
+
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        });
+      });
+    </script>
+  </body>
+</html>

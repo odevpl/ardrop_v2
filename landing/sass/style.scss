@@ -71,9 +71,10 @@ header {
   }
 }
 
-.about {
+.hero {
   position: relative;
-  padding-top: 50px;
+  padding-top: 80px;
+  padding-bottom: 100px;
 
   img.block {
     position: absolute;
@@ -92,7 +93,8 @@ header {
     font-weight: 300;
     font-size: 18px;
     padding: 20px;
-    padding-bottom: 80px;
+    padding-top: 40px;
+    padding-bottom: 30px;
     b {
       font-weight: 800;
       color: #005ec7;
@@ -113,22 +115,30 @@ header {
       width: 700px;
     }
   }
+  p {
+    margin: auto;
+    padding: 20px;
+    @media (min-width: 550px) {
+      font-size: 18px;
+      width: 400px;
+      margin: auto;
+    }
 
-  img.block-phone {
-    position: relative;
-    left: 0;
-    width: 80%;
     @media (min-width: 700px) {
-      width: 35%;
-      position: absolute;
-      margin-top: 100px;
+      font-size: 22px;
+      width: 700px;
     }
   }
+}
+
+.about {
+  position: relative;
 
   ul.custom-list {
     display: block;
     list-style-type: none;
-    padding: 50px 20px;
+    padding: 30px 20px;
+    margin-top: 20px;
 
     li {
       position: relative;
@@ -168,6 +178,34 @@ header {
       li {
         width: auto;
       }
+    }
+  }
+  @media (min-width: 1200px) {
+    ul.custom-list {
+      li {
+        font-size: 25px;
+        &:before {
+          left: -15px;
+          top: 2px;
+          width: 26px;
+          height: 26px;
+        }
+      }
+    }
+  }
+
+  img.block-phone {
+    width: 480px;
+  }
+  img.block-phone {
+    position: relative;
+    left: 0;
+    top: 100px;
+    width: 80%;
+    @media (min-width: 700px) {
+      width: 35%;
+      position: absolute;
+      margin-top: 50px;
     }
   }
 }
@@ -317,16 +355,13 @@ footer {
       }
     }
   }
-  .about {
+  .hero {
     margin-top: 70px;
     padding-top: 50px;
     padding-bottom: 150px;
     img.block {
       top: 100px;
       width: 200px;
-    }
-    ul.custom-list {
-      margin-top: 100px;
     }
   }
   .application {
@@ -380,26 +415,14 @@ footer {
 }
 
 @media (min-width: 1200px) {
-  .about {
-    padding-bottom: 250px;
+  .hero {
     h1 {
       width: 800px;
-      font-size: 50px;
+      font-size: 45px;
     }
-
-    img.block-phone {
-      width: 480px;
-    }
-    ul.custom-list {
-      li {
-        font-size: 25px;
-        &:before {
-          left: -15px;
-          top: 2px;
-          width: 26px;
-          height: 26px;
-        }
-      }
+    p {
+      width: 800px;
+      font-size: 22px;
     }
   }
   .aromatycznie {
@@ -449,12 +472,15 @@ footer {
 }
 
 @media (min-width: 1600px) {
-  .about {
+  .hero {
     h1 {
       width: 1200px;
       padding-top: 100px;
-      padding-bottom: 100px;
+      padding-bottom: 60px;
       font-size: 60px;
+    }
+    p {
+      width: 1200px;
     }
   }
   .application {

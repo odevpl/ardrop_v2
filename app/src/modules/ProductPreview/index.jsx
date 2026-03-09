@@ -17,6 +17,12 @@ const formatUnitLabel = (unit) => {
   return "sztuk";
 };
 
+const formatUnitShort = (unit) => {
+  if (unit === "g") return "g";
+  if (unit === "l") return "l";
+  return "szt.";
+};
+
 const ProductPreviewView = ({ payload }) => {
   const product = payload?.data || payload?.product || payload;
   const images = Array.isArray(product?.images) ? product.images : [];
@@ -61,6 +67,7 @@ const ProductPreviewView = ({ payload }) => {
   const vatRate = Number(product.vatRate);
   const hasVatRate = !Number.isNaN(vatRate);
   const unitLabel = formatUnitLabel(product.unit);
+  const unitShort = formatUnitShort(product.unit);
 
   return (
     <section className="productPreview">
@@ -145,7 +152,7 @@ const ProductPreviewView = ({ payload }) => {
             </div>
 
             <p className="productPreviewPriceMeta">
-              Jednostka: <strong>{product.unit || "pcs"}</strong>
+              Jednostka: <strong>{unitShort}</strong>
             </p>
             <p className="productPreviewPriceMeta">
               Dostepny stan: <strong>{product.stockQuantity ?? 0} {unitLabel}</strong>

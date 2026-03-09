@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Ardrop – zamówienia przypraw dla HoReCa</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <body>
+    <header>
+      <img class="logo" src="images/logo.png" />
+      <nav>
+        <ul>
+          <li><a href="./app">Zaloguj się</a></li>
+          <li><a class="js-scroll" href="#kontakt">Kontakt</a></li>
+        </ul>
+      </nav>
+    </header>
+    <section class="about">
+      <img class="block" src="./images/block.png" />
+      <h1><b>Ardrop.pl</b> - Twoje zamówienia, faktury i&nbsp;dostawy - <span>wszystko w jednym miejscu.</span></h1>
+      <img class="block-phone" src="./images/block-phone.png" />
+      <ul class="custom-list">
+        <li>
+          <strong>Wysokiej jakości produkty</strong> - Świeże i aromatyczne. Dostępne w każdej chwili poprzez urządzenia
+          z przeglądarką internetową.
+        </li>
+        <li>
+          <strong>Prosta obsługa zamówień</strong> - Przejrzysta lista produktów w jednym miejscu i szybki dostęp do
+          ulubionych produktów za jednym kliknięciem.
+        </li>
+        <li><strong>Ekspresowa dostawa</strong> - Zawsze na czas, z pełną dbałością o jakość produktów.</li>
+        <li>
+          <strong>Automatyczne fakturowanie</strong> - Wszystkie faktury dostępne w jednym miejscu gotowe do pobrania w
+          każdej chwili tworzone od razu po zakupie.
+        </li>
+      </ul>
+    </section>
+
+    <section class="application">
+      <img src="./images/przyprawy2.png" class="przyprawy2" />
+      <h2><strong>ardrop</strong> - aplikacja, która upraszcza codzienność gastronomii.</h2>
+      <p>
+        W jednym miejscu znajdziesz wysokiej jakości przyprawy i produkty spożywcze, zamówisz je w kilka sekund i
+        automatycznie otrzymasz fakturę.
+      </p>
+
+      <div class="points">
+        <h3>Prosto.</h3>
+        <h3>Szybko.</h3>
+        <h3>Aromatycznie.</h3>
+        <img src="./images/laptop.png" class="laptop" />
+      </div>
+    </section>
+
+    <section class="aromatycznie">
+      <img src="./images/aromatycznie-logo.jpg" class="aromatycznie-logo" />
+      <p>
+        Dystrybutorem przypraw jest współtwórca aplikacji, firma Aromatycznie – gwarantująca świeżość, intensywny aromat
+        i składniki najwyższej klasy.
+      </p>
+      <img class="przyprawy" src="./images/przyprawy.png" />
+    </section>
+
+    <footer id="kontakt">
+      <div>
+        <div class="link">Tel: <a href="tel:+48510462291">+48 510 462 291</a></div>
+        <div class="link">Tel2: <a href="tel:+48509043258">+48 509 043 258</a></div>
+        <div class="link">Mail: <a href="mailto:kontakt@ardrop.pl">kontakt@ardrop.pl</a></div>
+      </div>
+      <img src="./images/logo.png" />
+      <div class="copyright">Copyright by <b>Odev.pl</b></div>
+    </footer>
+
+    <script>
+      const HEADER_HEIGHT = 100;
+
+      document.querySelectorAll('.js-scroll').forEach((link) => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+
+          const target = document.querySelector(link.getAttribute('href'));
+          if (!target) return;
+
+          const y = target.getBoundingClientRect().top + window.pageYOffset - HEADER_HEIGHT;
+
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        });
+      });
+    </script>
+  </body>
+</html>

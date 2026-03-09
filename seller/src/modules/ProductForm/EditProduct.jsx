@@ -1,4 +1,5 @@
 import ProductsService from 'services/products'
+import { useNotification } from 'components/GlobalNotification/index.js'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { normalizeImageUrl, round2 } from './helpers'
@@ -6,6 +7,7 @@ import ProductFormView from './ProductFormView'
 
 const EditProduct = ({ id }) => {
   const navigate = useNavigate()
+  const notification = useNotification()
   const [images, setImages] = useState([])
   const [existingImages, setExistingImages] = useState([])
   const [isImagesActionLoading, setIsImagesActionLoading] = useState(false)
@@ -68,7 +70,7 @@ const EditProduct = ({ id }) => {
 
     const result = await ProductsService.updateProduct({ id, payload })
     if (result?.status && result.status >= 400) {
-      setStatus(result?.data?.error || 'Nie udalo sie zaktualizowac produktu')
+      notification.error(result?.data?.error || 'Nie udalo sie zaktualizowac produktu')
       setSubmitting(false)
       return
     }
@@ -77,13 +79,14 @@ const EditProduct = ({ id }) => {
       for (const file of images) {
         const uploadResult = await ProductsService.uploadProductImage({ productId: id, file })
         if (uploadResult?.status && uploadResult.status >= 400) {
-          setStatus(uploadResult?.data?.error || 'Nie udalo sie przeslac jednego ze zdjec')
+          notification.error(uploadResult?.data?.error || 'Nie udalo sie przeslac jednego ze zdjec')
           setSubmitting(false)
           return
         }
       }
     }
 
+    notification.success('Produkt zostal zaktualizowany')
     navigate(-1)
   }
 
@@ -94,9 +97,14 @@ const EditProduct = ({ id }) => {
       fileName: image.fileName,
     })
 
-    if (!(response?.status && response.status >= 400)) {
-      setExistingImages((prev) => prev.filter((item) => item.id !== image.id))
+    if (response?.status && response.status >= 400) {
+      notification.error(response?.data?.error || 'Nie udalo sie usunac zdjecia')
+      setIsImagesActionLoading(false)
+      return
     }
+
+    setExistingImages((prev) => prev.filter((item) => item.id !== image.id))
+    notification.success('Zdjecie zostalo usuniete')
     setIsImagesActionLoading(false)
   }
 
@@ -107,14 +115,19 @@ const EditProduct = ({ id }) => {
       imageId: image.id,
     })
 
-    if (!(response?.status && response.status >= 400)) {
-      setExistingImages((prev) =>
-        prev.map((item) => ({
-          ...item,
-          isMain: item.id === image.id ? 1 : 0,
-        })),
-      )
+    if (response?.status && response.status >= 400) {
+      notification.error(response?.data?.error || 'Nie udalo sie ustawic zdjecia glownego')
+      setIsImagesActionLoading(false)
+      return
     }
+
+    setExistingImages((prev) =>
+      prev.map((item) => ({
+        ...item,
+        isMain: item.id === image.id ? 1 : 0,
+      })),
+    )
+    notification.success('Zmieniono zdjecie glowne')
     setIsImagesActionLoading(false)
   }
 
@@ -126,10 +139,11 @@ const EditProduct = ({ id }) => {
 
     const response = await ProductsService.deleteProduct(id)
     if (response?.status && response.status >= 400) {
-      window.alert(response?.data?.error || 'Nie udalo sie usunac produktu')
+      notification.error(response?.data?.error || 'Nie udalo sie usunac produktu')
       return
     }
 
+    notification.success('Produkt zostal usuniety')
     navigate('/products')
   }
 
@@ -152,3 +166,4 @@ const EditProduct = ({ id }) => {
 }
 
 export default EditProduct
+

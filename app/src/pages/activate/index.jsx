@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useNotification } from 'components/GlobalNotification/index.js'
 import UserService from 'services/userService'
 import '../login/login.scss'
 
@@ -8,27 +9,33 @@ function ActivatePage() {
   const token = useMemo(() => searchParams.get('token') || '', [searchParams])
   const [message, setMessage] = useState('Aktywacja konta...')
   const [errorMessage, setErrorMessage] = useState('')
+  const notification = useNotification()
 
   useEffect(() => {
     const activate = async () => {
       if (!token) {
-        setErrorMessage('Brak tokenu aktywacyjnego.')
+        const text = 'Brak tokenu aktywacyjnego.'
+        setErrorMessage(text)
+        notification.error(text)
         setMessage('')
         return
       }
 
       const response = await UserService.activate({ token })
       if (response?.status && response.status >= 400) {
-        setErrorMessage(response?.data?.error || 'Nie udalo sie aktywowac konta.')
+        const text = response?.data?.error || 'Nie udalo sie aktywowac konta.'
+        setErrorMessage(text)
+        notification.error(text)
         setMessage('')
         return
       }
 
       setMessage('Konto aktywowane, mozesz sie zalogowac.')
+      notification.success('Konto aktywowane, mozesz sie zalogowac.')
     }
 
     activate()
-  }, [token])
+  }, [token, notification])
 
   return (
     <main className="loginPage">
@@ -45,3 +52,4 @@ function ActivatePage() {
 }
 
 export default ActivatePage
+

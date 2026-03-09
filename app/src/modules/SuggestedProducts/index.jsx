@@ -1,4 +1,5 @@
 import FetchWrapper from "components/FetchWrapper";
+import { useNotification } from "components/GlobalNotification/index.js";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CartsService from "services/carts";
@@ -35,7 +36,7 @@ const SuggestedProductsView = ({ payload }) => {
     getVisibleLimit(window.innerWidth),
   );
   const [pendingId, setPendingId] = useState(null);
-  const [message, setMessage] = useState("");
+  const notification = useNotification();
 
   useEffect(() => {
     const updateLimit = () =>
@@ -48,19 +49,18 @@ const SuggestedProductsView = ({ payload }) => {
 
   const addToCart = async (productId) => {
     setPendingId(productId);
-    setMessage("");
     const response = await CartsService.addItemToCart({
       productId,
       quantity: 1,
     });
 
     if (response?.status && response.status >= 400) {
-      setMessage(response?.data?.error || "Nie udalo sie dodac do koszyka.");
+      notification.error(response?.data?.error || "Nie udalo sie dodac do koszyka.");
       setPendingId(null);
       return;
     }
 
-    setMessage("Produkt dodany do koszyka.");
+    notification.success("Produkt dodany do koszyka.");
     window.dispatchEvent(new Event("cart:updated"));
     setPendingId(null);
   };
@@ -68,8 +68,6 @@ const SuggestedProductsView = ({ payload }) => {
   return (
     <section className="suggestedProducts">
       <h2 className="suggestedProductsTitle">Polecane produkty</h2>
-      {message ? <p className="suggestedProductsMessage">{message}</p> : null}
-
       <div className="suggestedProductsGrid">
         {visibleProducts.map((product) => {
           const mainImage = getMainImage(product);
@@ -128,3 +126,4 @@ const SuggestedProducts = () => {
 };
 
 export default SuggestedProducts;
+

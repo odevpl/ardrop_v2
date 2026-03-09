@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import FetchWrapper from "components/FetchWrapper";
+import { useNotification } from "components/GlobalNotification/index.js";
 import ProductsService from "services/products";
 import CartsService from "services/carts";
 import "./ProductPreview.scss";
@@ -28,7 +29,7 @@ const ProductPreviewView = ({ payload }) => {
   const [selectedImageUrl, setSelectedImageUrl] = useState(mainImage?.url || "");
   const [quantity, setQuantity] = useState(1);
   const [isPending, setIsPending] = useState(false);
-  const [message, setMessage] = useState("");
+  const notification = useNotification();
 
   useEffect(() => {
     setSelectedImageUrl(mainImage?.url || "");
@@ -37,19 +38,18 @@ const ProductPreviewView = ({ payload }) => {
   const addToCart = async () => {
     if (!product?.id) return;
     setIsPending(true);
-    setMessage("");
     const response = await CartsService.addItemToCart({
       productId: product.id,
       quantity: Math.max(1, Number(quantity) || 1),
     });
 
     if (response?.status && response.status >= 400) {
-      setMessage(response?.data?.error || "Nie udalo sie dodac produktu do koszyka.");
+      notification.error(response?.data?.error || "Nie udalo sie dodac produktu do koszyka.");
       setIsPending(false);
       return;
     }
 
-    setMessage("Produkt dodany do koszyka.");
+    notification.success("Produkt dodany do koszyka.");
     window.dispatchEvent(new Event("cart:updated"));
     setIsPending(false);
   };
@@ -160,7 +160,6 @@ const ProductPreviewView = ({ payload }) => {
               Dodaj do koszyka
             </button>
 
-            {message ? <p className="productPreviewMessage">{message}</p> : null}
           </section>
         </aside>
       </div>
@@ -179,3 +178,4 @@ const ProductPreview = ({ productId }) => {
 };
 
 export default ProductPreview;
+

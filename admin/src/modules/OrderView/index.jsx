@@ -1,4 +1,5 @@
 import FormikWrapper from 'components/FormikWrapper'
+import { useNotification } from 'components/GlobalNotification/index.js'
 import { useNavigate } from 'react-router-dom'
 import OrdersService from 'services/orders'
 import './OrderView.scss'
@@ -15,6 +16,7 @@ const resolveThumbUrl = (item) => {
 
 const OrderView = ({ payload }) => {
   const navigate = useNavigate()
+  const notification = useNotification()
   const order = payload?.data || payload?.order || payload || {}
   const items = Array.isArray(order?.items) ? order.items : []
   const orderTotalFromItems = items.reduce(
@@ -27,24 +29,29 @@ const OrderView = ({ payload }) => {
     paymentStatus: order?.paymentStatus || 'pending',
   }
 
-  const handleSubmit = async (values, { setSubmitting, setStatus }) => {
+  const handleSubmit = async (values, { setSubmitting }) => {
     const response = await OrdersService.updateOrder({
       id: order.id,
       payload: values,
     })
 
     if (response?.status && response.status >= 400) {
-      setStatus(response?.data?.error || 'Nie udalo sie zapisac zmian')
+      notification.error(response?.data?.error || 'Nie udalo sie zapisac zmian')
       setSubmitting(false)
       return
     }
 
+    notification.success('Zamowienie zostalo zaktualizowane')
     navigate('/orders')
   }
 
   const handleDelete = async () => {
     const response = await OrdersService.deleteOrder(order.id)
-    if (response?.status && response.status >= 400) return
+    if (response?.status && response.status >= 400) {
+      notification.error(response?.data?.error || 'Nie udalo sie usunac zamowienia')
+      return
+    }
+    notification.success('Zamowienie zostalo usuniete')
     navigate('/orders')
   }
 
@@ -55,12 +62,11 @@ const OrderView = ({ payload }) => {
       </header>
 
       <FormikWrapper initialValues={initialValues} onSubmit={handleSubmit}>
-        {({ values, status, setFieldValue }) => (
+        {({ values, setFieldValue }) => (
           <div className="orderViewLayout">
             <div className="orderViewMainColumn">
               <div className="orderViewCard">
                 <h2>Dane zamowienia</h2>
-                {status ? <p className="orderViewError">{status}</p> : null}
                 <div className="orderViewInfoGrid">
                   <span>Numer zamowienia</span>
                   <span>#{order?.id || '-'}</span>
@@ -188,3 +194,4 @@ const OrderView = ({ payload }) => {
 }
 
 export default OrderView
+

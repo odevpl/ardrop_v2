@@ -2,11 +2,13 @@ import FetchWrapper from 'components/FetchWrapper'
 import FormikWrapper from 'components/FormikWrapper'
 import Checkbox from 'components/FormikWrapper/FormControls/Checkbox'
 import Input from 'components/FormikWrapper/FormControls/Input'
+import { useNotification } from 'components/GlobalNotification/index.js'
 import { useNavigate } from 'react-router-dom'
 import { getSellerById, updateSeller } from 'services/sellers'
 
 const SellerViewForm = ({ payload, refetch, sellerId }) => {
   const navigate = useNavigate()
+  const notification = useNotification()
   const seller = payload?.data || payload?.seller || {}
   const initialValues = {
     email: seller.email || '',
@@ -29,8 +31,7 @@ const SellerViewForm = ({ payload, refetch, sellerId }) => {
       <FormikWrapper
         className="adminProductForm"
         initialValues={initialValues}
-        onSubmit={async (values, { setSubmitting, setStatus }) => {
-          setStatus(null)
+        onSubmit={async (values, { setSubmitting }) => {
           const payloadToUpdate = {
             ...values,
             email: values.email?.trim(),
@@ -45,17 +46,17 @@ const SellerViewForm = ({ payload, refetch, sellerId }) => {
 
           const result = await updateSeller(sellerId, payloadToUpdate)
           if (result?.status && result.status >= 400) {
-            setStatus(result?.data?.error || 'Nie udalo sie zapisac sprzedawcy')
+            notification.error(result?.data?.error || 'Nie udalo sie zapisac sprzedawcy')
             setSubmitting(false)
             return
           }
 
-          setStatus('Dane sprzedawcy zostaly zapisane')
+          notification.success('Dane sprzedawcy zostaly zapisane')
           setSubmitting(false)
           await refetch()
         }}
       >
-        {({ isSubmitting, status }) => (
+        {({ isSubmitting }) => (
           <>
             <div className="adminFormGrid">
               <Input id="email" placeholder="Email" />
@@ -68,8 +69,6 @@ const SellerViewForm = ({ payload, refetch, sellerId }) => {
               <Input id="postalCode" placeholder="Kod pocztowy" />
             </div>
             <Checkbox id="isActive" placeholder="Aktywny" />
-
-            {status ? <p className="adminFormError">{status}</p> : null}
 
             <div className="adminActions adminFormActions">
               <button type="submit" className="adminPrimaryButton" disabled={isSubmitting}>
@@ -98,3 +97,4 @@ const SellerView = ({ id }) => {
 }
 
 export default SellerView
+

@@ -1,6 +1,7 @@
 import Checkbox from "components/FormikWrapper/FormControls/Checkbox";
 import Input from "components/FormikWrapper/FormControls/Input";
 import FormikWrapper from "components/FormikWrapper";
+import { useNotification } from "components/GlobalNotification/index.js";
 import { useNavigate } from "react-router-dom";
 import { createSeller } from "services/sellers";
 
@@ -18,6 +19,7 @@ const initialValues = {
 
 const SellerCreate = () => {
   const navigate = useNavigate();
+  const notification = useNotification();
 
   return (
     <section className="adminPageSection">
@@ -28,9 +30,7 @@ const SellerCreate = () => {
       <FormikWrapper
         className="adminProductForm"
         initialValues={initialValues}
-        onSubmit={async (values, { setSubmitting, setStatus }) => {
-          setStatus(null);
-
+        onSubmit={async (values, { setSubmitting }) => {
           const payload = {
             email: values.email?.trim(),
             password: values.password || "",
@@ -45,11 +45,12 @@ const SellerCreate = () => {
 
           const result = await createSeller(payload);
           if (result?.status && result.status >= 400) {
-            setStatus(result?.data?.error || "Nie udalo sie utworzyc sprzedawcy");
+            notification.error(result?.data?.error || "Nie udalo sie utworzyc sprzedawcy");
             setSubmitting(false);
             return;
           }
 
+          notification.success("Sprzedawca zostal utworzony");
           const sellerId = result?.seller?.id;
           setSubmitting(false);
           if (sellerId) {
@@ -59,7 +60,7 @@ const SellerCreate = () => {
           navigate("/sellers");
         }}
       >
-        {({ isSubmitting, status }) => (
+        {({ isSubmitting }) => (
           <>
             <div className="adminFormGrid">
               <Input id="email" placeholder="Email" type="email" autoComplete="email" />
@@ -77,8 +78,6 @@ const SellerCreate = () => {
               <Input id="postalCode" placeholder="Kod pocztowy" />
             </div>
             <Checkbox id="isActive" placeholder="Aktywny" />
-
-            {status ? <p className="adminFormError">{status}</p> : null}
 
             <div className="adminActions adminFormActions">
               <button type="submit" className="adminPrimaryButton" disabled={isSubmitting}>

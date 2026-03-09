@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import FormikWrapper from "components/FormikWrapper";
 import Input from "components/FormikWrapper/FormControls/Input";
+import { useNotification } from "components/GlobalNotification/index.js";
 import AccountService from "services/account";
 import "./Account.scss";
 
@@ -22,6 +23,7 @@ const Account = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const notification = useNotification();
 
   const loadAccount = async () => {
     setIsLoading(true);
@@ -29,7 +31,9 @@ const Account = () => {
 
     const response = await AccountService.getMyAccount();
     if (response?.status && response.status >= 400) {
-      setError(response?.data?.error || "Nie udalo sie pobrac danych konta.");
+      const text = response?.data?.error || "Nie udalo sie pobrac danych konta.";
+      setError(text);
+      notification.error(text);
       setIsLoading(false);
       return;
     }
@@ -65,7 +69,9 @@ const Account = () => {
 
     const response = await AccountService.updateMyAccount(values);
     if (response?.status && response.status >= 400) {
-      setError(response?.data?.error || "Nie udalo sie zapisac zmian.");
+      const text = response?.data?.error || "Nie udalo sie zapisac zmian.";
+      setError(text);
+      notification.error(text);
       setIsSaving(false);
       return;
     }
@@ -84,6 +90,7 @@ const Account = () => {
       postalCode: client.postalCode || "",
     });
     setMessage("Dane konta zostaly zaktualizowane.");
+    notification.success("Dane konta zostaly zaktualizowane.");
     setIsSaving(false);
   };
 
@@ -131,3 +138,4 @@ const Account = () => {
 };
 
 export default Account;
+

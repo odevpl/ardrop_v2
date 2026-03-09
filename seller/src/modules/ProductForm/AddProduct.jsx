@@ -1,4 +1,5 @@
 import ProductsService from 'services/products'
+import { useNotification } from 'components/GlobalNotification/index.js'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { round2 } from './helpers'
@@ -17,6 +18,7 @@ const initialValues = {
 
 const AddProduct = () => {
   const navigate = useNavigate()
+  const notification = useNotification()
   const [images, setImages] = useState([])
 
   const handleSubmit = async (values, { setSubmitting, setStatus }) => {
@@ -34,14 +36,14 @@ const AddProduct = () => {
     const result = await ProductsService.createProduct(payload)
 
     if (result?.status && result.status >= 400) {
-      setStatus(result?.data?.error || 'Nie udalo sie zapisac produktu')
+      notification.error(result?.data?.error || 'Nie udalo sie zapisac produktu')
       setSubmitting(false)
       return
     }
 
     const productId = result?.product?.id
     if (!productId) {
-      setStatus('Brak ID produktu po zapisie')
+      notification.error('Brak ID produktu po zapisie')
       setSubmitting(false)
       return
     }
@@ -50,13 +52,14 @@ const AddProduct = () => {
       for (const file of images) {
         const uploadResult = await ProductsService.uploadProductImage({ productId, file })
         if (uploadResult?.status && uploadResult.status >= 400) {
-          setStatus(uploadResult?.data?.error || 'Nie udalo sie przeslac jednego ze zdjec')
+          notification.error(uploadResult?.data?.error || 'Nie udalo sie przeslac jednego ze zdjec')
           setSubmitting(false)
           return
         }
       }
     }
 
+    notification.success('Produkt zostal zapisany')
     navigate(-1)
   }
 
@@ -73,3 +76,4 @@ const AddProduct = () => {
 }
 
 export default AddProduct
+

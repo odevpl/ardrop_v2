@@ -2,11 +2,13 @@ import FetchWrapper from 'components/FetchWrapper'
 import FormikWrapper from 'components/FormikWrapper'
 import Checkbox from 'components/FormikWrapper/FormControls/Checkbox'
 import Input from 'components/FormikWrapper/FormControls/Input'
+import { useNotification } from 'components/GlobalNotification/index.js'
 import { useNavigate } from 'react-router-dom'
 import { getClientById, updateClient } from 'services/clients'
 
 const ClientViewForm = ({ payload, refetch, clientId }) => {
   const navigate = useNavigate()
+  const notification = useNotification()
   const client = payload?.data || payload?.client || {}
   const initialValues = {
     email: client.email || '',
@@ -29,8 +31,7 @@ const ClientViewForm = ({ payload, refetch, clientId }) => {
       <FormikWrapper
         className="adminProductForm"
         initialValues={initialValues}
-        onSubmit={async (values, { setSubmitting, setStatus }) => {
-          setStatus(null)
+        onSubmit={async (values, { setSubmitting }) => {
           const payloadToUpdate = {
             ...values,
             email: values.email?.trim(),
@@ -45,17 +46,17 @@ const ClientViewForm = ({ payload, refetch, clientId }) => {
 
           const result = await updateClient(clientId, payloadToUpdate)
           if (result?.status && result.status >= 400) {
-            setStatus(result?.data?.error || 'Nie udalo sie zapisac klienta')
+            notification.error(result?.data?.error || 'Nie udalo sie zapisac klienta')
             setSubmitting(false)
             return
           }
 
-          setStatus('Dane klienta zostaly zapisane')
+          notification.success('Dane klienta zostaly zapisane')
           setSubmitting(false)
           await refetch()
         }}
       >
-        {({ isSubmitting, status }) => (
+        {({ isSubmitting }) => (
           <>
             <div className="adminFormGrid">
               <Input id="email" placeholder="Email" />
@@ -68,8 +69,6 @@ const ClientViewForm = ({ payload, refetch, clientId }) => {
               <Input id="postalCode" placeholder="Kod pocztowy" />
             </div>
             <Checkbox id="isActive" placeholder="Aktywny" />
-
-            {status ? <p className="adminFormError">{status}</p> : null}
 
             <div className="adminActions adminFormActions">
               <button type="submit" className="adminPrimaryButton" disabled={isSubmitting}>
@@ -98,3 +97,4 @@ const ClientView = ({ id }) => {
 }
 
 export default ClientView
+

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useNotification } from 'components/GlobalNotification/index.js'
 import UserService from 'services/userService'
 import '../login/login.scss'
 
@@ -9,12 +10,11 @@ function ResetPasswordPage() {
   const [password, setPassword] = useState('')
   const [passwordRepeat, setPasswordRepeat] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [message, setMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const notification = useNotification()
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    setMessage('')
     setErrorMessage('')
 
     if (!token) {
@@ -35,12 +35,14 @@ function ResetPasswordPage() {
     setIsSubmitting(true)
     const response = await UserService.resetPassword({ token, password })
     if (response?.status && response.status >= 400) {
-      setErrorMessage(response?.data?.error || 'Nie udalo sie ustawic nowego hasla.')
+      const text = response?.data?.error || 'Nie udalo sie ustawic nowego hasla.'
+      setErrorMessage(text)
+      notification.error(text)
       setIsSubmitting(false)
       return
     }
 
-    setMessage('Haslo zostalo zmienione. Mozesz sie zalogowac.')
+    notification.success('Haslo zostalo zmienione. Mozesz sie zalogowac.')
     setIsSubmitting(false)
   }
 
@@ -76,8 +78,6 @@ function ResetPasswordPage() {
         />
 
         {errorMessage ? <p className="loginError">{errorMessage}</p> : null}
-        {message ? <p>{message}</p> : null}
-
         <button className="loginButton" type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Zapisywanie...' : 'Zapisz nowe haslo'}
         </button>
@@ -91,3 +91,4 @@ function ResetPasswordPage() {
 }
 
 export default ResetPasswordPage
+

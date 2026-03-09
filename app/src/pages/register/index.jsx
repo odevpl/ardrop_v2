@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useNotification } from 'components/GlobalNotification/index.js'
 import UserService from 'services/userService'
 import '../login/login.scss'
 
@@ -8,14 +9,12 @@ function RegisterPage() {
   const [password, setPassword] = useState('')
   const [passwordRepeat, setPasswordRepeat] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [message, setMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const notification = useNotification()
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     setErrorMessage('')
-    setMessage('')
-
     if (password !== passwordRepeat) {
       setErrorMessage('Hasla musza byc takie same.')
       return
@@ -30,11 +29,12 @@ function RegisterPage() {
     const response = await UserService.register({ email, password, role: 'CLIENT' })
     if (response?.status && response.status >= 400) {
       setErrorMessage(response?.data?.error || 'Rejestracja nie powiodla sie.')
+      notification.error(response?.data?.error || 'Rejestracja nie powiodla sie.')
       setIsSubmitting(false)
       return
     }
 
-    setMessage('Sprawdz email, aby aktywowac konto.')
+    notification.success('Sprawdz email, aby aktywowac konto.')
     setIsSubmitting(false)
   }
 
@@ -83,8 +83,6 @@ function RegisterPage() {
         />
 
         {errorMessage ? <p className="loginError">{errorMessage}</p> : null}
-        {message ? <p>{message}</p> : null}
-
         <button className="loginButton" type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Rejestracja...' : 'Zarejestruj'}
         </button>
@@ -98,3 +96,4 @@ function RegisterPage() {
 }
 
 export default RegisterPage
+

@@ -1,5 +1,6 @@
 import FetchWrapper from "components/FetchWrapper";
 import Pagination from "components/Pagination";
+import { useNotification } from "components/GlobalNotification/index.js";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CartsService from "services/carts";
@@ -24,23 +25,22 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
   const page = Number(pagination.page || filters?.page || 1);
   const totalPages = Number(pagination.totalPages || 1);
   const [pendingId, setPendingId] = useState(null);
-  const [message, setMessage] = useState("");
+  const notification = useNotification();
 
   const addToCart = async (productId) => {
     setPendingId(productId);
-    setMessage("");
     const response = await CartsService.addItemToCart({
       productId,
       quantity: 1,
     });
 
     if (response?.status && response.status >= 400) {
-      setMessage(response?.data?.error || "Nie udalo sie dodac do koszyka.");
+      notification.error(response?.data?.error || "Nie udalo sie dodac do koszyka.");
       setPendingId(null);
       return;
     }
 
-    setMessage("Produkt dodany do koszyka.");
+    notification.success("Produkt dodany do koszyka.");
     window.dispatchEvent(new Event("cart:updated"));
     setPendingId(null);
   };
@@ -62,8 +62,6 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
           Strona {page} / {Math.max(totalPages, 1)}
         </span>
       </div>
-      {message ? <p className="allProductsMessage">{message}</p> : null}
-
       <div className="allProductsGrid">
         {products.map((product) => {
           const mainImage = getMainImage(product);
@@ -132,3 +130,4 @@ const AllProducts = () => (
 );
 
 export default AllProducts;
+

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNotification } from "components/GlobalNotification/index.js";
 import { NavLink } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import AccountService from "services/account";
@@ -32,6 +33,7 @@ const Cart = () => {
   const [selectedDeliveryAddressId, setSelectedDeliveryAddressId] = useState(null);
   const [deliveryError, setDeliveryError] = useState("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const notification = useNotification();
 
   const fetchCart = async () => {
     setIsLoading(true);
@@ -116,7 +118,7 @@ const Cart = () => {
     setPendingItemId(itemId);
     const response = await CartsService.updateCartItem({ itemId, quantity });
     if (response?.status && response.status >= 400) {
-      setError(response?.data?.error || "Nie udalo sie zaktualizowac pozycji.");
+      notification.error(response?.data?.error || "Nie udalo sie zaktualizowac pozycji.");
       setPendingItemId(null);
       return;
     }
@@ -130,7 +132,7 @@ const Cart = () => {
     setPendingItemId(itemId);
     const response = await CartsService.removeCartItem({ itemId });
     if (response?.status && response.status >= 400) {
-      setError(response?.data?.error || "Nie udalo sie usunac pozycji.");
+      notification.error(response?.data?.error || "Nie udalo sie usunac pozycji.");
       setPendingItemId(null);
       return;
     }
@@ -144,7 +146,7 @@ const Cart = () => {
     setPendingItemId("all");
     const response = await CartsService.clearCart();
     if (response?.status && response.status >= 400) {
-      setError(response?.data?.error || "Nie udalo sie wyczyscic koszyka.");
+      notification.error(response?.data?.error || "Nie udalo sie wyczyscic koszyka.");
       setPendingItemId(null);
       return;
     }
@@ -179,7 +181,9 @@ const Cart = () => {
 
   const handleSubmitOrder = async () => {
     if (!isDeliveryAddressValid) {
-      setDeliveryError("Uzupelnij dane dostawy i wybierz poprawny adres.");
+      const message = "Uzupelnij dane dostawy i wybierz poprawny adres.";
+      setDeliveryError(message);
+      notification.error(message);
       return;
     }
 
@@ -191,13 +195,16 @@ const Cart = () => {
     });
 
     if (response?.status && response.status >= 400) {
-      setDeliveryError(response?.data?.error || "Nie udalo sie wyslac zamowienia.");
+      const message = response?.data?.error || "Nie udalo sie wyslac zamowienia.";
+      setDeliveryError(message);
+      notification.error(message);
       setIsSubmittingOrder(false);
       return;
     }
 
     const orderId = response?.data?.primaryOrderId || response?.primaryOrderId;
     window.dispatchEvent(new Event("cart:updated"));
+    notification.success("Zamowienie zostalo zlozone.");
     setIsSubmittingOrder(false);
 
     if (orderId) {
@@ -442,3 +449,4 @@ const Cart = () => {
 };
 
 export default Cart;
+

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import FetchWrapper from "components/FetchWrapper";
+import { useNotification } from "components/GlobalNotification/index.js";
 import Popup from "components/Popup";
 import DeliveryAdressessService from "services/deliveryAdressess";
 import "./DeliveryAdressess.scss";
@@ -129,6 +130,7 @@ const DeliveryAddressPopupForm = ({ mode = "create", addressId = null, initialAd
 };
 
 const DeliveryAdressessView = ({ payload, refetch }) => {
+  const notification = useNotification();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const addresses = Array.isArray(payload?.data || payload?.addresses)
@@ -138,12 +140,15 @@ const DeliveryAdressessView = ({ payload, refetch }) => {
   const handleAddressSaved = async (mode) => {
     await refetch();
     setError("");
-    setMessage(mode === "updated" ? "Adres zostal zaktualizowany." : "Adres zostal dodany.");
+    const text = mode === "updated" ? "Adres zostal zaktualizowany." : "Adres zostal dodany.";
+    setMessage(text);
+    notification.success(text);
   };
 
   const handleDeleteAddress = async (id) => {
     if (id === undefined || id === null || String(id).trim() === "") {
       setError("Nieprawidlowy identyfikator adresu.");
+      notification.error("Nieprawidlowy identyfikator adresu.");
       return;
     }
 
@@ -151,12 +156,15 @@ const DeliveryAdressessView = ({ payload, refetch }) => {
     setMessage("");
     const response = await DeliveryAdressessService.deleteDeliveryAdressess(id);
     if (response?.status && response.status >= 400) {
-      setError(response?.data?.error || "Nie udalo sie usunac adresu.");
+      const text = response?.data?.error || "Nie udalo sie usunac adresu.";
+      setError(text);
+      notification.error(text);
       return;
     }
 
     await refetch();
     setMessage("Adres zostal usuniety.");
+    notification.success("Adres zostal usuniety.");
   };
 
   return (
@@ -242,3 +250,4 @@ const DeliveryAdressess = () => (
 );
 
 export default DeliveryAdressess;
+

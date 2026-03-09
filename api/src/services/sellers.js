@@ -6,20 +6,37 @@ async function createSeller({
   email,
   password,
   companyName,
+  isActive = true,
   nip = null,
   phone = null,
   address = null,
   city = null,
   postalCode = null,
 }) {
-  if (!email || !password || !companyName) {
+  const normalizedEmail = String(email || "").trim();
+  const normalizedPassword = String(password || "");
+  const normalizedCompanyName = String(companyName || "").trim();
+
+  if (!normalizedEmail || !normalizedPassword || !normalizedCompanyName) {
     const error = new Error("Email, password and companyName are required");
     error.status = 400;
     throw error;
   }
 
+  if (!validator.email(normalizedEmail)) {
+    const error = new Error("Invalid email format");
+    error.status = 400;
+    throw error;
+  }
+
+  if (normalizedPassword.length < 8) {
+    const error = new Error("Password must be at least 8 characters long");
+    error.status = 400;
+    throw error;
+  }
+
   return db.transaction(async (trx) => {
-    const existing = await trx("users").where({ email }).first();
+    const existing = await trx("users").where({ email: normalizedEmail }).first();
 
     if (existing) {
       const error = new Error("Email already in use");
@@ -27,13 +44,13 @@ async function createSeller({
       throw error;
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(normalizedPassword, 10);
 
     const insertedUser = await trx("users").insert({
-      email,
+      email: normalizedEmail,
       passwordHash,
       role: "SELLER",
-      isActive: true,
+      isActive: Boolean(isActive),
     });
     const userId = Array.isArray(insertedUser) ? insertedUser[0] : insertedUser;
     const user = await trx("users")
@@ -43,12 +60,12 @@ async function createSeller({
 
     const insertedSeller = await trx("sellers").insert({
       userId: user.id,
-      companyName,
-      nip,
-      phone,
-      address,
-      city,
-      postalCode,
+      companyName: normalizedCompanyName,
+      nip: nip === null ? null : String(nip).trim(),
+      phone: phone === null ? null : String(phone).trim(),
+      address: address === null ? null : String(address).trim(),
+      city: city === null ? null : String(city).trim(),
+      postalCode: postalCode === null ? null : String(postalCode).trim(),
     });
     const sellerId = Array.isArray(insertedSeller)
       ? insertedSeller[0]
@@ -294,6 +311,19 @@ async function updateSeller(id, payload = {}) {
 
     if (payload.isActive !== undefined) {
       userUpdates.isActive = Boolean(payload.isActive);
+    }
+
+    if (payload.password !== undefined) {
+      const nextPassword = String(payload.password || "");
+      if (nextPassword.length > 0 && nextPassword.length < 8) {
+        const error = new Error("Password must be at least 8 characters long");
+        error.status = 400;
+        throw error;
+      }
+
+      if (nextPassword.length > 0) {
+        userUpdates.passwordHash = await bcrypt.hash(nextPassword, 10);
+      }
     }
 
     if (Object.keys(userUpdates).length > 0) {

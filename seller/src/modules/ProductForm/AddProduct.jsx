@@ -10,6 +10,8 @@ const initialValues = {
   netPrice: '',
   grossPrice: '',
   vatRate: '',
+  unit: 'pcs',
+  stockQuantity: '',
   status: 'draft',
 }
 
@@ -24,6 +26,8 @@ const AddProduct = () => {
       netPrice: round2(Number(values.netPrice)),
       grossPrice: round2(Number(values.grossPrice)),
       vatRate: round2(Number(values.vatRate)),
+      unit: values.unit || 'pcs',
+      stockQuantity: Number(values.stockQuantity || 0),
       description: values.description?.trim() || null,
     }
 

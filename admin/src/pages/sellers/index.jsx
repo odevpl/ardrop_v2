@@ -11,6 +11,15 @@ const Sellers = ({ payload, filters, setFilters }) => {
 
   return (
     <section className="adminPageSection">
+      <div className="adminToolbar">
+        <h2>Sprzedawcy</h2>
+        <div className="adminActions">
+          <button type="button" className="adminPrimaryButton" onClick={() => navigate('/sellers/add')}>
+            Dodaj sprzedawce
+          </button>
+        </div>
+      </div>
+
       <Table
         config={getSellersTableConfig()}
         data={sellers}

@@ -1,16 +1,44 @@
 const db = require("../config/db");
 
-const ALLOWED_SORT_FIELDS = ["id", "name", "netPrice", "grossPrice", "vatRate", "status", "createdAt", "updatedAt", "sellerCompanyName"];
+const PRODUCT_UNITS = ["pcs", "g", "l"];
+
+const ALLOWED_SORT_FIELDS = ["id", "name", "netPrice", "grossPrice", "vatRate", "unit", "stockQuantity", "status", "createdAt", "updatedAt", "sellerCompanyName"];
 const SORT_FIELD_MAP = {
   id: "products.id",
   name: "products.name",
   netPrice: "products.netPrice",
   grossPrice: "products.grossPrice",
   vatRate: "products.vatRate",
+  unit: "products.unit",
+  stockQuantity: "products.stockQuantity",
   status: "products.status",
   createdAt: "products.createdAt",
   updatedAt: "products.updatedAt",
   sellerCompanyName: "sellers.companyName",
+};
+
+const normalizeUnit = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+
+  if (!PRODUCT_UNITS.includes(normalized)) {
+    const error = new Error(`Invalid unit. Allowed: ${PRODUCT_UNITS.join(", ")}`);
+    error.status = 400;
+    throw error;
+  }
+
+  return normalized;
+};
+
+const normalizeStockQuantity = (value) => {
+  const numeric = Number(value);
+
+  if (!Number.isFinite(numeric) || numeric < 0) {
+    const error = new Error("stockQuantity must be a number >= 0");
+    error.status = 400;
+    throw error;
+  }
+
+  return Number(numeric.toFixed(3));
 };
 
 const resolveSellerIdByUserId = async (userId) => {
@@ -198,6 +226,8 @@ const createProduct = async ({
   netPrice,
   grossPrice,
   vatRate,
+  unit = "pcs",
+  stockQuantity = 0,
   status,
 }) => {
   let targetSellerId = sellerId !== undefined ? Number(sellerId) : null;
@@ -220,11 +250,13 @@ const createProduct = async ({
 
   const inserted = await db("products").insert({
     sellerId: targetSellerId,
-    name,
+    name: String(name || "").trim(),
     description: description || null,
     netPrice,
     grossPrice,
     vatRate,
+    unit: normalizeUnit(unit),
+    stockQuantity: normalizeStockQuantity(stockQuantity),
     status: status || "draft",
   });
   const productId = Array.isArray(inserted) ? inserted[0] : inserted;
@@ -249,7 +281,56 @@ const updateProduct = async ({ userId, role, productId, payload }) => {
     }
   }
 
-  const updates = { ...payload, updatedAt: db.fn.now() };
+  const updates = { updatedAt: db.fn.now() };
+
+  if (payload.name !== undefined) {
+    const normalizedName = String(payload.name || "").trim();
+    if (!normalizedName) {
+      const error = new Error("name is required");
+      error.status = 400;
+      throw error;
+    }
+    updates.name = normalizedName;
+  }
+
+  if (payload.description !== undefined) {
+    updates.description = payload.description ? String(payload.description).trim() : null;
+  }
+
+  if (payload.netPrice !== undefined) {
+    updates.netPrice = Number(payload.netPrice);
+  }
+
+  if (payload.grossPrice !== undefined) {
+    updates.grossPrice = Number(payload.grossPrice);
+  }
+
+  if (payload.vatRate !== undefined) {
+    updates.vatRate = Number(payload.vatRate);
+  }
+
+  if (payload.status !== undefined) {
+    updates.status = payload.status;
+  }
+
+  if (payload.sellerId !== undefined && role === "ADMIN") {
+    const normalizedSellerId = Number(payload.sellerId);
+    if (!normalizedSellerId) {
+      const error = new Error("sellerId must be a valid number");
+      error.status = 400;
+      throw error;
+    }
+    updates.sellerId = normalizedSellerId;
+  }
+
+  if (payload.unit !== undefined) {
+    updates.unit = normalizeUnit(payload.unit);
+  }
+
+  if (payload.stockQuantity !== undefined) {
+    updates.stockQuantity = normalizeStockQuantity(payload.stockQuantity);
+  }
+
   await db("products").where({ id: productId }).update(updates);
   return getProductById({ userId, role, productId });
 };
@@ -292,4 +373,5 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
+  PRODUCT_UNITS,
 };

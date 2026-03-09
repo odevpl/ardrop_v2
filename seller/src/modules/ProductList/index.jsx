@@ -15,6 +15,12 @@ const normalizeImageUrl = (url) => {
   return `${normalizedBase}${normalizedPath}`
 }
 
+const formatUnit = (unit) => {
+  if (unit === 'g') return 'g'
+  if (unit === 'l') return 'l'
+  return 'szt.'
+}
+
 const ProductListView = ({ payload, filters, setFilters }) => {
   const navigate = useNavigate()
   const products = payload?.data || payload?.products || []
@@ -32,6 +38,7 @@ const ProductListView = ({ payload, filters, setFilters }) => {
         netPrice: `${product.netPrice} zl`,
         grossPrice: `${product.grossPrice} zl`,
         vatRate: `${product.vatRate}%`,
+        unitLabel: formatUnit(product.unit),
       }
     })
   }, [products])

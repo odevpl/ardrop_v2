@@ -10,6 +10,7 @@ const SellerViewForm = ({ payload, refetch, sellerId }) => {
   const seller = payload?.data || payload?.seller || {}
   const initialValues = {
     email: seller.email || '',
+    password: '',
     companyName: seller.companyName || '',
     phone: seller.phone || '',
     nip: seller.nip || '',
@@ -33,6 +34,7 @@ const SellerViewForm = ({ payload, refetch, sellerId }) => {
           const payloadToUpdate = {
             ...values,
             email: values.email?.trim(),
+            password: values.password || undefined,
             companyName: values.companyName?.trim(),
             phone: values.phone?.trim() || null,
             nip: values.nip?.trim() || null,
@@ -57,6 +59,7 @@ const SellerViewForm = ({ payload, refetch, sellerId }) => {
           <>
             <div className="adminFormGrid">
               <Input id="email" placeholder="Email" />
+              <Input id="password" placeholder="Nowe haslo (opcjonalnie)" type="password" autoComplete="new-password" />
               <Input id="companyName" placeholder="Firma" />
               <Input id="phone" placeholder="Telefon" />
               <Input id="nip" placeholder="NIP" />

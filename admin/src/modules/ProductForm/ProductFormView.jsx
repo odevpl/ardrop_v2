@@ -12,6 +12,12 @@ export const STATUS_OPTIONS = {
   archived: 'Archiwalny',
 }
 
+export const UNIT_OPTIONS = {
+  pcs: 'szt.',
+  g: 'g',
+  l: 'l',
+}
+
 const PriceSync = ({ values, setFieldValue }) => {
   const prevRef = useRef({
     netPrice: values.netPrice,
@@ -134,6 +140,8 @@ const ProductFormView = ({
               <Input id="netPrice" placeholder="Cena netto" type="decimal" />
               <Input id="grossPrice" placeholder="Cena brutto" type="decimal" />
               <Input id="vatRate" placeholder="Stawka VAT (%)" type="decimal" />
+              <Select id="unit" placeholder="Jednostka" config={UNIT_OPTIONS} />
+              <Input id="stockQuantity" placeholder="Stan magazynowy" type="decimal" />
               <Select id="status" placeholder="Status" config={STATUS_OPTIONS} />
             </div>
             <Textarea id="description" placeholder="Opis" />

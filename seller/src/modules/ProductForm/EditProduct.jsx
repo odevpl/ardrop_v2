@@ -16,6 +16,8 @@ const EditProduct = ({ id }) => {
     netPrice: '',
     grossPrice: '',
     vatRate: '',
+    unit: 'pcs',
+    stockQuantity: '',
     status: 'draft',
   })
 
@@ -34,6 +36,8 @@ const EditProduct = ({ id }) => {
           netPrice: product.netPrice ?? '',
           grossPrice: product.grossPrice ?? '',
           vatRate: product.vatRate ?? '',
+          unit: product.unit || 'pcs',
+          stockQuantity: product.stockQuantity ?? '',
           status: product.status || 'draft',
         })
         setExistingImages(
@@ -57,6 +61,8 @@ const EditProduct = ({ id }) => {
       netPrice: round2(Number(values.netPrice)),
       grossPrice: round2(Number(values.grossPrice)),
       vatRate: round2(Number(values.vatRate)),
+      unit: values.unit || 'pcs',
+      stockQuantity: Number(values.stockQuantity || 0),
       description: values.description?.trim() || null,
     }
 

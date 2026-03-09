@@ -133,6 +133,8 @@ const createOrderFromCurrentCart = async ({ userId, role, clientId }, trxDb = db
         "netPrice",
         "grossPrice",
         "vatRate",
+        "unit",
+        "stockQuantity",
         "createdAt",
         "updatedAt",
       )
@@ -215,6 +217,8 @@ const createOrderFromCurrentCart = async ({ userId, role, clientId }, trxDb = db
           netPrice: Number(product.netPrice),
           grossPrice: Number(product.grossPrice),
           vatRate: Number(product.vatRate),
+          unit: product.unit || "pcs",
+          stockQuantity: Number(product.stockQuantity || 0),
           images: imagesByProductId[Number(product.id)] || [],
           createdAt: product.createdAt,
           updatedAt: product.updatedAt,

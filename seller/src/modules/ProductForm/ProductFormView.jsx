@@ -3,7 +3,7 @@ import Input from 'components/FormikWrapper/FormControls/Input'
 import Select from 'components/FormikWrapper/FormControls/Select'
 import Textarea from 'components/FormikWrapper/FormControls/Textarea'
 import { useEffect, useRef } from 'react'
-import { addProductValidationSchema, STATUS_OPTIONS } from './validation'
+import { addProductValidationSchema, STATUS_OPTIONS, UNIT_OPTIONS } from './validation'
 import ImageDropzone from './ImageDropzone'
 import { parseNumber, round2 } from './helpers'
 
@@ -133,6 +133,8 @@ const ProductFormView = ({
               <Input id="netPrice" placeholder="Cena netto" type="decimal" />
               <Input id="grossPrice" placeholder="Cena brutto" type="decimal" />
               <Input id="vatRate" placeholder="Stawka VAT (%)" type="decimal" />
+              <Select id="unit" placeholder="Jednostka" config={UNIT_OPTIONS} />
+              <Input id="stockQuantity" placeholder="Stan magazynowy" type="decimal" />
               <Select id="status" placeholder="Status" config={STATUS_OPTIONS} />
             </div>
 

@@ -27,6 +27,8 @@ export const getProductsTableConfig = () => {
     { key: "netPrice", title: "Cena netto" },
     { key: "grossPrice", title: "Cena brutto" },
     { key: "vatRate", title: "VAT" },
+    { key: "unitLabel", title: "Jedn." },
+    { key: "stockQuantity", title: "Stan" },
     { key: "status", title: "Status" },
   ];
 };

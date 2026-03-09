@@ -10,6 +10,12 @@ const formatPrice = (value) => {
   return `${numericValue.toFixed(2)} zl`;
 };
 
+const formatUnitLabel = (unit) => {
+  if (unit === "g") return "gramow";
+  if (unit === "l") return "litrow";
+  return "sztuk";
+};
+
 const ProductPreviewView = ({ payload }) => {
   const product = payload?.data || payload?.product || payload;
   const images = Array.isArray(product?.images) ? product.images : [];
@@ -54,6 +60,7 @@ const ProductPreviewView = ({ payload }) => {
 
   const vatRate = Number(product.vatRate);
   const hasVatRate = !Number.isNaN(vatRate);
+  const unitLabel = formatUnitLabel(product.unit);
 
   return (
     <section className="productPreview">
@@ -105,7 +112,7 @@ const ProductPreviewView = ({ payload }) => {
             </p>
 
             <div className="productPreviewQtyBlock">
-              <label htmlFor="productPreviewQty">Liczba sztuk</label>
+              <label htmlFor="productPreviewQty">Liczba {unitLabel}</label>
               <div className="productPreviewQtyControl">
                 <button
                   type="button"
@@ -136,6 +143,13 @@ const ProductPreviewView = ({ payload }) => {
                 </button>
               </div>
             </div>
+
+            <p className="productPreviewPriceMeta">
+              Jednostka: <strong>{product.unit || "pcs"}</strong>
+            </p>
+            <p className="productPreviewPriceMeta">
+              Dostepny stan: <strong>{product.stockQuantity ?? 0} {unitLabel}</strong>
+            </p>
 
             <button
               type="button"

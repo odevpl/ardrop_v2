@@ -13,6 +13,12 @@ const normalizeImageUrl = (url) => {
   return `${normalizedBase}${normalizedPath}`;
 };
 
+const formatUnit = (unit) => {
+  if (unit === "g") return "g";
+  if (unit === "l") return "l";
+  return "szt.";
+};
+
 const ProductList = ({ payload, filters, setFilters }) => {
   const navigate = useNavigate();
   const products = payload?.data ?? payload?.products ?? [];
@@ -28,6 +34,7 @@ const ProductList = ({ payload, filters, setFilters }) => {
         ...product,
         vat: product.vat ?? product.vatRate,
         thumbnailUrl: normalizeImageUrl(mainImage?.thumbUrl),
+        unitLabel: formatUnit(product.unit),
       };
     });
   }, [products]);

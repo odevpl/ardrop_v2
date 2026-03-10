@@ -55,7 +55,9 @@ const SuggestedProductsView = ({ payload }) => {
     });
 
     if (response?.status && response.status >= 400) {
-      notification.error(response?.data?.error || "Nie udalo sie dodac do koszyka.");
+      notification.error(
+        response?.data?.error || "Nie udalo sie dodac do koszyka.",
+      );
       setPendingId(null);
       return;
     }
@@ -67,7 +69,7 @@ const SuggestedProductsView = ({ payload }) => {
 
   return (
     <section className="suggestedProducts">
-      <h2 className="suggestedProductsTitle">Polecane produkty</h2>
+      {/* <h2 className="suggestedProductsTitle">Polecane produkty</h2> */}
       <div className="suggestedProductsGrid">
         {visibleProducts.map((product) => {
           const mainImage = getMainImage(product);
@@ -126,4 +128,3 @@ const SuggestedProducts = () => {
 };
 
 export default SuggestedProducts;
-

@@ -5,8 +5,8 @@ import AllProducts from "modules/AllProducts";
 const HomePage = () => {
   return (
     <section className="homePage">
-      <HeroBanner imageUrl="hero.png" />
-      <SuggestedProducts />
+      {/* <HeroBanner imageUrl="hero.png" /> */}
+      {/* <SuggestedProducts /> */}
       <AllProducts />
     </section>
   );

@@ -7,7 +7,7 @@ const Footer = () => {
         <section className="clientFooterCol clientFooterBrand">
           <img className="clientFooterLogoImage" src="/logo.png" alt="Ardrop" />
           <p>
-            Projekt Ardrop zasila Aromatycznie sp. z o.o. Zapraszamy do kontaktu
+            Projekt Ardrop zasila Aromatycznie Sp. z o.o. Zapraszamy do kontaktu
             w sprawie wspolpracy i wdrozen e-commerce.
           </p>
         </section>
@@ -15,7 +15,7 @@ const Footer = () => {
         <section className="clientFooterCol clientFooterCompany">
           <h4>Dane firmy</h4>
           <ul>
-            <li>Aromatycznie sp. z o.o.</li>
+            <li>Aromatycznie Sp. z o.o.</li>
             <li>Różana 3</li>
             <li>Nakło Śląskie, 42-620</li>
             <li>NIP: 6452597821</li>
@@ -26,6 +26,8 @@ const Footer = () => {
 
       <div className="clientFooterBottom">
         <p className="clientFooterContact">
+          Tel: 510 462 291
+          <br />
           Tel: 509 043 258
           <br />
           kontakt@ardrop.pl

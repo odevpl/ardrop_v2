@@ -68,9 +68,9 @@ function App() {
   const cartBadge = cartItemsCount > 9 ? "9+" : String(cartItemsCount);
 
   const topMenuConfig = [
-    { key: "promo", label: "Promocje", path: "/promocje" },
-    { key: "news", label: "Nowosci", path: "/nowosci" },
-    { key: "bestsellers", label: "Bestsellery", path: "/bestsellery" },
+    // { key: "promo", label: "Promocje", path: "/promocje" },
+    // { key: "news", label: "Nowosci", path: "/nowosci" },
+    // { key: "bestsellers", label: "Bestsellery", path: "/bestsellery" },
     {
       key: "orders",
       path: "/zamowienia",
@@ -132,9 +132,15 @@ function App() {
               <Route path="/klient" element={<AccountPage />} />
               <Route path="/zamowienia" element={<DeliveriesListPage />} />
               <Route path="/zamowienia/:id" element={<OrderDetailsPage />} />
-              <Route path="/dostawy" element={<Navigate to="/zamowienia" replace />} />
+              <Route
+                path="/dostawy"
+                element={<Navigate to="/zamowienia" replace />}
+              />
               <Route path="/dostawy/:id" element={<OrderDetailsPage />} />
-              <Route path="/adresy-dostawy" element={<DeliveryAdressessPage />} />
+              <Route
+                path="/adresy-dostawy"
+                element={<DeliveryAdressessPage />}
+              />
               <Route path="/promocje" element={<HomePage />} />
               <Route path="/nowosci" element={<HomePage />} />
               <Route path="/bestsellery" element={<HomePage />} />

@@ -8,6 +8,8 @@ import OrdersService from "services/orders";
 import ProductsService from "services/products";
 import "./Cart.scss";
 
+const SHIPPING_COST = 20;
+
 const formatPrice = (value) => {
   const numericValue = Number(value);
   if (Number.isNaN(numericValue)) return "-";
@@ -74,6 +76,8 @@ const Cart = () => {
   }, []);
 
   const items = useMemo(() => cart?.items || [], [cart]);
+  const productsTotalGross = Number(cart?.totalGross || 0);
+  const orderTotalGross = productsTotalGross + SHIPPING_COST;
 
   useEffect(() => {
     let isMounted = true;
@@ -412,16 +416,16 @@ const Cart = () => {
           <section className="cartSummaryCard">
             <div className="cartSummaryRow">
               <span>Wartosc produktow</span>
-              <strong>{formatPrice(cart?.totalGross || 0)} zl</strong>
+              <strong>{formatPrice(productsTotalGross)} zl</strong>
             </div>
             <div className="cartSummaryRow">
-              <span>Dostawa od</span>
-              <strong>0,00 zl</strong>
+              <span>Dostawa</span>
+              <strong>{formatPrice(SHIPPING_COST)} zl</strong>
             </div>
 
             <div className="cartTotalLine">
               <strong>Razem</strong>
-              <strong>{formatPrice(cart?.totalGross || 0)} zl</strong>
+              <strong>{formatPrice(orderTotalGross)} zl</strong>
             </div>
 
             <div className="cartSubmitWrap">

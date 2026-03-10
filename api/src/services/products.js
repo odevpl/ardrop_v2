@@ -70,7 +70,9 @@ const getProducts = async ({
   const baseQuery = db("products")
     .leftJoin("sellers", "products.sellerId", "sellers.id");
 
-  if (role === "SELLER") {
+  if (role === "CLIENT") {
+    baseQuery.where("products.status", "active");
+  } else if (role === "SELLER") {
     const currentSellerId = await resolveSellerIdByUserId(userId);
     baseQuery.where("products.sellerId", currentSellerId);
   } else if (sellerId !== undefined) {
@@ -81,7 +83,7 @@ const getProducts = async ({
     baseQuery.andWhere("name", "like", `%${search}%`);
   }
 
-  if (status) {
+  if (status && role !== "CLIENT") {
     baseQuery.andWhere({ status });
   }
 
@@ -161,6 +163,12 @@ const getProductById = async ({ userId, role, productId }) => {
     throw error;
   }
 
+  if (role === "CLIENT" && product.status !== "active") {
+    const error = new Error("Product not found");
+    error.status = 404;
+    throw error;
+  }
+
   if (role === "SELLER") {
     const currentSellerId = await resolveSellerIdByUserId(userId);
     if (Number(product.sellerId) !== currentSellerId) {
@@ -182,14 +190,18 @@ const getProductById = async ({ userId, role, productId }) => {
   };
 };
 
-const getSuggestedProducts = async ({ limit = 10 }) => {
+const getSuggestedProducts = async ({ limit = 10, role }) => {
   const normalizedLimit = Number(limit) > 0 ? Math.min(Number(limit), 20) : 10;
 
-  const products = await db("products")
+  const query = db("products")
     .select("products.*", "sellers.companyName as sellerCompanyName")
-    .leftJoin("sellers", "products.sellerId", "sellers.id")
-    .orderBy("products.id", "asc")
-    .limit(normalizedLimit);
+    .leftJoin("sellers", "products.sellerId", "sellers.id");
+
+  if (role === "CLIENT") {
+    query.where("products.status", "active");
+  }
+
+  const products = await query.orderBy("products.id", "asc").limit(normalizedLimit);
 
   if (products.length === 0) {
     return [];

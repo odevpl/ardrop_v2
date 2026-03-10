@@ -61,10 +61,14 @@
   margin: 0;
   font-size: 16px;
   color: #d3ddf7;
+  a {
+    color: #fff;
+    font-weight: 600;
+  }
 }
 
 .clientFooterContact {
-  color: #ff5ca1;
+  color: #fff;
 }
 
 @media (max-width: 760px) {

@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import OrdersService from 'services/orders'
 import './OrderView.scss'
 
+const SHIPPING_COST = 20
+
 const formatPrice = (value) => `${Number(value || 0).toFixed(2)} zl`
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
 
@@ -22,6 +24,8 @@ const OrderViewContent = ({ payload }) => {
     (sum, item) => sum + Number(item.grossPrice || 0) * Number(item.quantity || 0),
     0,
   )
+  const shippingTotal = Number(order?.totalShipping) > 0 ? Number(order.totalShipping) : SHIPPING_COST
+  const grossTotal = Number(order?.totalGross) > 0 ? Number(order.totalGross) : orderTotalFromItems + shippingTotal
 
   return (
     <section className="orderViewModule">
@@ -118,11 +122,11 @@ const OrderViewContent = ({ payload }) => {
             </div>
             <div className="orderViewSummaryRow">
               <span>Dostawa</span>
-              <strong>{formatPrice(order?.totalShipping)}</strong>
+              <strong>{formatPrice(shippingTotal)}</strong>
             </div>
             <div className="orderViewTotalLine">
               <strong>Razem brutto</strong>
-              <strong>{formatPrice(order?.totalGross)}</strong>
+              <strong>{formatPrice(grossTotal)}</strong>
             </div>
             <div className="orderViewSummaryRow">
               <span>Razem netto</span>

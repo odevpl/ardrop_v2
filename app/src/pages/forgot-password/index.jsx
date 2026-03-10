@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import AuthLayout from 'components/AuthLayout'
 import { useNotification } from 'components/GlobalNotification/index.js'
 import UserService from 'services/userService'
-import '../login/login.scss'
 
 function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -18,16 +18,14 @@ function ForgotPasswordPage() {
   }
 
   return (
-    <main className="loginPage">
-      <form className="loginCard" onSubmit={handleSubmit}>
-        <h1 className="loginTitle">Przypomnienie hasla</h1>
-
-        <label className="loginLabel" htmlFor="forgot-email">
+    <AuthLayout title="Reset hasla" subtitle="Podaj email, a wyslemy link resetujacy">
+      <form onSubmit={handleSubmit}>
+        <label className="authLabel" htmlFor="forgot-email">
           Email
         </label>
         <input
           id="forgot-email"
-          className="loginInput"
+          className="authInput"
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -35,15 +33,15 @@ function ForgotPasswordPage() {
           autoComplete="email"
         />
 
-        <button className="loginButton" type="submit" disabled={isSubmitting}>
+        <button className="authButton" type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Wysylanie...' : 'Wyslij link'}
         </button>
 
-        <div className="loginLinks">
+        <div className="authLinks">
           <Link to="/login">Wroc do logowania</Link>
         </div>
       </form>
-    </main>
+    </AuthLayout>
   )
 }
 

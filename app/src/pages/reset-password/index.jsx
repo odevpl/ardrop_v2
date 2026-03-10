@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import AuthLayout from 'components/AuthLayout'
 import { useNotification } from 'components/GlobalNotification/index.js'
 import UserService from 'services/userService'
-import '../login/login.scss'
 
 function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -47,16 +47,14 @@ function ResetPasswordPage() {
   }
 
   return (
-    <main className="loginPage">
-      <form className="loginCard" onSubmit={handleSubmit}>
-        <h1 className="loginTitle">Ustaw nowe haslo</h1>
-
-        <label className="loginLabel" htmlFor="reset-password">
+    <AuthLayout title="Nowe haslo" subtitle="Ustaw nowe haslo do konta">
+      <form onSubmit={handleSubmit}>
+        <label className="authLabel" htmlFor="reset-password">
           Nowe haslo
         </label>
         <input
           id="reset-password"
-          className="loginInput"
+          className="authInput"
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
@@ -64,12 +62,12 @@ function ResetPasswordPage() {
           autoComplete="new-password"
         />
 
-        <label className="loginLabel" htmlFor="reset-password-repeat">
+        <label className="authLabel" htmlFor="reset-password-repeat">
           Powtorz haslo
         </label>
         <input
           id="reset-password-repeat"
-          className="loginInput"
+          className="authInput"
           type="password"
           value={passwordRepeat}
           onChange={(event) => setPasswordRepeat(event.target.value)}
@@ -77,16 +75,16 @@ function ResetPasswordPage() {
           autoComplete="new-password"
         />
 
-        {errorMessage ? <p className="loginError">{errorMessage}</p> : null}
-        <button className="loginButton" type="submit" disabled={isSubmitting}>
+        {errorMessage ? <p className="authError">{errorMessage}</p> : null}
+        <button className="authButton" type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Zapisywanie...' : 'Zapisz nowe haslo'}
         </button>
 
-        <div className="loginLinks">
+        <div className="authLinks">
           <Link to="/login">Przejdz do logowania</Link>
         </div>
       </form>
-    </main>
+    </AuthLayout>
   )
 }
 

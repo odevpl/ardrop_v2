@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import AuthLayout from 'components/AuthLayout'
 import { useNotification } from 'components/GlobalNotification/index.js'
 import UserService from 'services/userService'
-import '../login/login.scss'
 
 function RegisterPage() {
   const [email, setEmail] = useState('')
@@ -39,16 +39,14 @@ function RegisterPage() {
   }
 
   return (
-    <main className="loginPage">
-      <form className="loginCard" onSubmit={handleSubmit}>
-        <h1 className="loginTitle">Rejestracja klienta</h1>
-
-        <label className="loginLabel" htmlFor="register-email">
+    <AuthLayout title="Dolacz do nas" subtitle="Zaloz konto klienta">
+      <form onSubmit={handleSubmit}>
+        <label className="authLabel" htmlFor="register-email">
           Email
         </label>
         <input
           id="register-email"
-          className="loginInput"
+          className="authInput"
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -56,12 +54,12 @@ function RegisterPage() {
           autoComplete="email"
         />
 
-        <label className="loginLabel" htmlFor="register-password">
+        <label className="authLabel" htmlFor="register-password">
           Haslo
         </label>
         <input
           id="register-password"
-          className="loginInput"
+          className="authInput"
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
@@ -69,12 +67,12 @@ function RegisterPage() {
           autoComplete="new-password"
         />
 
-        <label className="loginLabel" htmlFor="register-password-repeat">
+        <label className="authLabel" htmlFor="register-password-repeat">
           Powtorz haslo
         </label>
         <input
           id="register-password-repeat"
-          className="loginInput"
+          className="authInput"
           type="password"
           value={passwordRepeat}
           onChange={(event) => setPasswordRepeat(event.target.value)}
@@ -82,16 +80,16 @@ function RegisterPage() {
           autoComplete="new-password"
         />
 
-        {errorMessage ? <p className="loginError">{errorMessage}</p> : null}
-        <button className="loginButton" type="submit" disabled={isSubmitting}>
+        {errorMessage ? <p className="authError">{errorMessage}</p> : null}
+        <button className="authButton" type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Rejestracja...' : 'Zarejestruj'}
         </button>
 
-        <div className="loginLinks">
+        <div className="authLinks">
           <Link to="/login">Masz juz konto? Zaloguj sie</Link>
         </div>
       </form>
-    </main>
+    </AuthLayout>
   )
 }
 

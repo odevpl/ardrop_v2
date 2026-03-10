@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import AuthLayout from 'components/AuthLayout'
 import { useAuth } from '../../providers/authProvider'
 import UserService from '../../services/userService'
-import './login.scss'
 
 function LoginPage() {
   const { setAuthToken, setRole } = useAuth()
@@ -40,16 +40,14 @@ function LoginPage() {
   }
 
   return (
-    <main className="loginPage">
-      <form className="loginCard" onSubmit={handleSubmit}>
-        <h1 className="loginTitle">Logowanie klienta</h1>
-
-        <label className="loginLabel" htmlFor="email">
+    <AuthLayout title="Witaj!" subtitle="Zaloguj sie do panelu klienta">
+      <form onSubmit={handleSubmit}>
+        <label className="authLabel" htmlFor="email">
           Email
         </label>
         <input
           id="email"
-          className="loginInput"
+          className="authInput"
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -57,12 +55,12 @@ function LoginPage() {
           autoComplete="email"
         />
 
-        <label className="loginLabel" htmlFor="password">
+        <label className="authLabel" htmlFor="password">
           Haslo
         </label>
         <input
           id="password"
-          className="loginInput"
+          className="authInput"
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
@@ -70,18 +68,18 @@ function LoginPage() {
           autoComplete="current-password"
         />
 
-        {errorMessage ? <p className="loginError">{errorMessage}</p> : null}
+        {errorMessage ? <p className="authError">{errorMessage}</p> : null}
 
-        <button className="loginButton" type="submit" disabled={isSubmitting}>
+        <button className="authButton" type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Logowanie...' : 'Zaloguj'}
         </button>
 
-        <div className="loginLinks">
+        <div className="authLinks">
           <Link to="/register">Zaloz konto</Link>
           <Link to="/forgot-password">Nie pamietasz hasla?</Link>
         </div>
       </form>
-    </main>
+    </AuthLayout>
   )
 }
 

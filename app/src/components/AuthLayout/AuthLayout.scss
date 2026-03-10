@@ -1,0 +1,194 @@
+.authPage {
+  min-height: 100vh;
+  background: #f2f4f8;
+}
+
+.authShell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(520px, 1.05fr);
+}
+
+.authVisual {
+  background: #f2f2f2;
+  display: grid;
+  place-items: center;
+  padding: 48px;
+}
+
+.authVisualMedia {
+  width: min(560px, 100%);
+  border-radius: 22px;
+  padding: 20px;
+  display: grid;
+  place-items: center;
+}
+
+.authVisualMedia img {
+  display: block;
+  width: 100%;
+  max-width: 250px;
+  height: auto;
+  object-fit: contain;
+}
+
+.authPanel {
+  background: #0a64c9;
+  border-top-left-radius: 30px;
+  border-bottom-left-radius: 30px;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.authPanel::before,
+.authPanel::after {
+  content: "";
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.authPanel::before {
+  width: 420px;
+  height: 420px;
+  right: -210px;
+  bottom: -210px;
+}
+
+.authPanel::after {
+  width: 520px;
+  height: 520px;
+  right: -260px;
+  bottom: -260px;
+}
+
+.authCard {
+  width: min(460px, 100%);
+  background: #f5f6f8;
+  border-radius: 16px;
+  padding: 28px 28px 24px;
+  box-shadow: 0 12px 30px rgba(16, 42, 78, 0.22);
+  display: grid;
+  gap: 12px;
+  z-index: 1;
+}
+
+.authCardHeader {
+  margin-bottom: 4px;
+}
+
+.authTitle {
+  margin: 0;
+  font-size: 2rem;
+  color: #212529;
+}
+
+.authSubtitle {
+  margin: 8px 0 0;
+  font-size: 1.15rem;
+  color: #3b4956;
+}
+
+.authLabel {
+  font-size: 0.88rem;
+  color: #4e606f;
+}
+
+.authInput {
+  width: 100%;
+  height: 50px;
+  border: 1px solid #c9d4de;
+  border-radius: 999px;
+  padding: 0 16px;
+  font-size: 1rem;
+  color: #22313f;
+  background: #ffffff;
+}
+
+.authInput:focus {
+  outline: none;
+  border-color: #0a64c9;
+  box-shadow: 0 0 0 2px rgba(10, 100, 201, 0.18);
+}
+
+.authError {
+  margin: 0;
+  color: #c0392b;
+  font-size: 0.9rem;
+}
+
+.authInfo {
+  margin: 0;
+  color: #3b4956;
+  font-size: 0.95rem;
+}
+
+.authButton {
+  margin-top: 6px;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 20px;
+  background: #0a64c9;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.authButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.authLinks {
+  margin-top: 6px;
+  display: grid;
+  gap: 8px;
+}
+
+.authLinks a {
+  color: #31485f;
+  text-decoration: none;
+  font-size: 0.94rem;
+}
+
+.authLinks a:hover {
+  color: #0a64c9;
+}
+
+@media (max-width: 1024px) {
+  .authShell {
+    grid-template-columns: 1fr;
+  }
+
+  .authVisual {
+    display: none;
+  }
+
+  .authPanel {
+    border-radius: 0;
+    min-height: 100vh;
+  }
+}
+
+@media (max-width: 640px) {
+  .authPanel {
+    padding: 18px;
+  }
+
+  .authCard {
+    padding: 22px 18px 20px;
+  }
+
+  .authTitle {
+    font-size: 1.7rem;
+  }
+
+  .authSubtitle {
+    font-size: 1rem;
+  }
+}

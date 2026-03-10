@@ -24,6 +24,7 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
   const pagination = payload?.meta?.pagination || {};
   const page = Number(pagination.page || filters?.page || 1);
   const totalPages = Number(pagination.totalPages || 1);
+  const searchValue = filters?.search || "";
   const [pendingId, setPendingId] = useState(null);
   const notification = useNotification();
 
@@ -61,6 +62,21 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
         <span className="allProductsMeta">
           Strona {page} / {Math.max(totalPages, 1)}
         </span>
+      </div>
+      <div className="allProductsToolbar">
+        <input
+          className="allProductsSearchInput"
+          type="search"
+          value={searchValue}
+          placeholder="Szukaj produktu..."
+          onChange={(event) =>
+            setFilters({
+              ...(filters || {}),
+              search: event.target.value,
+              page: 1,
+            })
+          }
+        />
       </div>
       <div className="allProductsGrid">
         {products.map((product) => {
@@ -125,7 +141,7 @@ const AllProducts = () => (
     name="AllProducts"
     component={AllProductsView}
     connector={ProductsService.getProducts}
-    filters={{ page: 1, limit: 20 }}
+    filters={{ page: 1, limit: 20, search: "" }}
   />
 );
 

@@ -10,6 +10,25 @@
   margin-bottom: 12px;
 }
 
+.allProductsToolbar {
+  margin-bottom: 12px;
+}
+
+.allProductsSearchInput {
+  width: min(420px, 100%);
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid #0a64c9;
+  border-radius: 14px;
+  color: #0f1720;
+  background: #ffffff;
+}
+
+.allProductsSearchInput:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(10, 100, 201, 0.18);
+}
+
 .allProductsTitle {
   margin: 0;
   font-size: 1.25rem;

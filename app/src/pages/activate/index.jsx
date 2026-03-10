@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import AuthLayout from 'components/AuthLayout'
 import { useNotification } from 'components/GlobalNotification/index.js'
 import UserService from 'services/userService'
-import '../login/login.scss'
 
 function ActivatePage() {
   const [searchParams] = useSearchParams()
@@ -38,16 +38,13 @@ function ActivatePage() {
   }, [token, notification])
 
   return (
-    <main className="loginPage">
-      <div className="loginCard">
-        <h1 className="loginTitle">Aktywacja konta</h1>
-        {errorMessage ? <p className="loginError">{errorMessage}</p> : null}
-        {message ? <p>{message}</p> : null}
-        <div className="loginLinks">
-          <Link to="/login">Przejdz do logowania</Link>
-        </div>
+    <AuthLayout title="Aktywacja konta" subtitle="Finalizujemy aktywacje Twojego konta">
+      {errorMessage ? <p className="authError">{errorMessage}</p> : null}
+      {message ? <p className="authInfo">{message}</p> : null}
+      <div className="authLinks">
+        <Link to="/login">Przejdz do logowania</Link>
       </div>
-    </main>
+    </AuthLayout>
   )
 }
 

@@ -1,0 +1,104 @@
+.marketingBanner {
+  width: 100%;
+  margin-bottom: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.marketingBanner-hero {
+  grid-template-columns: 1fr;
+}
+
+.marketingBanner-tiles {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.marketingBanner-tiles .marketingBannerItem {
+  grid-column: span 4;
+  min-height: 160px;
+}
+
+.marketingBanner-tiles .marketingBannerItem:first-child {
+  grid-column: span 6;
+}
+
+.marketingBanner-tiles .marketingBannerItem:nth-child(2) {
+  grid-column: span 6;
+}
+
+.marketingBannerItem {
+  border: 0;
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden;
+  background: #f3f6f9;
+  box-shadow: 0 10px 24px rgba(15, 23, 32, 0.14);
+  position: relative;
+  cursor: pointer;
+  min-height: 240px;
+}
+
+.marketingBanner-hero .marketingBannerItem {
+  min-height: 260px;
+  max-height: 420px;
+}
+
+.marketingBannerItem img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.marketingBannerCaption {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  background: rgba(15, 23, 32, 0.62);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  color: #ffffff;
+}
+
+.marketingBannerCaption strong {
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+
+.marketingBannerCaption small {
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+@media (max-width: 1099px) {
+  .marketingBanner-tiles .marketingBannerItem {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 760px) {
+  .marketingBanner {
+    margin-bottom: 14px;
+  }
+
+  .marketingBanner-tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .marketingBanner-tiles .marketingBannerItem,
+  .marketingBanner-tiles .marketingBannerItem:first-child,
+  .marketingBanner-tiles .marketingBannerItem:nth-child(2) {
+    grid-column: 1;
+  }
+
+  .marketingBannerItem,
+  .marketingBanner-hero .marketingBannerItem {
+    min-height: 180px;
+    border-radius: 10px;
+  }
+}
+

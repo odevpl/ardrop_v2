@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { Navigate, NavLink, Route, Routes } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "./providers/authProvider";
 import SidebarMenu from "./components/SidebarMenu";
 import TopMenu from "./components/TopMenu";
 import Footer from "./components/Footer";
+import ApplicationLoading from "./components/ApplicationLoading";
 import { SIDEBAR_MENU_CONFIG } from "./components/SidebarMenu/sidebar.config";
 import HomePage from "pages/home";
 import CartPage from "pages/cart";
@@ -13,6 +14,7 @@ import DeliveriesListPage from "pages/deliveriesList";
 import OrderDetailsPage from "pages/orderDetails";
 import ProductPreviewPage from "pages/productPreview";
 import CartsService from "services/carts";
+import AccountService from "services/account";
 import "./App.scss";
 
 const renderTopMenuItem = ({ item, key, className, content }) =>
@@ -40,8 +42,30 @@ const renderTopMenuItem = ({ item, key, className, content }) =>
   );
 
 function App() {
+  const location = useLocation();
   const { logout } = useAuth();
   const [cartItemsCount, setCartItemsCount] = useState(0);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
+
+  const isClientProfileComplete = (profile) => {
+    const client = profile?.client || {};
+    const required = ["name", "phone", "nip", "address", "city", "postalCode"];
+    return required.every((key) => String(client?.[key] || "").trim() !== "");
+  };
+
+  const refreshProfileCompleteness = async () => {
+    const response = await AccountService.getMyAccount();
+    if (response?.status && response.status >= 400) {
+      setIsProfileComplete(false);
+      setIsProfileLoading(false);
+      return;
+    }
+
+    const profile = response?.data || response?.profile || {};
+    setIsProfileComplete(isClientProfileComplete(profile));
+    setIsProfileLoading(false);
+  };
 
   const refreshCartCount = async () => {
     const response = await CartsService.getCurrentCart();
@@ -64,6 +88,19 @@ function App() {
     window.addEventListener("cart:updated", onCartUpdated);
     return () => window.removeEventListener("cart:updated", onCartUpdated);
   }, []);
+
+  useEffect(() => {
+    refreshProfileCompleteness();
+    const onProfileUpdated = () => refreshProfileCompleteness();
+    window.addEventListener("client-profile:updated", onProfileUpdated);
+    return () => window.removeEventListener("client-profile:updated", onProfileUpdated);
+  }, []);
+
+  const shouldForceAccountPage = useMemo(() => {
+    if (isProfileComplete) return false;
+    const allowedPaths = ["/klient", "/konto"];
+    return !allowedPaths.includes(location.pathname);
+  }, [isProfileComplete, location.pathname]);
 
   const cartBadge = cartItemsCount > 9 ? "9+" : String(cartItemsCount);
 
@@ -110,6 +147,10 @@ function App() {
     },
   ];
 
+  if (isProfileLoading) {
+    return <ApplicationLoading />;
+  }
+
   return (
     <div className="clientLayout">
       <div className="clientContent">
@@ -125,6 +166,7 @@ function App() {
         <main className="clientMain">
           <TopMenu config={topMenuConfig} renderItem={renderTopMenuItem} />
           <div className="clientMainContent">
+            {shouldForceAccountPage ? <Navigate to="/klient" replace /> : null}
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/koszyk" element={<CartPage />} />

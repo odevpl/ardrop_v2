@@ -1,5 +1,6 @@
 .cartModule {
-  width: calc(100vw - 320px);
+  width: 100%;
+  max-width: 100%;
   color: #071a33;
 }
 
@@ -316,10 +317,6 @@
 }
 
 @media (max-width: 786px) {
-  .cartModule {
-    width: 100%;
-  }
-
   .cartTable thead {
     display: none;
   }

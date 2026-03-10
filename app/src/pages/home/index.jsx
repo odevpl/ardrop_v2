@@ -1,12 +1,12 @@
-import HeroBanner from "modules/HeroBanner";
+import MarketingBanner from "modules/MarketingBanner";
 import SuggestedProducts from "modules/SuggestedProducts";
 import AllProducts from "modules/AllProducts";
 
 const HomePage = () => {
   return (
     <section className="homePage">
-      {/* <HeroBanner imageUrl="hero.png" /> */}
-      {/* <SuggestedProducts /> */}
+      <MarketingBanner />
+      <SuggestedProducts />
       <AllProducts />
     </section>
   );

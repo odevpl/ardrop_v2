@@ -91,6 +91,7 @@ const Account = () => {
     });
     setMessage("Dane konta zostaly zaktualizowane.");
     notification.success("Dane konta zostaly zaktualizowane.");
+    window.dispatchEvent(new Event("client-profile:updated"));
     setIsSaving(false);
   };
 

@@ -35,6 +35,7 @@
 }
 
 .clientMain {
+  min-width: 0;
   padding: 20px 24px 28px;
   display: flex;
   flex-direction: column;
@@ -42,19 +43,16 @@
 }
 
 .clientMainContent {
+  min-width: 0;
   flex: 1;
 }
 
 .homePage {
   display: block;
-  width: calc(100vw - 320px);
+  width: 100%;
 
   .suggestedProducts {
-    width: calc(100vw);
-
-    @media (min-width: 786px) {
-      width: calc(100vw - 320px);
-    }
+    width: 100%;
   }
 }
 

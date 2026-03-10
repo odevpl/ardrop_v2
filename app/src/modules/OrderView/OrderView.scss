@@ -1,5 +1,6 @@
 .orderViewModule {
-  width: calc(100vw - 320px);
+  width: 100%;
+  max-width: 100%;
   color: #071a33;
 }
 
@@ -175,10 +176,6 @@
 }
 
 @media (max-width: 786px) {
-  .orderViewModule {
-    width: 100%;
-  }
-
   .orderViewInfoGrid {
     grid-template-columns: 1fr;
     gap: 4px;

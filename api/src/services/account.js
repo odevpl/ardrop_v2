@@ -39,6 +39,17 @@ const mapProfile = (row) => ({
   },
 });
 
+const REQUIRED_PROFILE_FIELDS = [
+  { key: "name", label: "name" },
+  { key: "phone", label: "phone" },
+  { key: "nip", label: "nip" },
+  { key: "address", label: "address" },
+  { key: "city", label: "city" },
+  { key: "postalCode", label: "postalCode" },
+];
+
+const isBlank = (value) => String(value || "").trim() === "";
+
 const getCurrentClientProfile = async ({ userId }) => {
   const profile = await db("users")
     .innerJoin("clients", "clients.userId", "users.id")
@@ -114,6 +125,30 @@ const updateCurrentClientProfile = async ({ userId, payload = {} }) => {
         clientUpdates[field] = payload[field] === null ? null : String(payload[field]).trim();
       }
     });
+
+    const mergedProfile = {
+      name: clientUpdates.name !== undefined ? clientUpdates.name : existing.name,
+      phone: clientUpdates.phone !== undefined ? clientUpdates.phone : existing.phone,
+      nip: clientUpdates.nip !== undefined ? clientUpdates.nip : existing.nip,
+      address: clientUpdates.address !== undefined ? clientUpdates.address : existing.address,
+      city: clientUpdates.city !== undefined ? clientUpdates.city : existing.city,
+      postalCode:
+        clientUpdates.postalCode !== undefined
+          ? clientUpdates.postalCode
+          : existing.postalCode,
+    };
+
+    const missingFields = REQUIRED_PROFILE_FIELDS.filter(({ key }) =>
+      isBlank(mergedProfile[key]),
+    ).map(({ label }) => label);
+
+    if (missingFields.length > 0) {
+      const error = new Error(
+        `Profile is incomplete. Missing required fields: ${missingFields.join(", ")}`,
+      );
+      error.status = 400;
+      throw error;
+    }
 
     if (Object.keys(userUpdates).length > 0) {
       await trx("users").where({ id: normalizedUserId }).update(userUpdates);

@@ -18,6 +18,7 @@ import ProductDetailsPage from "pages/products/Details";
 import SellersPage from "pages/sellers";
 import AddSellerPage from "pages/sellers/AddSeller";
 import SellerDetailsPage from "pages/sellers/Details";
+import MarketingPage from "pages/marketing";
 import "./App.scss";
 
 const AppContent = () => {
@@ -50,6 +51,7 @@ const AppContent = () => {
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/products/add" element={<AddProductPage />} />
             <Route path="/products/:id" element={<ProductDetailsPage />} />
+            <Route path="/marketing" element={<MarketingPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:id" element={<OrderDetailsPage />} />
           </Routes>

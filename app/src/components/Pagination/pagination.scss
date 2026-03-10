@@ -2,6 +2,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   padding: 12px;
   border-top: 1px solid #e5edf2;
@@ -9,6 +10,7 @@
 
 .paginationInfo {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   color: #5a7282;
   font-size: 0.85rem;
@@ -16,6 +18,7 @@
 
 .paginationControls {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -37,6 +40,7 @@
 .paginationLimit {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   color: #5a7282;
   font-size: 0.85rem;
@@ -61,4 +65,34 @@
   border: 1px solid #c3d4df;
   border-radius: 8px;
   padding: 0 8px;
+}
+
+@media (max-width: 760px) {
+  .pagination {
+    align-items: flex-start;
+  }
+
+  .paginationInfo,
+  .paginationControls,
+  .paginationLimit {
+    width: 100%;
+  }
+
+  .paginationControls {
+    gap: 6px;
+  }
+
+  .paginationButton {
+    flex: 1 1 calc(50% - 3px);
+    min-width: 120px;
+  }
+
+  .paginationGoToPage {
+    flex: 1 1 100%;
+  }
+
+  .paginationPageSelect,
+  .paginationLimitSelect {
+    width: 100%;
+  }
 }

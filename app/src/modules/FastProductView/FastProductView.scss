@@ -1,0 +1,146 @@
+.fastProductView {
+  width: min(520px, 100%);
+}
+
+.fastProductViewTitle {
+  margin: 0 0 12px;
+  color: #213541;
+}
+
+.fastProductViewImageWrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  border: 1px solid #e5edf2;
+  background: #f8fbfd;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fastProductViewImageWrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fastProductViewImagePlaceholder {
+  color: #5a7282;
+}
+
+.fastProductViewRow {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(180px, 1.3fr) minmax(150px, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.fastProductViewField {
+  margin-top: 0;
+}
+
+.fastProductViewField label {
+  display: block;
+  margin-bottom: 6px;
+  color: #3f5664;
+}
+
+.fastProductViewField select {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #c3d4df;
+  border-radius: 8px;
+  padding: 0 10px;
+}
+
+.fastProductViewPriceBox {
+  padding: 8px 10px;
+  border: 1px solid #c3d4df;
+  border-radius: 8px;
+  background: #f8fbfd;
+}
+
+.fastProductViewPriceLabel {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #5a7282;
+}
+
+.fastProductViewPriceValue {
+  margin: 2px 0 6px;
+  color: #005ec7;
+  font-weight: 700;
+}
+
+.fastProductViewPriceValue:last-child {
+  margin-bottom: 0;
+}
+
+.fastProductViewQtyControl {
+  display: inline-flex;
+  border: 1px solid #c3d4df;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.fastProductViewQtyControl button,
+.fastProductViewQtyControl input {
+  height: 40px;
+  border: 0;
+  background: #ffffff;
+}
+
+.fastProductViewQtyControl button {
+  width: 40px;
+  cursor: pointer;
+}
+
+.fastProductViewQtyControl input {
+  width: 72px;
+  text-align: center;
+  border-left: 1px solid #e5edf2;
+  border-right: 1px solid #e5edf2;
+}
+
+.fastProductViewAddButton {
+  margin-top: 14px;
+  width: 100%;
+  height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: #005ec7;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fastProductViewDescription {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e5edf2;
+}
+
+.fastProductViewDescription p {
+  margin: 0;
+  color: #3f5664;
+  white-space: pre-line;
+}
+
+.fastProductViewAddButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fastProductViewEmpty {
+  margin: 0;
+  color: #5a7282;
+}
+
+@media (max-width: 720px) {
+  .fastProductViewRow {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}

@@ -1,6 +1,8 @@
 import FetchWrapper from "components/FetchWrapper";
 import Pagination from "components/Pagination";
 import { useNotification } from "components/GlobalNotification/index.js";
+import Popup2 from "components/Popup2";
+import FastProductView from "modules/FastProductView";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CartsService from "services/carts";
@@ -14,8 +16,12 @@ const formatPrice = (value) => {
 };
 
 const getMainImage = (product) => {
-  if (!Array.isArray(product.images) || product.images.length === 0) return null;
-  return product.images.find((image) => Number(image.isMain) === 1) || product.images[0];
+  if (!Array.isArray(product.images) || product.images.length === 0)
+    return null;
+  return (
+    product.images.find((image) => Number(image.isMain) === 1) ||
+    product.images[0]
+  );
 };
 
 const AllProductsView = ({ payload, filters, setFilters }) => {
@@ -37,7 +43,9 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
     });
 
     if (response?.status && response.status >= 400) {
-      notification.error(response?.data?.error || "Nie udalo sie dodac do koszyka.");
+      notification.error(
+        response?.data?.error || "Nie udalo sie dodac do koszyka.",
+      );
       setPendingId(null);
       return;
     }
@@ -82,10 +90,16 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
       <div className="allProductsGrid">
         {products.map((product) => {
           const mainImage = getMainImage(product);
-          const variants = Array.isArray(product.variants) ? product.variants : [];
-          const activeVariants = variants.filter((variant) => variant.status === "active");
+          const variants = Array.isArray(product.variants)
+            ? product.variants
+            : [];
+          const activeVariants = variants.filter(
+            (variant) => variant.status === "active",
+          );
           const defaultVariant =
-            activeVariants.find((variant) => variant.isDefault) || activeVariants[0] || null;
+            activeVariants.find((variant) => variant.isDefault) ||
+            activeVariants[0] ||
+            null;
           const displayPrice = defaultVariant?.grossPrice ?? product.grossPrice;
           return (
             <article
@@ -101,27 +115,49 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
                     loading="lazy"
                   />
                 ) : (
-                  <div className="allProductsImagePlaceholder">Brak zdjecia</div>
+                  <div className="allProductsImagePlaceholder">
+                    Brak zdjecia
+                  </div>
                 )}
               </div>
               <p className="allProductsPrice">{formatPrice(displayPrice)}</p>
               <h3 className="allProductsName">{product.name}</h3>
-              <button
-                type="button"
-                className="allProductsAddButton"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  addToCart({
-                    productId: product.id,
-                    variantId: defaultVariant ? Number(defaultVariant.id) : null,
-                  });
-                }}
-                disabled={pendingId === product.id}
-                aria-label={`Dodaj ${product.name} do koszyka`}
+              <div
+                className="allProductsActions"
+                onClick={(event) => event.stopPropagation()}
               >
-                <i className="fa-solid fa-cart-shopping" aria-hidden="true" />
-                <i className="fa-solid fa-plus" aria-hidden="true" />
-              </button>
+                <button
+                  type="button"
+                  className="allProductsAddButton"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    addToCart({
+                      productId: product.id,
+                      variantId: defaultVariant
+                        ? Number(defaultVariant.id)
+                        : null,
+                    });
+                  }}
+                  disabled={pendingId === product.id}
+                  aria-label={`Dodaj ${product.name} do koszyka`}
+                >
+                  <i className="fa-solid fa-cart-shopping" aria-hidden="true" />
+                  <i className="fa-solid fa-plus" aria-hidden="true" />
+                </button>
+                <Popup2
+                  openButtonText="Szybki podgląd"
+                  buttonComponent="button"
+                  buttonProps={{
+                    type: "button",
+                    className: "allProductsPopupButton",
+                    "aria-label": `Otworz szybki podglad produktu ${product.name}`,
+                    onClick: (event) => event.stopPropagation(),
+                  }}
+                  component={FastProductView}
+                  componentProps={{ productId: product.id }}
+                  modalProps={{ width: 580 }}
+                />
+              </div>
             </article>
           );
         })}
@@ -155,4 +191,3 @@ const AllProducts = () => (
 );
 
 export default AllProducts;
-

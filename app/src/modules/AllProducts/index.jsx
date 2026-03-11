@@ -28,10 +28,11 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
   const [pendingId, setPendingId] = useState(null);
   const notification = useNotification();
 
-  const addToCart = async (productId) => {
+  const addToCart = async ({ productId, variantId = null }) => {
     setPendingId(productId);
     const response = await CartsService.addItemToCart({
       productId,
+      variantId,
       quantity: 1,
     });
 
@@ -81,6 +82,11 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
       <div className="allProductsGrid">
         {products.map((product) => {
           const mainImage = getMainImage(product);
+          const variants = Array.isArray(product.variants) ? product.variants : [];
+          const activeVariants = variants.filter((variant) => variant.status === "active");
+          const defaultVariant =
+            activeVariants.find((variant) => variant.isDefault) || activeVariants[0] || null;
+          const displayPrice = defaultVariant?.grossPrice ?? product.grossPrice;
           return (
             <article
               key={product.id}
@@ -98,14 +104,17 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
                   <div className="allProductsImagePlaceholder">Brak zdjecia</div>
                 )}
               </div>
-              <p className="allProductsPrice">{formatPrice(product.grossPrice)}</p>
+              <p className="allProductsPrice">{formatPrice(displayPrice)}</p>
               <h3 className="allProductsName">{product.name}</h3>
               <button
                 type="button"
                 className="allProductsAddButton"
                 onClick={(event) => {
                   event.stopPropagation();
-                  addToCart(product.id);
+                  addToCart({
+                    productId: product.id,
+                    variantId: defaultVariant ? Number(defaultVariant.id) : null,
+                  });
                 }}
                 disabled={pendingId === product.id}
                 aria-label={`Dodaj ${product.name} do koszyka`}

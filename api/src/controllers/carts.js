@@ -29,6 +29,7 @@ router.post(
       clientId: req.body.clientId,
       currency: req.body.currency,
       productId: req.body.productId,
+      variantId: req.body.variantId,
       quantity: req.body.quantity,
     });
 

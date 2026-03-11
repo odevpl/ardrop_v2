@@ -274,6 +274,9 @@ const Cart = () => {
                             )}
                           </div>
                           <p className="cartProductName">{item.productNameSnapshot}</p>
+                          {item.variantNameSnapshot ? (
+                            <p className="cartProductVariant">{item.variantNameSnapshot}</p>
+                          ) : null}
                         </div>
                       </td>
                       <td>

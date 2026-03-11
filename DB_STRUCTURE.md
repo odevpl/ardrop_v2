@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 08, 2026 at 11:01 AM
+-- Generation Time: Mar 10, 2026 at 11:40 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -74,8 +74,8 @@ CREATE TABLE `cart_items` (
 --
 
 CREATE TABLE `clients` (
-`id` int(36) NOT NULL,
-`userId` int(36) NOT NULL,
+`id` int(11) NOT NULL,
+`userId` int(11) NOT NULL,
 `name` varchar(255) NOT NULL,
 `phone` varchar(30) DEFAULT NULL,
 `companyName` varchar(255) DEFAULT NULL,
@@ -94,8 +94,8 @@ CREATE TABLE `clients` (
 --
 
 CREATE TABLE `clients_delivery_address` (
-`id` int(10) NOT NULL,
-`clientId` int(36) NOT NULL,
+`id` int(11) NOT NULL,
+`clientId` int(11) NOT NULL,
 `label` varchar(100) DEFAULT NULL,
 `recipientName` varchar(255) NOT NULL,
 `phone` varchar(30) DEFAULT NULL,
@@ -107,6 +107,53 @@ CREATE TABLE `clients_delivery_address` (
 `isDefault` tinyint(1) NOT NULL DEFAULT 0,
 `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
 `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `marketing_campaigns`
+--
+
+CREATE TABLE `marketing_campaigns` (
+`id` int(10) UNSIGNED NOT NULL,
+`name` varchar(180) NOT NULL,
+`slug` varchar(180) NOT NULL,
+`placement` enum('home_hero') NOT NULL DEFAULT 'home_hero',
+`status` enum('draft','active','archived') NOT NULL DEFAULT 'draft',
+`layoutMode` enum('auto','hero','tiles') NOT NULL DEFAULT 'auto',
+`startsAt` datetime DEFAULT NULL,
+`endsAt` datetime DEFAULT NULL,
+`priority` int(11) NOT NULL DEFAULT 100,
+`showOnMobile` tinyint(1) NOT NULL DEFAULT 1,
+`showOnTablet` tinyint(1) NOT NULL DEFAULT 1,
+`showOnDesktop` tinyint(1) NOT NULL DEFAULT 1,
+`maxItems` int(10) UNSIGNED NOT NULL DEFAULT 6,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `marketing_campaign_items`
+--
+
+CREATE TABLE `marketing_campaign_items` (
+`id` int(10) UNSIGNED NOT NULL,
+`campaignId` int(10) UNSIGNED NOT NULL,
+`title` varchar(180) DEFAULT NULL,
+`subtitle` varchar(255) DEFAULT NULL,
+`imageFileName` varchar(255) NOT NULL,
+`imageAlt` varchar(255) DEFAULT NULL,
+`targetType` enum('url','product','category','custom') NOT NULL DEFAULT 'url',
+`targetValue` varchar(500) NOT NULL,
+`position` int(11) NOT NULL DEFAULT 0,
+`isActive` tinyint(1) NOT NULL DEFAULT 1,
+`startsAt` datetime DEFAULT NULL,
+`endsAt` datetime DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -193,8 +240,8 @@ CREATE TABLE `products_image` (
 --
 
 CREATE TABLE `sellers` (
-`id` int(36) NOT NULL,
-`userId` int(36) NOT NULL,
+`id` int(11) NOT NULL,
+`userId` int(11) NOT NULL,
 `companyName` varchar(255) NOT NULL,
 `nip` varchar(20) DEFAULT NULL,
 `phone` varchar(30) DEFAULT NULL,
@@ -212,13 +259,43 @@ CREATE TABLE `sellers` (
 --
 
 CREATE TABLE `users` (
-`id` int(36) NOT NULL,
+`id` int(11) NOT NULL,
 `email` varchar(255) NOT NULL,
 `passwordHash` text NOT NULL,
 `role` enum('ADMIN','SELLER','CLIENT') NOT NULL,
 `isActive` tinyint(1) DEFAULT 1,
 `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
 `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `user_activation_tokens`
+--
+
+CREATE TABLE `user_activation_tokens` (
+`id` int(10) UNSIGNED NOT NULL,
+`userId` int(11) NOT NULL,
+`tokenHash` char(64) NOT NULL,
+`expiresAt` datetime NOT NULL,
+`usedAt` datetime DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `user_password_reset_tokens`
+--
+
+CREATE TABLE `user_password_reset_tokens` (
+`id` int(10) UNSIGNED NOT NULL,
+`userId` int(11) NOT NULL,
+`tokenHash` char(64) NOT NULL,
+`expiresAt` datetime NOT NULL,
+`usedAt` datetime DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -271,13 +348,29 @@ ADD PRIMARY KEY (`id`);
 --
 ALTER TABLE `clients`
 ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `uq_clients_userId` (`userId`),
 ADD KEY `idxClientsSellerId` (`userId`);
 
 --
 -- Indexes for table `clients_delivery_address`
 --
 ALTER TABLE `clients_delivery_address`
-ADD PRIMARY KEY (`id`);
+ADD PRIMARY KEY (`id`),
+ADD KEY `idx_cda_clientId` (`clientId`);
+
+--
+-- Indexes for table `marketing_campaigns`
+--
+ALTER TABLE `marketing_campaigns`
+ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `ux_marketing_campaigns_slug` (`slug`);
+
+--
+-- Indexes for table `marketing_campaign_items`
+--
+ALTER TABLE `marketing_campaign_items`
+ADD PRIMARY KEY (`id`),
+ADD KEY `idx_mkt_items_campaign` (`campaignId`);
 
 --
 -- Indexes for table `orders`
@@ -319,6 +412,22 @@ ADD PRIMARY KEY (`id`),
 ADD UNIQUE KEY `email` (`email`);
 
 --
+-- Indexes for table `user_activation_tokens`
+--
+ALTER TABLE `user_activation_tokens`
+ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `uq_uat_token_hash` (`tokenHash`),
+ADD KEY `idx_uat_user_id` (`userId`);
+
+--
+-- Indexes for table `user_password_reset_tokens`
+--
+ALTER TABLE `user_password_reset_tokens`
+ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `uq_uprt_token_hash` (`tokenHash`),
+ADD KEY `idx_uprt_user_id` (`userId`);
+
+--
 -- Indexes for table `wallets`
 --
 ALTER TABLE `wallets`
@@ -351,13 +460,25 @@ MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 -- AUTO_INCREMENT for table `clients`
 --
 ALTER TABLE `clients`
-MODIFY `id` int(36) NOT NULL AUTO_INCREMENT;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `clients_delivery_address`
 --
 ALTER TABLE `clients_delivery_address`
-MODIFY `id` int(10) NOT NULL AUTO_INCREMENT;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketing_campaigns`
+--
+ALTER TABLE `marketing_campaigns`
+MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketing_campaign_items`
+--
+ALTER TABLE `marketing_campaign_items`
+MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `orders`
@@ -387,13 +508,25 @@ MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 -- AUTO_INCREMENT for table `sellers`
 --
 ALTER TABLE `sellers`
-MODIFY `id` int(36) NOT NULL AUTO_INCREMENT;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-MODIFY `id` int(36) NOT NULL AUTO_INCREMENT;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `user_activation_tokens`
+--
+ALTER TABLE `user_activation_tokens`
+MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `user_password_reset_tokens`
+--
+ALTER TABLE `user_password_reset_tokens`
+MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `wallets`
@@ -406,6 +539,40 @@ MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 --
 ALTER TABLE `wallet_ledger`
 MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `clients`
+--
+ALTER TABLE `clients`
+ADD CONSTRAINT `fk_clients_userId_users_id` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `clients_delivery_address`
+--
+ALTER TABLE `clients_delivery_address`
+ADD CONSTRAINT `fk_cda_clientId_clients_id` FOREIGN KEY (`clientId`) REFERENCES `clients` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `marketing_campaign_items`
+--
+ALTER TABLE `marketing_campaign_items`
+ADD CONSTRAINT `fk_mkt_items_campaign` FOREIGN KEY (`campaignId`) REFERENCES `marketing_campaigns` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_activation_tokens`
+--
+ALTER TABLE `user_activation_tokens`
+ADD CONSTRAINT `fk_uat_user_id` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `user_password_reset_tokens`
+--
+ALTER TABLE `user_password_reset_tokens`
+ADD CONSTRAINT `fk_uprt_user_id` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /_!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT _/;

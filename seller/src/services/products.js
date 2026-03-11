@@ -66,12 +66,42 @@ export const deleteProduct = (id) => {
   })
 }
 
+export const getProductVariants = (productId) => {
+  return apiGet({
+    url: `products/${productId}/variants`,
+  })
+}
+
+export const createProductVariant = ({ productId, payload }) => {
+  return apiPost({
+    url: `products/${productId}/variants`,
+    data: payload,
+  })
+}
+
+export const updateProductVariant = ({ productId, variantId, payload }) => {
+  return apiPut({
+    url: `products/${productId}/variants/${variantId}`,
+    data: payload,
+  })
+}
+
+export const deleteProductVariant = ({ productId, variantId }) => {
+  return apiDelete({
+    url: `products/${productId}/variants/${variantId}`,
+  })
+}
+
 export default {
   getProducts,
   createProduct,
   getProductById,
   updateProduct,
   deleteProduct,
+  getProductVariants,
+  createProductVariant,
+  updateProductVariant,
+  deleteProductVariant,
   uploadProductImage,
   deleteProductImage,
   setMainProductImage,

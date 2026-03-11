@@ -2,90 +2,9 @@ import FormikWrapper from 'components/FormikWrapper'
 import Input from 'components/FormikWrapper/FormControls/Input'
 import Select from 'components/FormikWrapper/FormControls/Select'
 import Textarea from 'components/FormikWrapper/FormControls/Textarea'
-import { useEffect, useRef } from 'react'
 import { addProductValidationSchema, STATUS_OPTIONS, UNIT_OPTIONS } from './validation'
 import ImageDropzone from './ImageDropzone'
 import { parseNumber, round2 } from './helpers'
-
-const PriceSync = ({ values, setFieldValue }) => {
-  const prevRef = useRef({
-    netPrice: values.netPrice,
-    grossPrice: values.grossPrice,
-    vatRate: values.vatRate,
-  })
-  const autoUpdatedFieldRef = useRef(null)
-
-  useEffect(() => {
-    if (values.vatRate === '' || values.vatRate === null || values.vatRate === undefined) {
-      setFieldValue('vatRate', 23, false)
-    }
-  }, [])
-
-  useEffect(() => {
-    const prev = prevRef.current
-    const changedNet = prev.netPrice !== values.netPrice
-    const changedGross = prev.grossPrice !== values.grossPrice
-    const changedVat = prev.vatRate !== values.vatRate
-
-    const vat = parseNumber(values.vatRate)
-    const net = parseNumber(values.netPrice)
-    const gross = parseNumber(values.grossPrice)
-
-    if (autoUpdatedFieldRef.current === 'grossPrice' && changedGross) {
-      autoUpdatedFieldRef.current = null
-      prevRef.current = values
-      return
-    }
-
-    if (autoUpdatedFieldRef.current === 'netPrice' && changedNet) {
-      autoUpdatedFieldRef.current = null
-      prevRef.current = values
-      return
-    }
-
-    if (vat !== null && vat >= 0) {
-      const multiplier = 1 + vat / 100
-
-      if (changedNet && net !== null) {
-        const roundedNet = round2(net)
-        if (Math.abs(net - roundedNet) > 0.009) {
-          autoUpdatedFieldRef.current = 'netPrice'
-          setFieldValue('netPrice', roundedNet, false)
-          prevRef.current = values
-          return
-        }
-        const nextGross = round2(roundedNet * multiplier)
-        if (gross === null || Math.abs(gross - nextGross) > 0.009) {
-          autoUpdatedFieldRef.current = 'grossPrice'
-          setFieldValue('grossPrice', nextGross, false)
-        }
-      } else if (changedGross && gross !== null) {
-        const roundedGross = round2(gross)
-        if (Math.abs(gross - roundedGross) > 0.009) {
-          autoUpdatedFieldRef.current = 'grossPrice'
-          setFieldValue('grossPrice', roundedGross, false)
-          prevRef.current = values
-          return
-        }
-        const nextNet = round2(roundedGross / multiplier)
-        if (net === null || Math.abs(net - nextNet) > 0.009) {
-          autoUpdatedFieldRef.current = 'netPrice'
-          setFieldValue('netPrice', nextNet, false)
-        }
-      } else if (changedVat && net !== null) {
-        const nextGross = round2(net * multiplier)
-        if (gross === null || Math.abs(gross - nextGross) > 0.009) {
-          autoUpdatedFieldRef.current = 'grossPrice'
-          setFieldValue('grossPrice', nextGross, false)
-        }
-      }
-    }
-
-    prevRef.current = values
-  }, [values, setFieldValue])
-
-  return null
-}
 
 const ProductFormView = ({
   title,
@@ -100,7 +19,45 @@ const ProductFormView = ({
   onCancel,
   onDelete,
   loading = false,
+  variants = [],
+  setVariants,
 }) => {
+  const updateVariantValue = (index, field, rawValue, vatRateValue) => {
+    const parsedValue = rawValue === '' ? '' : Number(rawValue)
+    const vat = parseNumber(vatRateValue)
+    const multiplier = vat !== null && vat >= 0 ? 1 + vat / 100 : null
+
+    setVariants(
+      variants.map((item, itemIndex) => {
+        if (itemIndex !== index) return item
+
+        if (field === 'netPrice') {
+          if (parsedValue === '' || multiplier === null) {
+            return { ...item, netPrice: parsedValue }
+          }
+          return {
+            ...item,
+            netPrice: parsedValue,
+            grossPrice: round2(parsedValue * multiplier),
+          }
+        }
+
+        if (field === 'grossPrice') {
+          if (parsedValue === '' || multiplier === null || multiplier === 0) {
+            return { ...item, grossPrice: parsedValue }
+          }
+          return {
+            ...item,
+            grossPrice: parsedValue,
+            netPrice: round2(parsedValue / multiplier),
+          }
+        }
+
+        return { ...item, [field]: parsedValue }
+      }),
+    )
+  }
+
   if (loading) {
     return (
       <section className="sellerPageSection">
@@ -124,14 +81,10 @@ const ProductFormView = ({
         onSubmit={onSubmit}
         validationSchema={addProductValidationSchema}
       >
-        {({ isSubmitting, status, values, setFieldValue }) => (
+        {({ isSubmitting, status, values }) => (
           <>
-            <PriceSync values={values} setFieldValue={setFieldValue} />
-
             <div className="sellerFormGrid">
               <Input id="name" placeholder="Nazwa" />
-              <Input id="netPrice" placeholder="Cena netto" type="decimal" />
-              <Input id="grossPrice" placeholder="Cena brutto" type="decimal" />
               <Input id="vatRate" placeholder="Stawka VAT (%)" type="decimal" />
               <Select id="unit" placeholder="Jednostka" config={UNIT_OPTIONS} />
               <Input id="stockQuantity" placeholder="Stan magazynowy" type="decimal" />
@@ -139,6 +92,152 @@ const ProductFormView = ({
             </div>
 
             <Textarea id="description" placeholder="Opis" />
+
+            {typeof setVariants === 'function' ? (
+              <section className="sellerVariantsSection">
+                <div className="sellerToolbar">
+                  <h3>Warianty produktu</h3>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVariants([
+                        ...variants,
+                        {
+                          id: null,
+                          name: '',
+                          unitAmount: 1,
+                          unit: values.unit || 'pcs',
+                          netPrice: 0,
+                          grossPrice: 0,
+                          vatRate: values.vatRate || 23,
+                          stockQuantity: values.stockQuantity || 0,
+                          status: values.status || 'draft',
+                          isDefault: variants.length === 0,
+                          position: variants.length,
+                        },
+                      ])
+                    }
+                  >
+                    Dodaj wariant
+                  </button>
+                </div>
+                <div className="sellerVariantsGrid">
+                  {variants.map((variant, index) => (
+                    <div className="sellerVariantCard" key={variant.id || `new-${index}`}>
+                      <div className="sellerVariantField">
+                        <label htmlFor={`variant-name-${index}`}>Nazwa wariantu</label>
+                        <input
+                          id={`variant-name-${index}`}
+                          type="text"
+                          placeholder="np. 250 g"
+                          value={variant.name || ''}
+                          onChange={(event) =>
+                            setVariants(
+                              variants.map((item, itemIndex) =>
+                                itemIndex === index ? { ...item, name: event.target.value } : item,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="sellerVariantField">
+                        <label htmlFor={`variant-unit-amount-${index}`}>Waga/objetosc</label>
+                        <input
+                          id={`variant-unit-amount-${index}`}
+                          type="number"
+                          step="0.001"
+                          min="0.001"
+                          placeholder="0.250"
+                          value={variant.unitAmount ?? ''}
+                          onChange={(event) =>
+                            setVariants(
+                              variants.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, unitAmount: (event.target.value === "" ? "" : Number(event.target.value)) }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="sellerVariantField">
+                        <label htmlFor={`variant-net-price-${index}`}>Cena netto</label>
+                        <input
+                          id={`variant-net-price-${index}`}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          value={variant.netPrice ?? ''}
+                          onChange={(event) =>
+                            updateVariantValue(index, 'netPrice', event.target.value, values.vatRate)
+                          }
+                        />
+                      </div>
+                      <div className="sellerVariantField">
+                        <label htmlFor={`variant-gross-price-${index}`}>Cena brutto</label>
+                        <input
+                          id={`variant-gross-price-${index}`}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          value={variant.grossPrice ?? ''}
+                          onChange={(event) =>
+                            updateVariantValue(index, 'grossPrice', event.target.value, values.vatRate)
+                          }
+                        />
+                      </div>
+                      <div className="sellerVariantField">
+                        <label htmlFor={`variant-stock-quantity-${index}`}>Stan magazynowy</label>
+                        <input
+                          id={`variant-stock-quantity-${index}`}
+                          type="number"
+                          step="0.001"
+                          min="0"
+                          placeholder="0"
+                          value={variant.stockQuantity ?? ''}
+                          onChange={(event) =>
+                            setVariants(
+                              variants.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, stockQuantity: (event.target.value === "" ? "" : Number(event.target.value)) }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                      <label className="sellerVariantDefault">
+                        <input
+                          type="radio"
+                          name="defaultVariant"
+                          checked={Boolean(variant.isDefault)}
+                          onChange={() =>
+                            setVariants(
+                              variants.map((item, itemIndex) => ({
+                                ...item,
+                                isDefault: itemIndex === index,
+                              })),
+                            )
+                          }
+                        />
+                        Domyslny
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVariants(variants.filter((_, itemIndex) => itemIndex !== index))
+                        }
+                        disabled={variants.length <= 1}
+                      >
+                        Usun wariant
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <ImageDropzone
               images={images}

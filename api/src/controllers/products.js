@@ -238,4 +238,75 @@ router.post(
   },
 );
 
+router.get(
+  "/products/:id/variants",
+  roleMiddleware("ADMIN", "SELLER"),
+  async (req, res) => {
+    const variants = await productsService.getProductVariants({
+      userId: req.user.userId,
+      role: req.user.role,
+      productId: Number(req.params.id),
+    });
+    res.status(200).json({ data: variants, variants });
+  },
+);
+
+router.post(
+  "/products/:id/variants",
+  roleMiddleware("ADMIN", "SELLER"),
+  async (req, res) => {
+    const variants = await productsService.createProductVariant({
+      userId: req.user.userId,
+      role: req.user.role,
+      productId: Number(req.params.id),
+      payload: req.body || {},
+    });
+    res.status(201).json({ data: variants, variants });
+  },
+);
+
+router.patch(
+  "/products/:id/variants/:variantId",
+  roleMiddleware("ADMIN", "SELLER"),
+  async (req, res) => {
+    const variants = await productsService.updateProductVariant({
+      userId: req.user.userId,
+      role: req.user.role,
+      productId: Number(req.params.id),
+      variantId: Number(req.params.variantId),
+      payload: req.body || {},
+    });
+    res.status(200).json({ data: variants, variants });
+  },
+);
+
+router.put(
+  "/products/:id/variants/:variantId",
+  roleMiddleware("ADMIN", "SELLER"),
+  async (req, res) => {
+    const variants = await productsService.updateProductVariant({
+      userId: req.user.userId,
+      role: req.user.role,
+      productId: Number(req.params.id),
+      variantId: Number(req.params.variantId),
+      payload: req.body || {},
+    });
+    res.status(200).json({ data: variants, variants });
+  },
+);
+
+router.delete(
+  "/products/:id/variants/:variantId",
+  roleMiddleware("ADMIN", "SELLER"),
+  async (req, res) => {
+    const variants = await productsService.deleteProductVariant({
+      userId: req.user.userId,
+      role: req.user.role,
+      productId: Number(req.params.id),
+      variantId: Number(req.params.variantId),
+    });
+    res.status(200).json({ data: variants, variants, meta: { deleted: true } });
+  },
+);
+
 module.exports = router;

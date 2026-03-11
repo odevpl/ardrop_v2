@@ -5,11 +5,12 @@ export const getCurrentCart = () =>
     url: 'carts/current',
   })
 
-export const addItemToCart = ({ productId, quantity = 1 }) =>
+export const addItemToCart = ({ productId, variantId = null, quantity = 1 }) =>
   apiPost({
     url: 'carts/items',
     data: {
       productId,
+      variantId,
       quantity,
     },
   })

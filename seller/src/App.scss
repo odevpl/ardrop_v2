@@ -228,6 +228,60 @@
   color: #6b7280;
 }
 
+.sellerVariantsSection {
+  margin: 12px 0;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.sellerVariantsSection h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.sellerVariantsSection .sellerToolbar button {
+  border: 1px solid #0a64c9;
+  background: #0a64c9;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.sellerVariantsSection .sellerToolbar button:hover {
+  background: #0956ab;
+  border-color: #0956ab;
+}
+
+.sellerVariantsGrid {
+  display: flex;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.sellerVariantCard {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  max-width: 300px;
+  width: 100%;
+}
+
+.sellerVariantField label {
+  color: #344a59;
+}
+
+.sellerVariantDefault {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #344a59;
+}
+
 @media (max-width: 900px) {
   .sellerLayout {
     grid-template-columns: 1fr;

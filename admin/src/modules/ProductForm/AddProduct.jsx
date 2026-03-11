@@ -22,6 +22,7 @@ const AddProduct = () => {
   const navigate = useNavigate()
   const notification = useNotification()
   const [images, setImages] = useState([])
+  const [variants, setVariants] = useState([])
   const [sellers, setSellers] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -48,16 +49,31 @@ const AddProduct = () => {
       setSubmitting(false)
       return
     }
+    if (!Array.isArray(variants) || variants.length === 0) {
+      setStatus('Produkt musi miec co najmniej jeden wariant')
+      setSubmitting(false)
+      return
+    }
+
+    const normalizedVariants = variants.map((variant, index) => ({
+      ...variant,
+      isDefault: variants.some((item) => Boolean(item.isDefault))
+        ? Boolean(variant.isDefault)
+        : index === 0,
+      position: Number.isFinite(Number(variant.position)) ? Number(variant.position) : index,
+    }))
+    const defaultVariant = normalizedVariants.find((variant) => Boolean(variant.isDefault)) || normalizedVariants[0]
 
     const payload = {
       ...values,
       sellerId: Number(values.sellerId),
-      netPrice: round2(Number(values.netPrice)),
-      grossPrice: round2(Number(values.grossPrice)),
+      netPrice: round2(Number(defaultVariant?.netPrice || 0)),
+      grossPrice: round2(Number(defaultVariant?.grossPrice || 0)),
       vatRate: round2(Number(values.vatRate)),
       unit: values.unit || 'pcs',
       stockQuantity: Number(values.stockQuantity || 0),
       description: values.description?.trim() || null,
+      variants: normalizedVariants,
     }
 
     const result = await ProductsService.createProduct(payload)
@@ -97,6 +113,8 @@ const AddProduct = () => {
       onSubmit={handleSubmit}
       images={images}
       setImages={setImages}
+      variants={variants}
+      setVariants={setVariants}
       sellerOptions={sellerOptions}
       onCancel={() => navigate(-1)}
       loading={loading}

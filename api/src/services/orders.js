@@ -52,6 +52,12 @@ const mapOrderItem = (item) => ({
   orderGroupId: Number(item.orderGroupId),
   sellerId: Number(item.sellerId),
   productId: Number(item.productId),
+  variantId: item.variantId ? Number(item.variantId) : null,
+  variantNameSnapshot: item.variantNameSnapshot || null,
+  variantAmountSnapshot:
+    item.variantAmountSnapshot !== null && item.variantAmountSnapshot !== undefined
+      ? Number(item.variantAmountSnapshot)
+      : null,
   quantity: Number(item.quantity),
   netPrice: Number(item.netPrice),
   grossPrice: Number(item.grossPrice),
@@ -220,6 +226,16 @@ const createOrderFromCurrentCart = async ({ userId, role, clientId }, trxDb = db
           unit: product.unit || "pcs",
           stockQuantity: Number(product.stockQuantity || 0),
           images: imagesByProductId[Number(product.id)] || [],
+          variant: item.variantId
+            ? {
+                id: Number(item.variantId),
+                name: item.variantNameSnapshot || null,
+                unitAmount:
+                  item.variantAmountSnapshot !== undefined && item.variantAmountSnapshot !== null
+                    ? Number(item.variantAmountSnapshot)
+                    : null,
+              }
+            : null,
           createdAt: product.createdAt,
           updatedAt: product.updatedAt,
         };
@@ -229,11 +245,17 @@ const createOrderFromCurrentCart = async ({ userId, role, clientId }, trxDb = db
           orderGroupId,
           sellerId,
           productId: Number(item.productId),
+          variantId: item.variantId ? Number(item.variantId) : null,
           quantity: Number(item.quantity),
           netPrice: roundMoney(item.unitNet),
           grossPrice: roundMoney(item.unitGross),
           vatRate: roundMoney(item.vatRate),
           productSnapshotJson: JSON.stringify(productSnapshot),
+          variantNameSnapshot: item.variantNameSnapshot || null,
+          variantAmountSnapshot:
+            item.variantAmountSnapshot !== undefined && item.variantAmountSnapshot !== null
+              ? Number(item.variantAmountSnapshot)
+              : null,
         });
       }
     }
@@ -316,11 +338,14 @@ const getOrders = async ({ userId, role }) => {
         "orderGroupId",
         "sellerId",
         "productId",
+        "variantId",
         "quantity",
         "netPrice",
         "grossPrice",
         "vatRate",
         "productSnapshotJson",
+        "variantNameSnapshot",
+        "variantAmountSnapshot",
         "createdAt",
       )
       .whereIn("orderId", orderIds)
@@ -399,11 +424,14 @@ const getOrderById = async ({ userId, role, orderId }) => {
       "orderGroupId",
       "sellerId",
       "productId",
+      "variantId",
       "quantity",
       "netPrice",
       "grossPrice",
       "vatRate",
       "productSnapshotJson",
+      "variantNameSnapshot",
+      "variantAmountSnapshot",
       "createdAt",
     )
     .where("orderId", normalizedOrderId)

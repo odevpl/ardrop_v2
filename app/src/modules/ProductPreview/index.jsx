@@ -26,6 +26,11 @@ const formatUnitShort = (unit) => {
 const ProductPreviewView = ({ payload }) => {
   const product = payload?.data || payload?.product || payload;
   const images = Array.isArray(product?.images) ? product.images : [];
+  const variants = Array.isArray(product?.variants) ? product.variants : [];
+  const activeVariants = useMemo(
+    () => variants.filter((variant) => variant.status === "active"),
+    [variants],
+  );
   const mainImage = useMemo(
     () => images.find((image) => Number(image.isMain) === 1) || images[0] || null,
     [images],
@@ -34,18 +39,41 @@ const ProductPreviewView = ({ payload }) => {
 
   const [selectedImageUrl, setSelectedImageUrl] = useState(mainImage?.url || "");
   const [quantity, setQuantity] = useState(1);
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [isPending, setIsPending] = useState(false);
   const notification = useNotification();
+
+  const selectedVariant = useMemo(() => {
+    if (!selectedVariantId) return null;
+    return activeVariants.find((variant) => Number(variant.id) === Number(selectedVariantId)) || null;
+  }, [activeVariants, selectedVariantId]);
 
   useEffect(() => {
     setSelectedImageUrl(mainImage?.url || "");
   }, [mainImage?.url]);
+
+  useEffect(() => {
+    if (activeVariants.length === 0) {
+      setSelectedVariantId(null);
+      return;
+    }
+
+    const hasSelectedVariant = activeVariants.some(
+      (variant) => Number(variant.id) === Number(selectedVariantId),
+    );
+    if (hasSelectedVariant) return;
+
+    const defaultVariant =
+      activeVariants.find((variant) => variant.isDefault) || activeVariants[0];
+    setSelectedVariantId(Number(defaultVariant.id));
+  }, [activeVariants, selectedVariantId]);
 
   const addToCart = async () => {
     if (!product?.id) return;
     setIsPending(true);
     const response = await CartsService.addItemToCart({
       productId: product.id,
+      variantId: selectedVariant ? Number(selectedVariant.id) : null,
       quantity: Math.max(1, Number(quantity) || 1),
     });
 
@@ -64,10 +92,12 @@ const ProductPreviewView = ({ payload }) => {
     return <p className="productPreviewEmpty">Nie znaleziono produktu.</p>;
   }
 
-  const vatRate = Number(product.vatRate);
+  const source = selectedVariant || product;
+  const vatRate = Number(source.vatRate);
   const hasVatRate = !Number.isNaN(vatRate);
-  const unitLabel = formatUnitLabel(product.unit);
-  const unitShort = formatUnitShort(product.unit);
+  const unitLabel = formatUnitLabel(source.unit || product.unit);
+  const unitShort = formatUnitShort(source.unit || product.unit);
+  const stockQuantity = Number(source.stockQuantity ?? 0);
 
   return (
     <section className="productPreview">
@@ -110,13 +140,38 @@ const ProductPreviewView = ({ payload }) => {
 
         <aside className="productPreviewSidebar">
           <section className="productPreviewCard">
-            <p className="productPreviewPriceGross">{formatPrice(product.grossPrice)}</p>
+            <p className="productPreviewPriceGross">{formatPrice(source.grossPrice)}</p>
             <p className="productPreviewPriceMeta">
-              Netto: <strong>{formatPrice(product.netPrice)}</strong>
+              Netto: <strong>{formatPrice(source.netPrice)}</strong>
             </p>
             <p className="productPreviewPriceMeta">
               VAT: <strong>{hasVatRate ? `${vatRate}%` : "-"}</strong>
             </p>
+
+            {activeVariants.length > 1 ? (
+              <div className="productPreviewVariantBlock">
+                <label htmlFor="productPreviewVariant">Wariant</label>
+                <select
+                  id="productPreviewVariant"
+                  value={selectedVariantId || ""}
+                  onChange={(event) => setSelectedVariantId(Number(event.target.value) || null)}
+                  disabled={isPending}
+                >
+                  {activeVariants.map((variant) => (
+                    <option key={variant.id} value={variant.id}>
+                      {variant.name} (netto: {formatPrice(variant.netPrice)}, brutto: {formatPrice(variant.grossPrice)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : activeVariants.length === 1 ? (
+              <div className="productPreviewVariantBlock">
+                <p className="productPreviewVariantSingleLabel">Wariant</p>
+                <p className="productPreviewVariantSingleValue">
+                  {activeVariants[0].name} (netto: {formatPrice(activeVariants[0].netPrice)}, brutto: {formatPrice(activeVariants[0].grossPrice)})
+                </p>
+              </div>
+            ) : null}
 
             <div className="productPreviewQtyBlock">
               <label htmlFor="productPreviewQty">Liczba {unitLabel}</label>
@@ -155,7 +210,7 @@ const ProductPreviewView = ({ payload }) => {
               Jednostka: <strong>{unitShort}</strong>
             </p>
             <p className="productPreviewPriceMeta">
-              Dostepny stan: <strong>{product.stockQuantity ?? 0} {unitLabel}</strong>
+              Dostepny stan: <strong>{stockQuantity} {unitLabel}</strong>
             </p>
 
             <button

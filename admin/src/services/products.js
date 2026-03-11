@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut } from './api'
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from './api'
 import http from './http'
 
 export const getProducts = (params = {}) => {
@@ -60,11 +60,41 @@ export const setMainProductImage = async ({ productId, imageId }) => {
   }
 }
 
+export const getProductVariants = (productId) => {
+  return apiGet({
+    url: `products/${productId}/variants`,
+  })
+}
+
+export const createProductVariant = ({ productId, payload }) => {
+  return apiPost({
+    url: `products/${productId}/variants`,
+    data: payload,
+  })
+}
+
+export const updateProductVariant = ({ productId, variantId, payload }) => {
+  return apiPatch({
+    url: `products/${productId}/variants/${variantId}`,
+    data: payload,
+  })
+}
+
+export const deleteProductVariant = ({ productId, variantId }) => {
+  return apiDelete({
+    url: `products/${productId}/variants/${variantId}`,
+  })
+}
+
 export default {
   getProducts,
   createProduct,
   getProductById,
   updateProduct,
+  getProductVariants,
+  createProductVariant,
+  updateProductVariant,
+  deleteProductVariant,
   uploadProductImage,
   deleteProductImage,
   setMainProductImage,

@@ -12,6 +12,8 @@ const EditProduct = ({ id }) => {
   const [images, setImages] = useState([])
   const [existingImages, setExistingImages] = useState([])
   const [isImagesActionLoading, setIsImagesActionLoading] = useState(false)
+  const [variants, setVariants] = useState([])
+  const [initialVariantIds, setInitialVariantIds] = useState([])
   const [loading, setLoading] = useState(true)
   const [sellers, setSellers] = useState([])
   const [initialValues, setInitialValues] = useState({
@@ -59,6 +61,16 @@ const EditProduct = ({ id }) => {
               }))
             : [],
         )
+        const loadedVariants = Array.isArray(product.variants) ? product.variants : []
+        setVariants(
+          loadedVariants.map((variant, index) => ({
+            ...variant,
+            position: Number.isFinite(Number(variant.position)) ? Number(variant.position) : index,
+          })),
+        )
+        setInitialVariantIds(
+          loadedVariants.map((variant) => Number(variant.id)).filter(Boolean),
+        )
       }
       setLoading(false)
     }
@@ -79,12 +91,24 @@ const EditProduct = ({ id }) => {
       setSubmitting(false)
       return
     }
+    if (!Array.isArray(variants) || variants.length === 0) {
+      setStatus('Produkt musi miec co najmniej jeden wariant')
+      setSubmitting(false)
+      return
+    }
+
+    const hasDefaultVariant = variants.some((variant) => Boolean(variant.isDefault))
+    const normalizedVariants = variants.map((variant, index) => ({
+      ...variant,
+      isDefault: hasDefaultVariant ? Boolean(variant.isDefault) : index === 0,
+    }))
+    const defaultVariant = normalizedVariants.find((variant) => Boolean(variant.isDefault)) || normalizedVariants[0]
 
     const payload = {
       ...values,
       sellerId: Number(values.sellerId),
-      netPrice: round2(Number(values.netPrice)),
-      grossPrice: round2(Number(values.grossPrice)),
+      netPrice: round2(Number(defaultVariant?.netPrice || 0)),
+      grossPrice: round2(Number(defaultVariant?.grossPrice || 0)),
       vatRate: round2(Number(values.vatRate)),
       unit: values.unit || 'pcs',
       stockQuantity: Number(values.stockQuantity || 0),
@@ -103,6 +127,61 @@ const EditProduct = ({ id }) => {
         const uploadResult = await ProductsService.uploadProductImage({ productId: id, file })
         if (uploadResult?.status && uploadResult.status >= 400) {
           notification.error(uploadResult?.data?.error || 'Nie udalo sie przeslac jednego ze zdjec')
+          setSubmitting(false)
+          return
+        }
+      }
+    }
+
+    const currentVariantIds = normalizedVariants
+      .map((variant) => Number(variant.id))
+      .filter(Boolean)
+    const removedVariantIds = initialVariantIds.filter(
+      (variantId) => !currentVariantIds.includes(variantId),
+    )
+
+    for (const variantId of removedVariantIds) {
+      const deleteResult = await ProductsService.deleteProductVariant({ productId: id, variantId })
+      if (deleteResult?.status && deleteResult.status >= 400) {
+        notification.error(deleteResult?.data?.error || 'Nie udalo sie usunac wariantu')
+        setSubmitting(false)
+        return
+      }
+    }
+
+    for (let index = 0; index < normalizedVariants.length; index += 1) {
+      const variant = normalizedVariants[index]
+      const variantPayload = {
+        name: variant.name,
+        unitAmount: Number(variant.unitAmount || 0),
+        unit: variant.unit || values.unit || 'pcs',
+        netPrice: Number(variant.netPrice || 0),
+        grossPrice: Number(variant.grossPrice || 0),
+        vatRate: Number(variant.vatRate || 0),
+        stockQuantity: Number(variant.stockQuantity || 0),
+        status: variant.status || values.status || 'draft',
+        isDefault: Boolean(variant.isDefault),
+        position: index,
+      }
+
+      if (variant.id) {
+        const updateVariantResult = await ProductsService.updateProductVariant({
+          productId: id,
+          variantId: variant.id,
+          payload: variantPayload,
+        })
+        if (updateVariantResult?.status && updateVariantResult.status >= 400) {
+          notification.error(updateVariantResult?.data?.error || 'Nie udalo sie zaktualizowac wariantu')
+          setSubmitting(false)
+          return
+        }
+      } else {
+        const createVariantResult = await ProductsService.createProductVariant({
+          productId: id,
+          payload: variantPayload,
+        })
+        if (createVariantResult?.status && createVariantResult.status >= 400) {
+          notification.error(createVariantResult?.data?.error || 'Nie udalo sie dodac wariantu')
           setSubmitting(false)
           return
         }
@@ -161,6 +240,8 @@ const EditProduct = ({ id }) => {
       onSubmit={handleSubmit}
       images={images}
       setImages={setImages}
+      variants={variants}
+      setVariants={setVariants}
       sellerOptions={sellerOptions}
       existingImages={existingImages}
       onDeleteExistingImage={handleDeleteExistingImage}

@@ -47,10 +47,11 @@ const SuggestedProductsView = ({ payload }) => {
 
   const visibleProducts = products.slice(0, visibleLimit);
 
-  const addToCart = async (productId) => {
+  const addToCart = async ({ productId, variantId = null }) => {
     setPendingId(productId);
     const response = await CartsService.addItemToCart({
       productId,
+      variantId,
       quantity: 1,
     });
 
@@ -73,6 +74,11 @@ const SuggestedProductsView = ({ payload }) => {
       <div className="suggestedProductsGrid">
         {visibleProducts.map((product) => {
           const mainImage = getMainImage(product);
+          const variants = Array.isArray(product.variants) ? product.variants : [];
+          const activeVariants = variants.filter((variant) => variant.status === "active");
+          const defaultVariant =
+            activeVariants.find((variant) => variant.isDefault) || activeVariants[0] || null;
+          const displayPrice = defaultVariant?.grossPrice ?? product.grossPrice;
           return (
             <article
               key={product.id}
@@ -93,7 +99,7 @@ const SuggestedProductsView = ({ payload }) => {
                 )}
               </div>
               <p className="suggestedProductsPrice">
-                {formatPrice(product.grossPrice)}
+                {formatPrice(displayPrice)}
               </p>
               <h3 className="suggestedProductsName">{product.name}</h3>
               <button
@@ -101,7 +107,10 @@ const SuggestedProductsView = ({ payload }) => {
                 className="suggestedProductsAddButton"
                 onClick={(event) => {
                   event.stopPropagation();
-                  addToCart(product.id);
+                  addToCart({
+                    productId: product.id,
+                    variantId: defaultVariant ? Number(defaultVariant.id) : null,
+                  });
                 }}
                 disabled={pendingId === product.id}
                 aria-label={`Dodaj ${product.name} do koszyka`}

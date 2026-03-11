@@ -126,6 +126,7 @@ const addItemToCurrentCart = async ({
   clientId,
   currency,
   productId,
+  variantId,
   quantity = 1,
 }) => {
   const targetProductId = Number(productId);
@@ -161,17 +162,75 @@ const addItemToCurrentCart = async ({
       throw error;
     }
 
+    const normalizedVariantId = variantId ? Number(variantId) : null;
+    let selectedVariant = null;
+
+    if (normalizedVariantId) {
+      selectedVariant = await trx("product_variants")
+        .select(
+          "id",
+          "productId",
+          "name",
+          "netPrice",
+          "grossPrice",
+          "vatRate",
+          "stockQuantity",
+          "status",
+          "unit",
+          "unitAmount",
+        )
+        .where({ id: normalizedVariantId, productId: targetProductId })
+        .first();
+      if (!selectedVariant) {
+        const error = new Error("Selected variant not found");
+        error.status = 404;
+        throw error;
+      }
+    } else {
+      selectedVariant = await trx("product_variants")
+        .select(
+          "id",
+          "productId",
+          "name",
+          "netPrice",
+          "grossPrice",
+          "vatRate",
+          "stockQuantity",
+          "status",
+          "unit",
+          "unitAmount",
+        )
+        .where({ productId: targetProductId, isDefault: 1 })
+        .first();
+    }
+
+    if (selectedVariant && selectedVariant.status !== "active") {
+      const error = new Error("Selected variant is not active");
+      error.status = 400;
+      throw error;
+    }
+
+    const pricingSource = selectedVariant || product;
+    const targetVariantId = selectedVariant ? Number(selectedVariant.id) : null;
+
     const existingItem = await trx("cart_items")
       .where({
         cartId: cart.id,
         productId: targetProductId,
       })
+      .modify((query) => {
+        if (targetVariantId) {
+          query.andWhere("variantId", targetVariantId);
+        } else {
+          query.whereNull("variantId");
+        }
+      })
       .first();
 
     if (existingItem) {
       const newQuantity = Number(existingItem.quantity) + normalizedQuantity;
-      const unitNet = roundMoney(product.netPrice);
-      const unitGross = roundMoney(product.grossPrice);
+      const unitNet = roundMoney(pricingSource.netPrice);
+      const unitGross = roundMoney(pricingSource.grossPrice);
       const lineNet = roundMoney(unitNet * newQuantity);
       const lineGross = roundMoney(unitGross * newQuantity);
 
@@ -182,27 +241,33 @@ const addItemToCurrentCart = async ({
           sellerId: Number(product.sellerId),
           unitNet,
           unitGross,
-          vatRate: roundMoney(product.vatRate),
+          vatRate: roundMoney(pricingSource.vatRate),
           lineNet,
           lineGross,
           productNameSnapshot: product.name,
+          variantId: targetVariantId,
+          variantNameSnapshot: selectedVariant?.name || null,
+          variantAmountSnapshot: selectedVariant?.unitAmount || null,
           updatedAt: trx.fn.now(),
         });
     } else {
-      const unitNet = roundMoney(product.netPrice);
-      const unitGross = roundMoney(product.grossPrice);
+      const unitNet = roundMoney(pricingSource.netPrice);
+      const unitGross = roundMoney(pricingSource.grossPrice);
 
       await trx("cart_items").insert({
         cartId: Number(cart.id),
         productId: targetProductId,
+        variantId: targetVariantId,
         sellerId: Number(product.sellerId),
         quantity: normalizedQuantity,
         unitNet,
         unitGross,
-        vatRate: roundMoney(product.vatRate),
+        vatRate: roundMoney(pricingSource.vatRate),
         lineNet: roundMoney(unitNet * normalizedQuantity),
         lineGross: roundMoney(unitGross * normalizedQuantity),
         productNameSnapshot: product.name,
+        variantNameSnapshot: selectedVariant?.name || null,
+        variantAmountSnapshot: selectedVariant?.unitAmount || null,
       });
     }
 

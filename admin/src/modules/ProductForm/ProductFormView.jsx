@@ -29,6 +29,7 @@ const ProductFormView = ({
   onSetMainExistingImage,
   isImagesActionLoading = false,
   onCancel,
+  onDelete,
   loading = false,
   variants = [],
   setVariants,
@@ -312,6 +313,11 @@ const ProductFormView = ({
               <button type="submit" className="adminPrimaryButton" disabled={isSubmitting}>
                 Zapisz
               </button>
+              {typeof onDelete === 'function' ? (
+                <button type="button" className="adminDangerButton" onClick={onDelete} disabled={isSubmitting}>
+                  Usun produkt
+                </button>
+              ) : null}
               <button type="button" onClick={onCancel} disabled={isSubmitting}>
                 Anuluj
               </button>

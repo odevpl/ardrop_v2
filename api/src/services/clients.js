@@ -294,6 +294,22 @@ async function deleteClient(id) {
       throw error;
     }
 
+    const [order, activeCart] = await Promise.all([
+      trx("orders").select("id").where({ clientId: normalizedId }).first(),
+      trx("carts").select("id").where({ clientId: normalizedId }).first(),
+    ]);
+
+    if (order) {
+      const error = new Error("Nie mozna usunac klienta, bo posiada zamowienia");
+      error.status = 409;
+      throw error;
+    }
+
+    if (activeCart) {
+      await trx("cart_items").where({ cartId: Number(activeCart.id) }).del();
+      await trx("carts").where({ clientId: normalizedId }).del();
+    }
+
     await trx("clients").where({ id: normalizedId }).del();
     await trx("users").where({ id: Number(client.userId) }).del();
 

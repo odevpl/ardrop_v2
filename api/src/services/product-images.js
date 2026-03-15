@@ -6,7 +6,7 @@ const db = require("../config/db");
 const uploadsDir = path.resolve(__dirname, "../../uploads/images");
 const thumbsDir = path.resolve(__dirname, "../../uploads/images/thumbs");
 const THUMB_SIZE = 400;
-const MAIN_MAX_SIZE = 700;
+const MAIN_MAX_SIZE = 800;
 const JPEG_QUALITY = 70;
 
 const getThumbFileName = (fileName) => {
@@ -66,8 +66,17 @@ const saveProductImage = async ({ productId, file, role, userId }) => {
       await ensureProductExists(productId);
     }
 
-    const image = await Jimp.read(filePath);
-    image.scaleToFit({ w: MAIN_MAX_SIZE, h: MAIN_MAX_SIZE });
+    const sourceImage = await Jimp.read(filePath);
+    sourceImage.scaleToFit({ w: MAIN_MAX_SIZE, h: MAIN_MAX_SIZE });
+
+    const image = new Jimp({
+      width: MAIN_MAX_SIZE,
+      height: MAIN_MAX_SIZE,
+      color: 0xffffffff,
+    });
+    const mainX = Math.round((MAIN_MAX_SIZE - sourceImage.bitmap.width) / 2);
+    const mainY = Math.round((MAIN_MAX_SIZE - sourceImage.bitmap.height) / 2);
+    image.composite(sourceImage, mainX, mainY);
     await image.write(filePath, { quality: JPEG_QUALITY });
 
     const thumbSource = image.clone();
@@ -162,6 +171,29 @@ const deleteProductImage = async ({ productId, filename, role, userId }) => {
   await safeUnlink(thumbPath);
 };
 
+const deleteAllProductImages = async ({ productId, trx = db }) => {
+  const items = await trx("products_image")
+    .select("id", "fileName")
+    .where({ productId: Number(productId) });
+
+  if (items.length === 0) {
+    return;
+  }
+
+  await trx("products_image").where({ productId: Number(productId) }).del();
+
+  await Promise.all(
+    items.flatMap((item) => {
+      const fileName = String(item.fileName || "");
+      if (!fileName) return [];
+      return [
+        safeUnlink(path.join(uploadsDir, fileName)),
+        safeUnlink(path.join(thumbsDir, getThumbFileName(fileName))),
+      ];
+    }),
+  );
+};
+
 const setMainProductImage = async ({ productId, imageId, role, userId }) => {
   const item = await db("products_image")
     .select("id", "productId")
@@ -209,4 +241,5 @@ module.exports = {
   getProductImages,
   deleteProductImage,
   setMainProductImage,
+  deleteAllProductImages,
 };

@@ -4,7 +4,7 @@ import Checkbox from 'components/FormikWrapper/FormControls/Checkbox'
 import Input from 'components/FormikWrapper/FormControls/Input'
 import { useNotification } from 'components/GlobalNotification/index.js'
 import { useNavigate } from 'react-router-dom'
-import { getClientById, updateClient } from 'services/clients'
+import { deleteClient, getClientById, updateClient } from 'services/clients'
 
 const ClientViewForm = ({ payload, refetch, clientId }) => {
   const navigate = useNavigate()
@@ -20,6 +20,24 @@ const ClientViewForm = ({ payload, refetch, clientId }) => {
     city: client.city || '',
     postalCode: client.postalCode || '',
     isActive: Boolean(client.isActive),
+  }
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      `Usunac klienta #${clientId} wraz z kontem uzytkownika? Operacja jest nieodwracalna.`,
+    )
+    if (!confirmed) {
+      return
+    }
+
+    const result = await deleteClient(clientId)
+    if (result?.status && result.status >= 400) {
+      notification.error(result?.data?.error || 'Nie udalo sie usunac klienta')
+      return
+    }
+
+    notification.success('Klient zostal usuniety')
+    navigate('/clients')
   }
 
   return (
@@ -73,6 +91,9 @@ const ClientViewForm = ({ payload, refetch, clientId }) => {
             <div className="adminActions adminFormActions">
               <button type="submit" className="adminPrimaryButton" disabled={isSubmitting}>
                 Zapisz
+              </button>
+              <button type="button" className="adminDangerButton" onClick={handleDelete} disabled={isSubmitting}>
+                Usun klienta
               </button>
               <button type="button" onClick={() => navigate('/clients')} disabled={isSubmitting}>
                 Wroc do listy

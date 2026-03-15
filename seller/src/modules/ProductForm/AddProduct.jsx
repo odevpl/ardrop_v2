@@ -38,6 +38,7 @@ const AddProduct = () => {
 
   const handleSubmit = async (values, { setSubmitting, setStatus }) => {
     setStatus(null)
+    const currentUnit = values.unit || 'pcs'
     if (!Array.isArray(variants) || variants.length === 0) {
       setStatus('Produkt musi miec co najmniej jeden wariant')
       setSubmitting(false)
@@ -51,6 +52,7 @@ const AddProduct = () => {
 
     const normalizedVariants = variants.map((variant, index) => ({
       ...variant,
+      unit: currentUnit,
       isDefault: variants.some((item) => Boolean(item.isDefault))
         ? Boolean(variant.isDefault)
         : index === 0,
@@ -63,7 +65,7 @@ const AddProduct = () => {
       netPrice: round2(Number(defaultVariant?.netPrice || 0)),
       grossPrice: round2(Number(defaultVariant?.grossPrice || 0)),
       vatRate: round2(Number(values.vatRate)),
-      unit: values.unit || 'pcs',
+      unit: currentUnit,
       stockQuantity: Number(values.stockQuantity || 0),
       description: values.description?.trim() || null,
       variants: normalizedVariants,

@@ -4,7 +4,7 @@ import Checkbox from 'components/FormikWrapper/FormControls/Checkbox'
 import Input from 'components/FormikWrapper/FormControls/Input'
 import { useNotification } from 'components/GlobalNotification/index.js'
 import { useNavigate } from 'react-router-dom'
-import { getSellerById, updateSeller } from 'services/sellers'
+import { deleteSeller, getSellerById, updateSeller } from 'services/sellers'
 
 const SellerViewForm = ({ payload, refetch, sellerId }) => {
   const navigate = useNavigate()
@@ -20,6 +20,24 @@ const SellerViewForm = ({ payload, refetch, sellerId }) => {
     city: seller.city || '',
     postalCode: seller.postalCode || '',
     isActive: Boolean(seller.isActive),
+  }
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      `Usunac sprzedawce #${sellerId} wraz z kontem uzytkownika? Operacja jest nieodwracalna.`,
+    )
+    if (!confirmed) {
+      return
+    }
+
+    const result = await deleteSeller(sellerId)
+    if (result?.status && result.status >= 400) {
+      notification.error(result?.data?.error || 'Nie udalo sie usunac sprzedawcy')
+      return
+    }
+
+    notification.success('Sprzedawca zostal usuniety')
+    navigate('/sellers')
   }
 
   return (
@@ -73,6 +91,9 @@ const SellerViewForm = ({ payload, refetch, sellerId }) => {
             <div className="adminActions adminFormActions">
               <button type="submit" className="adminPrimaryButton" disabled={isSubmitting}>
                 Zapisz
+              </button>
+              <button type="button" className="adminDangerButton" onClick={handleDelete} disabled={isSubmitting}>
+                Usun sprzedawce
               </button>
               <button type="button" onClick={() => navigate('/sellers')} disabled={isSubmitting}>
                 Wroc do listy

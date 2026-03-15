@@ -95,8 +95,9 @@ const ProductPreviewView = ({ payload }) => {
   const source = selectedVariant || product;
   const vatRate = Number(source.vatRate);
   const hasVatRate = !Number.isNaN(vatRate);
-  const unitLabel = formatUnitLabel(source.unit || product.unit);
-  const unitShort = formatUnitShort(source.unit || product.unit);
+  const normalizedUnit = product.unit || source.unit;
+  const unitLabel = formatUnitLabel(normalizedUnit);
+  const unitShort = formatUnitShort(normalizedUnit);
   const stockQuantity = Number(source.stockQuantity ?? 0);
 
   return (

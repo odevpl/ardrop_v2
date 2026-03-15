@@ -84,6 +84,23 @@
   border-color: #0a64c9;
 }
 
+.adminActions .adminDangerButton {
+  background: #b42318;
+  color: #ffffff;
+  border-color: #b42318;
+}
+
+.adminActions .adminDangerButton:hover {
+  background: #911d14;
+  border-color: #911d14;
+}
+
+.adminActions .adminDangerButton:disabled {
+  background: #f0a7a1;
+  border-color: #f0a7a1;
+  cursor: not-allowed;
+}
+
 .adminFormGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(220px, 1fr));

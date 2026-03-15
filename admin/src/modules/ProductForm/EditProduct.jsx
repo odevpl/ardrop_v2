@@ -96,6 +96,7 @@ const EditProduct = ({ id }) => {
 
   const handleSubmit = async (values, { setSubmitting, setStatus }) => {
     setStatus(null)
+    const currentUnit = values.unit || 'pcs'
     if (!values.sellerId) {
       setStatus('Sprzedawca jest wymagany')
       setSubmitting(false)
@@ -115,6 +116,7 @@ const EditProduct = ({ id }) => {
     const hasDefaultVariant = variants.some((variant) => Boolean(variant.isDefault))
     const normalizedVariants = variants.map((variant, index) => ({
       ...variant,
+      unit: currentUnit,
       isDefault: hasDefaultVariant ? Boolean(variant.isDefault) : index === 0,
     }))
     const defaultVariant = normalizedVariants.find((variant) => Boolean(variant.isDefault)) || normalizedVariants[0]
@@ -125,7 +127,7 @@ const EditProduct = ({ id }) => {
       netPrice: round2(Number(defaultVariant?.netPrice || 0)),
       grossPrice: round2(Number(defaultVariant?.grossPrice || 0)),
       vatRate: round2(Number(values.vatRate)),
-      unit: values.unit || 'pcs',
+      unit: currentUnit,
       stockQuantity: Number(values.stockQuantity || 0),
       description: values.description?.trim() || null,
       categoryIds: selectedCategoryIds,
@@ -171,7 +173,7 @@ const EditProduct = ({ id }) => {
       const variantPayload = {
         name: variant.name,
         unitAmount: Number(variant.unitAmount || 0),
-        unit: variant.unit || values.unit || 'pcs',
+        unit: currentUnit,
         netPrice: Number(variant.netPrice || 0),
         grossPrice: Number(variant.grossPrice || 0),
         vatRate: Number(variant.vatRate || 0),
@@ -250,6 +252,24 @@ const EditProduct = ({ id }) => {
     setIsImagesActionLoading(false)
   }
 
+  const handleDeleteProduct = async () => {
+    const confirmed = window.confirm(
+      `Usunac produkt #${id}? Operacja jest nieodwracalna.`,
+    )
+    if (!confirmed) {
+      return
+    }
+
+    const response = await ProductsService.deleteProduct(id)
+    if (response?.status && response.status >= 400) {
+      notification.error(response?.data?.error || 'Nie udalo sie usunac produktu')
+      return
+    }
+
+    notification.success('Produkt zostal usuniety')
+    navigate('/products')
+  }
+
   return (
     <ProductFormView
       title="Edytuj produkt"
@@ -269,6 +289,7 @@ const EditProduct = ({ id }) => {
       onDeleteExistingImage={handleDeleteExistingImage}
       onSetMainExistingImage={handleSetMainExistingImage}
       isImagesActionLoading={isImagesActionLoading}
+      onDelete={handleDeleteProduct}
       onCancel={() => navigate(-1)}
       loading={loading}
     />

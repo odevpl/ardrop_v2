@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const { assignProductCategories, getCategoriesForProductIds } = require("./categories");
+const { deleteAllProductImages } = require("./product-images");
 
 const PRODUCT_UNITS = ["pcs", "g", "l"];
 
@@ -168,7 +169,7 @@ const getProducts = async ({
     .leftJoin("sellers", "products.sellerId", "sellers.id");
 
   if (category) {
-    baseQuery.andWhereExists(function applyCategoryFilter() {
+    baseQuery.whereExists(function applyCategoryFilter() {
       this.select(db.raw("1"))
         .from("product_categories")
         .innerJoin("categories", "categories.id", "product_categories.categoryId")
@@ -717,16 +718,23 @@ const deleteProduct = async ({ userId, role, productId }) => {
     }
   }
 
-  try {
-    await db("products").where({ id: productId }).del();
-  } catch (dbError) {
-    if (dbError && (dbError.code === "ER_ROW_IS_REFERENCED_2" || dbError.code === "ER_ROW_IS_REFERENCED")) {
-      const error = new Error("Nie mozna usunac produktu, bo jest powiazany z zamowieniem lub koszykiem");
-      error.status = 409;
-      throw error;
-    }
-    throw dbError;
+  const [orderItem, cartItem] = await Promise.all([
+    db("order_items").select("id").where({ productId: Number(productId) }).first(),
+    db("cart_items").select("id").where({ productId: Number(productId) }).first(),
+  ]);
+
+  if (orderItem || cartItem) {
+    const error = new Error("Nie mozna usunac produktu, bo jest powiazany z zamowieniem lub koszykiem");
+    error.status = 409;
+    throw error;
   }
+
+  await db.transaction(async (trx) => {
+    await deleteAllProductImages({ productId, trx });
+    await trx("product_variants").where({ productId: Number(productId) }).del();
+    await trx("product_categories").where({ productId: Number(productId) }).del();
+    await trx("products").where({ id: Number(productId) }).del();
+  });
 
   return { id: productId };
 };

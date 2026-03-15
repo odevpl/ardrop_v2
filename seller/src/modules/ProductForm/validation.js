@@ -17,14 +17,18 @@ export const addProductValidationSchema = yup.object({
   description: yup.string().nullable(),
   netPrice: yup
     .number()
+    .transform((value, originalValue) => (originalValue === '' ? null : value))
+    .nullable()
     .typeError('Cena netto musi byc liczba >= 0')
     .min(0, 'Cena netto musi byc liczba >= 0')
-    .required('Cena netto musi byc liczba >= 0'),
+    .notRequired(),
   grossPrice: yup
     .number()
+    .transform((value, originalValue) => (originalValue === '' ? null : value))
+    .nullable()
     .typeError('Cena brutto musi byc liczba >= 0')
     .min(0, 'Cena brutto musi byc liczba >= 0')
-    .required('Cena brutto musi byc liczba >= 0'),
+    .notRequired(),
   vatRate: yup
     .number()
     .typeError('VAT musi byc liczba >= 0')

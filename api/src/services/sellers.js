@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const db = require("../config/db");
 const validator = require("../helpers/validator");
+const { deleteAllProductImages } = require("./product-images");
 
 async function createSeller({
   email,
@@ -367,6 +368,52 @@ async function deleteSeller(id) {
       const error = new Error("Seller not found");
       error.status = 404;
       throw error;
+    }
+
+    const [order, walletLedger, productIds] = await Promise.all([
+      trx("orders").select("id").where({ sellerId: normalizedId }).first(),
+      trx("wallet_ledger")
+        .innerJoin("wallets", "wallet_ledger.walletId", "wallets.id")
+        .select("wallet_ledger.id")
+        .where("wallets.sellerId", normalizedId)
+        .first(),
+      trx("products").select("id").where({ sellerId: normalizedId }),
+    ]);
+
+    if (order || walletLedger) {
+      const error = new Error("Nie mozna usunac sprzedawcy, bo posiada zamowienia lub historie portfela");
+      error.status = 409;
+      throw error;
+    }
+
+    const safeProductIds = productIds.map((product) => Number(product.id)).filter(Boolean);
+    if (safeProductIds.length > 0) {
+      const [productOrderItem, productCartItem] = await Promise.all([
+        trx("order_items").select("id").whereIn("productId", safeProductIds).first(),
+        trx("cart_items").select("id").whereIn("productId", safeProductIds).first(),
+      ]);
+
+      if (productOrderItem || productCartItem) {
+        const error = new Error("Nie mozna usunac sprzedawcy, bo jego produkty sa powiazane z zamowieniem lub koszykiem");
+        error.status = 409;
+        throw error;
+      }
+
+      for (const productId of safeProductIds) {
+        await deleteAllProductImages({ productId, trx });
+      }
+
+      await trx("product_variants").whereIn("productId", safeProductIds).del();
+      await trx("product_categories").whereIn("productId", safeProductIds).del();
+      await trx("products").where({ sellerId: normalizedId }).del();
+      await trx("cart_items").where({ sellerId: normalizedId }).del();
+    }
+
+    const walletIds = await trx("wallets").select("id").where({ sellerId: normalizedId });
+    const safeWalletIds = walletIds.map((wallet) => Number(wallet.id)).filter(Boolean);
+    if (safeWalletIds.length > 0) {
+      await trx("wallet_ledger").whereIn("walletId", safeWalletIds).del();
+      await trx("wallets").whereIn("id", safeWalletIds).del();
     }
 
     await trx("sellers").where({ id: normalizedId }).del();

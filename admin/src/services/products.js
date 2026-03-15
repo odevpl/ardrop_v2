@@ -28,6 +28,12 @@ export const updateProduct = ({ id, payload }) => {
   })
 }
 
+export const deleteProduct = (id) => {
+  return apiDelete({
+    url: `products/${id}`,
+  })
+}
+
 export const uploadProductImage = async ({ productId, file }) => {
   const formData = new FormData()
   formData.append('image', file)
@@ -91,6 +97,7 @@ export default {
   createProduct,
   getProductById,
   updateProduct,
+  deleteProduct,
   getProductVariants,
   createProductVariant,
   updateProductVariant,

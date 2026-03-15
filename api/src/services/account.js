@@ -126,6 +126,28 @@ const updateCurrentClientProfile = async ({ userId, payload = {} }) => {
       }
     });
 
+    if (clientUpdates.nip !== undefined) {
+      const normalizedNip = validator.normalizeNip(clientUpdates.nip);
+      if (!validator.nip(normalizedNip)) {
+        const error = new Error("Invalid NIP format");
+        error.status = 400;
+        throw error;
+      }
+
+      const occupiedNip = await trx("clients")
+        .where({ nip: normalizedNip })
+        .andWhereNot("userId", normalizedUserId)
+        .first();
+
+      if (occupiedNip) {
+        const error = new Error("NIP already in use");
+        error.status = 409;
+        throw error;
+      }
+
+      clientUpdates.nip = normalizedNip;
+    }
+
     const mergedProfile = {
       name: clientUpdates.name !== undefined ? clientUpdates.name : existing.name,
       phone: clientUpdates.phone !== undefined ? clientUpdates.phone : existing.phone,

@@ -6,6 +6,7 @@ const { getEnv } = require("../config/env");
 const validator = require("../helpers/validator");
 const { activateAccountTemplate } = require("./mail/activate-account");
 const { resetPasswordTemplate } = require("./mail/reset-password");
+const { lookupBusinessByNip } = require("./business-registry");
 
 const ALLOWED_ROLES = ["ADMIN", "SELLER", "CLIENT"];
 const TOKEN_TTL_MINUTES = 60;
@@ -14,7 +15,7 @@ const hashToken = (token) => crypto.createHash("sha256").update(String(token)).d
 const generateToken = () => crypto.randomBytes(32).toString("hex");
 const nextExpiry = () => new Date(Date.now() + TOKEN_TTL_MINUTES * 60 * 1000);
 
-async function register({ email, password, role, name }) {
+async function register({ email, password, role, name, nip }) {
   if (!email || !password) {
     const error = new Error("Email and password are required");
     error.status = 400;
@@ -37,11 +38,31 @@ async function register({ email, password, role, name }) {
 
   const passwordHash = await bcrypt.hash(password, 10);
   const userRole = role || "CLIENT";
+  const normalizedNip = validator.normalizeNip(nip);
 
   if (!ALLOWED_ROLES.includes(userRole)) {
     const error = new Error("Invalid role");
     error.status = 400;
     throw error;
+  }
+
+  let businessProfile = null;
+  if (userRole === "CLIENT") {
+    if (!validator.nip(normalizedNip)) {
+      const error = new Error("Valid NIP is required for client registration");
+      error.status = 400;
+      throw error;
+    }
+
+    const existingClient = await db("clients").where({ nip: normalizedNip }).first();
+    if (existingClient) {
+      const error = new Error("NIP already in use");
+      error.status = 409;
+      throw error;
+    }
+
+    const lookupResult = await lookupBusinessByNip({ nip: normalizedNip });
+    businessProfile = lookupResult.data;
   }
 
   return db.transaction(async (trx) => {
@@ -56,7 +77,16 @@ async function register({ email, password, role, name }) {
     if (userRole === "CLIENT") {
       await trx("clients").insert({
         userId,
-        name: String(name || "").trim() || email.split("@")[0],
+        name:
+          String(name || "").trim() ||
+          businessProfile?.ownerName ||
+          businessProfile?.companyName ||
+          email.split("@")[0],
+        companyName: businessProfile?.companyName || null,
+        nip: normalizedNip,
+        address: businessProfile?.address || null,
+        city: businessProfile?.city || null,
+        postalCode: businessProfile?.postalCode || null,
       });
     }
 

@@ -14,6 +14,13 @@ export const register = (data) => {
   })
 }
 
+export const lookupCompanyByNip = (nip) => {
+  return apiGet({
+    url: 'auth/company-lookup',
+    params: { nip },
+  })
+}
+
 export const activate = (data) => {
   return apiPost({
     url: 'auth/activate',
@@ -44,6 +51,7 @@ export const me = () => {
 export default {
   login,
   register,
+  lookupCompanyByNip,
   activate,
   forgotPassword,
   resetPassword,

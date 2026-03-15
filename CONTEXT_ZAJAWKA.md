@@ -51,8 +51,16 @@ Pliki startowe:
 Wymagane env (walidowane):
 - `PORT`, `DB_HOST`, `DB_USER`, `DB_NAME`, `JWT_SECRET`
 
+Dodatkowe env opcjonalne:
+- `CEIDG_API_TOKEN` - bearer token do API CEIDG v3
+- `CEIDG_API_BASE_URL` - override URL lookupu CEIDG
+- `GUS_BIR_USER_KEY` - klucz uzytkownika do API REGON BIR
+- `GUS_BIR_API_URL` - override URL lookupu GUS BIR
+- `BUSINESS_REGISTRY_TIMEOUT_MS` - timeout lookupu rejestrow
+
 Publiczne endpointy:
 - `POST /auth/register`
+- `GET /auth/company-lookup?nip=...`
 - `POST /auth/activate`
 - `POST /auth/forgot-password`
 - `POST /auth/reset-password`
@@ -62,6 +70,7 @@ Publiczne endpointy:
 
 Chronione endpointy (globalny auth middleware + role):
 - produkty: `GET/POST/PUT/DELETE /products...`, obrazy produktu
+- kategorie: `GET /categories...` dla `ADMIN/SELLER/CLIENT`, CRUD + obrazy kategorii tylko dla `ADMIN`
 - koszyk: `GET /carts/current`, operacje na pozycjach i metadanych koszyka
 - zamowienia: `POST /orders`, `GET /orders`, `GET /orders/:id`, admin `PUT/DELETE`
 - konto klienta: `GET/PATCH /account/me`
@@ -71,6 +80,7 @@ Chronione endpointy (globalny auth middleware + role):
 
 ## 5. Frontendy - podzial odpowiedzialnosci
 - `app`: flow klienta (logowanie/rejestracja/aktywacja/reset hasla, produkty, koszyk, konto, adresy, zamowienia)
+  - rejestracja klienta jest B2B: NIP jest wymagany, a dane firmy sa pobierane z CEIDG/GUS
 - `seller`: produkty i zamowienia sprzedawcy, logowanie tylko dla roli `SELLER`
 - `admin`: klienci, sprzedawcy, produkty, zamowienia; ma `ConfigProvider`, ktory probuje pobrac `/configs`, a fallback trzyma w `admin/stories/apiConfigs.json`
 
@@ -80,6 +90,8 @@ Glowne tabele z `DB_STRUCTURE.md`:
 - `clients`, `sellers`
 - `products`, `products_image`
   - `products` zawiera teraz takze: `unit` (`pcs`/`g`/`l`) oraz `stockQuantity`
+  - produkty moga byc przypiete do wielu kategorii przez `product_categories`
+- `categories`, `categories_image`, `product_categories`
 - `carts`, `cart_items`
 - `orders`, `order_items`
 - `clients_delivery_address`

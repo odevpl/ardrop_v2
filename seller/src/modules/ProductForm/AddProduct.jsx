@@ -1,6 +1,7 @@
 import ProductsService from 'services/products'
+import CategoriesService from 'services/categories'
 import { useNotification } from 'components/GlobalNotification/index.js'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { round2 } from './helpers'
 import ProductFormView from './ProductFormView'
@@ -21,11 +22,29 @@ const AddProduct = () => {
   const notification = useNotification()
   const [images, setImages] = useState([])
   const [variants, setVariants] = useState([])
+  const [categories, setCategories] = useState([])
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([])
+  const [primaryCategoryId, setPrimaryCategoryId] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      const response = await CategoriesService.getCategories({ page: 1, limit: 500, sortBy: 'position', sortOrder: 'asc' })
+      setCategories(response?.data || [])
+      setIsLoading(false)
+    }
+    loadCategories()
+  }, [])
 
   const handleSubmit = async (values, { setSubmitting, setStatus }) => {
     setStatus(null)
     if (!Array.isArray(variants) || variants.length === 0) {
       setStatus('Produkt musi miec co najmniej jeden wariant')
+      setSubmitting(false)
+      return
+    }
+    if (selectedCategoryIds.length === 0) {
+      setStatus('Wybierz przynajmniej jedna kategorie')
       setSubmitting(false)
       return
     }
@@ -48,6 +67,8 @@ const AddProduct = () => {
       stockQuantity: Number(values.stockQuantity || 0),
       description: values.description?.trim() || null,
       variants: normalizedVariants,
+      categoryIds: selectedCategoryIds,
+      primaryCategoryId: primaryCategoryId || selectedCategoryIds[0],
     }
 
     const result = await ProductsService.createProduct(payload)
@@ -89,7 +110,13 @@ const AddProduct = () => {
       setImages={setImages}
       variants={variants}
       setVariants={setVariants}
+      categoryOptions={categories}
+      selectedCategoryIds={selectedCategoryIds}
+      setSelectedCategoryIds={setSelectedCategoryIds}
+      primaryCategoryId={primaryCategoryId}
+      setPrimaryCategoryId={setPrimaryCategoryId}
       onCancel={() => navigate(-1)}
+      loading={isLoading}
     />
   )
 }

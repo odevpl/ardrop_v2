@@ -47,6 +47,7 @@ router.get(
       search: req.query.search,
       status: req.query.status,
       sellerId: req.query.sellerId,
+      category: req.query.category,
       page: req.query.page,
       limit: req.query.limit,
       sortBy: req.query.sortBy,
@@ -62,6 +63,7 @@ router.get(
           search: req.query.search || null,
           status: req.query.status || null,
           sellerId: req.query.sellerId ? Number(req.query.sellerId) : null,
+          category: req.query.category || null,
         },
       },
     });

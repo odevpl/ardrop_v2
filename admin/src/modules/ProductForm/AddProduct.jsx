@@ -1,5 +1,6 @@
 import ProductsService from 'services/products'
 import SellersService from 'services/sellers'
+import CategoriesService from 'services/categories'
 import { useNotification } from 'components/GlobalNotification/index.js'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -24,12 +25,19 @@ const AddProduct = () => {
   const [images, setImages] = useState([])
   const [variants, setVariants] = useState([])
   const [sellers, setSellers] = useState([])
+  const [categories, setCategories] = useState([])
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([])
+  const [primaryCategoryId, setPrimaryCategoryId] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadSellers = async () => {
-      const response = await SellersService.getSellers({ page: 1, limit: 1000, sortBy: 'companyName' })
-      setSellers(response?.data || [])
+      const [sellersResponse, categoriesResponse] = await Promise.all([
+        SellersService.getSellers({ page: 1, limit: 1000, sortBy: 'companyName' }),
+        CategoriesService.getCategories({ page: 1, limit: 500, sortBy: 'position', sortOrder: 'asc' }),
+      ])
+      setSellers(sellersResponse?.data || [])
+      setCategories(categoriesResponse?.data || [])
       setLoading(false)
     }
     loadSellers()
@@ -54,6 +62,11 @@ const AddProduct = () => {
       setSubmitting(false)
       return
     }
+    if (selectedCategoryIds.length === 0) {
+      setStatus('Wybierz przynajmniej jedna kategorie')
+      setSubmitting(false)
+      return
+    }
 
     const normalizedVariants = variants.map((variant, index) => ({
       ...variant,
@@ -74,6 +87,8 @@ const AddProduct = () => {
       stockQuantity: Number(values.stockQuantity || 0),
       description: values.description?.trim() || null,
       variants: normalizedVariants,
+      categoryIds: selectedCategoryIds,
+      primaryCategoryId: primaryCategoryId || selectedCategoryIds[0],
     }
 
     const result = await ProductsService.createProduct(payload)
@@ -115,6 +130,11 @@ const AddProduct = () => {
       setImages={setImages}
       variants={variants}
       setVariants={setVariants}
+      categoryOptions={categories}
+      selectedCategoryIds={selectedCategoryIds}
+      setSelectedCategoryIds={setSelectedCategoryIds}
+      primaryCategoryId={primaryCategoryId}
+      setPrimaryCategoryId={setPrimaryCategoryId}
       sellerOptions={sellerOptions}
       onCancel={() => navigate(-1)}
       loading={loading}

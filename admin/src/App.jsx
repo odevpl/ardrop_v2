@@ -19,6 +19,9 @@ import SellersPage from "pages/sellers";
 import AddSellerPage from "pages/sellers/AddSeller";
 import SellerDetailsPage from "pages/sellers/Details";
 import MarketingPage from "pages/marketing";
+import CategoriesPage from "pages/categories";
+import AddCategoryPage from "pages/categories/AddCategory";
+import CategoryDetailsPage from "pages/categories/Details";
 import "./App.scss";
 
 const AppContent = () => {
@@ -51,6 +54,9 @@ const AppContent = () => {
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/products/add" element={<AddProductPage />} />
             <Route path="/products/:id" element={<ProductDetailsPage />} />
+            <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/categories/add" element={<AddCategoryPage />} />
+            <Route path="/categories/:id" element={<CategoryDetailsPage />} />
             <Route path="/marketing" element={<MarketingPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:id" element={<OrderDetailsPage />} />

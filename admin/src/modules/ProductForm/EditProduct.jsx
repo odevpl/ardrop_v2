@@ -1,5 +1,6 @@
 import ProductsService from 'services/products'
 import SellersService from 'services/sellers'
+import CategoriesService from 'services/categories'
 import { useNotification } from 'components/GlobalNotification/index.js'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -16,6 +17,9 @@ const EditProduct = ({ id }) => {
   const [initialVariantIds, setInitialVariantIds] = useState([])
   const [loading, setLoading] = useState(true)
   const [sellers, setSellers] = useState([])
+  const [categories, setCategories] = useState([])
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([])
+  const [primaryCategoryId, setPrimaryCategoryId] = useState(null)
   const [initialValues, setInitialValues] = useState({
     sellerId: '',
     name: '',
@@ -30,12 +34,14 @@ const EditProduct = ({ id }) => {
 
   useEffect(() => {
     const load = async () => {
-      const [productResponse, sellersResponse] = await Promise.all([
+      const [productResponse, sellersResponse, categoriesResponse] = await Promise.all([
         ProductsService.getProductById(id),
         SellersService.getSellers({ page: 1, limit: 1000, sortBy: 'companyName' }),
+        CategoriesService.getCategories({ page: 1, limit: 500, sortBy: 'position', sortOrder: 'asc' }),
       ])
 
       setSellers(sellersResponse?.data || [])
+      setCategories(categoriesResponse?.data || [])
       if (productResponse?.status && productResponse.status >= 400) {
         setLoading(false)
         return
@@ -71,6 +77,10 @@ const EditProduct = ({ id }) => {
         setInitialVariantIds(
           loadedVariants.map((variant) => Number(variant.id)).filter(Boolean),
         )
+        const productCategories = Array.isArray(product.categories) ? product.categories : []
+        setSelectedCategoryIds(productCategories.map((category) => Number(category.id)).filter(Boolean))
+        const primaryCategory = productCategories.find((category) => category.isPrimary) || productCategories[0]
+        setPrimaryCategoryId(primaryCategory ? Number(primaryCategory.id) : null)
       }
       setLoading(false)
     }
@@ -96,6 +106,11 @@ const EditProduct = ({ id }) => {
       setSubmitting(false)
       return
     }
+    if (selectedCategoryIds.length === 0) {
+      setStatus('Wybierz przynajmniej jedna kategorie')
+      setSubmitting(false)
+      return
+    }
 
     const hasDefaultVariant = variants.some((variant) => Boolean(variant.isDefault))
     const normalizedVariants = variants.map((variant, index) => ({
@@ -113,6 +128,8 @@ const EditProduct = ({ id }) => {
       unit: values.unit || 'pcs',
       stockQuantity: Number(values.stockQuantity || 0),
       description: values.description?.trim() || null,
+      categoryIds: selectedCategoryIds,
+      primaryCategoryId: primaryCategoryId || selectedCategoryIds[0],
     }
 
     const result = await ProductsService.updateProduct({ id, payload })
@@ -242,6 +259,11 @@ const EditProduct = ({ id }) => {
       setImages={setImages}
       variants={variants}
       setVariants={setVariants}
+      categoryOptions={categories}
+      selectedCategoryIds={selectedCategoryIds}
+      setSelectedCategoryIds={setSelectedCategoryIds}
+      primaryCategoryId={primaryCategoryId}
+      setPrimaryCategoryId={setPrimaryCategoryId}
       sellerOptions={sellerOptions}
       existingImages={existingImages}
       onDeleteExistingImage={handleDeleteExistingImage}

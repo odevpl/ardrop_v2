@@ -10,11 +10,16 @@ const FetchWrapper = ({
   id,
   connector,
   filters: defaultFilters = {},
+  syncSearchParams = true,
   ...props
 }) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const getInitialFilters = () => {
     const mergedFilters = { ...defaultFilters }
+
+    if (!syncSearchParams) {
+      return mergedFilters
+    }
 
     PAGINATION_FILTER_KEYS.forEach((key) => {
       if (!Object.prototype.hasOwnProperty.call(defaultFilters, key)) {
@@ -76,6 +81,10 @@ const FetchWrapper = ({
   }, [fetchElement, filters])
 
   useEffect(() => {
+    if (!syncSearchParams) {
+      return
+    }
+
     const hasPaginationFilters = PAGINATION_FILTER_KEYS.some((key) =>
       Object.prototype.hasOwnProperty.call(defaultFilters, key),
     )
@@ -100,7 +109,7 @@ const FetchWrapper = ({
     if (nextSearchParams.toString() !== searchParams.toString()) {
       setSearchParams(nextSearchParams, { replace: true })
     }
-  }, [defaultFilters, filters, searchParams, setSearchParams])
+  }, [defaultFilters, filters, searchParams, setSearchParams, syncSearchParams])
 
   if (isLoading && !data) {
     return <LoadingSpinner />

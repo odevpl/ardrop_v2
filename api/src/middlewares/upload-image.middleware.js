@@ -5,6 +5,8 @@ const multer = require("multer");
 
 const uploadDir = path.resolve(__dirname, "../../uploads/images");
 fs.mkdirSync(uploadDir, { recursive: true });
+const categoryUploadDir = path.resolve(__dirname, "../../uploads/categories");
+fs.mkdirSync(categoryUploadDir, { recursive: true });
 const marketingUploadDir = path.resolve(__dirname, "../../uploads/marketing");
 fs.mkdirSync(marketingUploadDir, { recursive: true });
 
@@ -37,6 +39,24 @@ const uploadProductImage = multer({
   fileFilter,
 });
 
+const categoryStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, categoryUploadDir);
+  },
+  filename: (req, file, cb) => {
+    const hash = crypto.randomBytes(24).toString("hex");
+    cb(null, `${hash}.jpg`);
+  },
+});
+
+const uploadCategoryImage = multer({
+  storage: categoryStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+  fileFilter,
+});
+
 const marketingStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, marketingUploadDir);
@@ -57,5 +77,6 @@ const uploadMarketingImage = multer({
 
 module.exports = {
   uploadProductImage,
+  uploadCategoryImage,
   uploadMarketingImage,
 };

@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const { assignProductCategories, getCategoriesForProductIds } = require("./categories");
 
 const PRODUCT_UNITS = ["pcs", "g", "l"];
 
@@ -152,6 +153,7 @@ const getProducts = async ({
   search,
   status,
   sellerId,
+  category,
   page = 1,
   limit = 20,
   sortBy = "id",
@@ -164,6 +166,19 @@ const getProducts = async ({
 
   const baseQuery = db("products")
     .leftJoin("sellers", "products.sellerId", "sellers.id");
+
+  if (category) {
+    baseQuery.andWhereExists(function applyCategoryFilter() {
+      this.select(db.raw("1"))
+        .from("product_categories")
+        .innerJoin("categories", "categories.id", "product_categories.categoryId")
+        .whereRaw("product_categories.productId = products.id")
+        .andWhere((qb) => {
+          qb.where("categories.name", String(category).trim())
+            .orWhere("categories.slug", String(category).trim());
+        });
+    });
+  }
 
   if (role === "CLIENT") {
     baseQuery.where("products.status", "active");
@@ -182,7 +197,7 @@ const getProducts = async ({
     baseQuery.andWhere({ status });
   }
 
-  const countRow = await baseQuery.clone().count({ total: "products.id" }).first();
+  const countRow = await baseQuery.clone().countDistinct({ total: "products.id" }).first();
   const total = Number(countRow?.total || 0);
   const offset = (normalizedPage - 1) * normalizedLimit;
   const sortColumn = SORT_FIELD_MAP[normalizedSortBy] || "products.id";
@@ -236,10 +251,14 @@ const getProducts = async ({
   const variantsByProductId = await getVariantsByProductIds(data.map((product) => Number(product.id)), {
     onlyActive: role === "CLIENT",
   });
+  const categoriesByProductId = await getCategoriesForProductIds(
+    data.map((product) => Number(product.id)),
+  );
 
   const normalizedData = data.map((product) => ({
     ...product,
     variants: variantsByProductId[Number(product.id)] || [],
+    categories: categoriesByProductId[Number(product.id)] || [],
   }));
 
   return {
@@ -291,11 +310,13 @@ const getProductById = async ({ userId, role, productId }) => {
   const variantsByProductId = await getVariantsByProductIds([Number(productId)], {
     onlyActive: role === "CLIENT",
   });
+  const categoriesByProductId = await getCategoriesForProductIds([Number(productId)]);
 
   return {
     ...product,
     images,
     variants: variantsByProductId[Number(product.id)] || [],
+    categories: categoriesByProductId[Number(product.id)] || [],
   };
 };
 
@@ -335,11 +356,15 @@ const getSuggestedProducts = async ({ limit = 10, role }) => {
   const variantsByProductId = await getVariantsByProductIds(products.map((product) => Number(product.id)), {
     onlyActive: role === "CLIENT",
   });
+  const categoriesByProductId = await getCategoriesForProductIds(
+    products.map((product) => Number(product.id)),
+  );
 
   return products.map((product) => ({
     ...product,
     images: imagesByProductId[Number(product.id)] || [],
     variants: variantsByProductId[Number(product.id)] || [],
+    categories: categoriesByProductId[Number(product.id)] || [],
   }));
 };
 
@@ -356,6 +381,8 @@ const createProduct = async ({
   stockQuantity = 0,
   status,
   variants = [],
+  categoryIds = [],
+  primaryCategoryId = null,
 }) => {
   let targetSellerId = sellerId !== undefined ? Number(sellerId) : null;
 
@@ -375,60 +402,71 @@ const createProduct = async ({
     throw error;
   }
 
-  const inserted = await db("products").insert({
-    sellerId: targetSellerId,
-    name: String(name || "").trim(),
-    description: description || null,
-    netPrice,
-    grossPrice,
-    vatRate,
-    unit: normalizeUnit(unit),
-    stockQuantity: normalizeStockQuantity(stockQuantity),
-    status: status || "draft",
-  });
-  const productId = Array.isArray(inserted) ? inserted[0] : inserted;
-
   const normalizedUnit = normalizeUnit(unit);
   const providedVariants = Array.isArray(variants) ? variants : [];
-
-  if (providedVariants.length > 0) {
-    const normalizedVariants = providedVariants.map((variant, index) => ({
-      ...normalizeVariantPayload(variant, normalizedUnit),
-      sku:
-        String(variant?.sku || "").trim() ||
-        `P${Number(productId)}-V${String(index + 1).padStart(3, "0")}`,
-      isDefault: variant?.isDefault ? 1 : 0,
-      position:
-        Number.isFinite(Number(variant?.position)) ? Number(variant.position) : index,
-    }));
-
-    const hasDefault = normalizedVariants.some((variant) => variant.isDefault === 1);
-    if (!hasDefault && normalizedVariants[0]) {
-      normalizedVariants[0].isDefault = 1;
-    }
-
-    for (const variant of normalizedVariants) {
-      await db("product_variants").insert({
-        productId: Number(productId),
-        ...variant,
-      });
-    }
-  } else {
-    await db("product_variants").insert({
-      productId: Number(productId),
-      sku: `P${Number(productId)}-DEF`,
-      name: normalizedUnit === "pcs" ? "1 szt." : `1 ${normalizedUnit}`,
+  const inserted = await db.transaction(async (trx) => {
+    const result = await trx("products").insert({
+      sellerId: targetSellerId,
+      name: String(name || "").trim(),
+      description: description || null,
+      netPrice,
+      grossPrice,
+      vatRate,
       unit: normalizedUnit,
-      unitAmount: 1,
-      netPrice: Number(netPrice),
-      grossPrice: Number(grossPrice),
-      vatRate: Number(vatRate),
       stockQuantity: normalizeStockQuantity(stockQuantity),
       status: status || "draft",
-      isDefault: 1,
-      position: 0,
     });
-  }
+    const productId = Array.isArray(result) ? result[0] : result;
+
+    if (providedVariants.length > 0) {
+      const normalizedVariants = providedVariants.map((variant, index) => ({
+        ...normalizeVariantPayload(variant, normalizedUnit),
+        sku:
+          String(variant?.sku || "").trim() ||
+          `P${Number(productId)}-V${String(index + 1).padStart(3, "0")}`,
+        isDefault: variant?.isDefault ? 1 : 0,
+        position:
+          Number.isFinite(Number(variant?.position)) ? Number(variant.position) : index,
+      }));
+
+      const hasDefault = normalizedVariants.some((variant) => variant.isDefault === 1);
+      if (!hasDefault && normalizedVariants[0]) {
+        normalizedVariants[0].isDefault = 1;
+      }
+
+      for (const variant of normalizedVariants) {
+        await trx("product_variants").insert({
+          productId: Number(productId),
+          ...variant,
+        });
+      }
+    } else {
+      await trx("product_variants").insert({
+        productId: Number(productId),
+        sku: `P${Number(productId)}-DEF`,
+        name: normalizedUnit === "pcs" ? "1 szt." : `1 ${normalizedUnit}`,
+        unit: normalizedUnit,
+        unitAmount: 1,
+        netPrice: Number(netPrice),
+        grossPrice: Number(grossPrice),
+        vatRate: Number(vatRate),
+        stockQuantity: normalizeStockQuantity(stockQuantity),
+        status: status || "draft",
+        isDefault: 1,
+        position: 0,
+      });
+    }
+
+    await assignProductCategories({
+      trx,
+      productId,
+      categoryIds,
+      primaryCategoryId,
+    });
+
+    return productId;
+  });
+  const productId = inserted;
 
   return getProductById({ productId });
 };
@@ -647,7 +685,18 @@ const updateProduct = async ({ userId, role, productId, payload }) => {
     updates.stockQuantity = normalizeStockQuantity(payload.stockQuantity);
   }
 
-  await db("products").where({ id: productId }).update(updates);
+  await db.transaction(async (trx) => {
+    await trx("products").where({ id: productId }).update(updates);
+
+    if (payload.categoryIds !== undefined || payload.primaryCategoryId !== undefined) {
+      await assignProductCategories({
+        trx,
+        productId,
+        categoryIds: payload.categoryIds || [],
+        primaryCategoryId: payload.primaryCategoryId || null,
+      });
+    }
+  });
   return getProductById({ userId, role, productId });
 };
 

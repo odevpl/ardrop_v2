@@ -7,6 +7,7 @@ const sellerController = require("./controllers/sellers");
 const usersController = require("./controllers/users");
 const clientsController = require("./controllers/clients");
 const productsController = require("./controllers/products");
+const categoriesController = require("./controllers/categories");
 const cartsController = require("./controllers/carts");
 const accountController = require("./controllers/account");
 const clientDeliveryAddressesController = require("./controllers/client-delivery-addresses");
@@ -64,6 +65,8 @@ app.use((req, res, next) => {
   const isPublicHealth = req.method === "GET" && req.path === "/health";
   const isPublicLogin = req.method === "POST" && req.path === "/auth/login";
   const isPublicRegister = req.method === "POST" && req.path === "/auth/register";
+  const isPublicCompanyLookup =
+    req.method === "GET" && req.path === "/auth/company-lookup";
   const isPublicActivate = req.method === "POST" && req.path === "/auth/activate";
   const isPublicForgotPassword =
     req.method === "POST" && req.path === "/auth/forgot-password";
@@ -75,6 +78,7 @@ app.use((req, res, next) => {
     isPublicHealth ||
     isPublicLogin ||
     isPublicRegister ||
+    isPublicCompanyLookup ||
     isPublicActivate ||
     isPublicForgotPassword ||
     isPublicResetPassword ||
@@ -91,6 +95,7 @@ app.use("/", sellerController);
 app.use("/", usersController);
 app.use("/", clientsController);
 app.use("/", productsController);
+app.use("/", categoriesController);
 app.use("/", cartsController);
 app.use("/", accountController);
 app.use("/", clientDeliveryAddressesController);

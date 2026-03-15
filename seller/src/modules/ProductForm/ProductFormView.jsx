@@ -21,6 +21,11 @@ const ProductFormView = ({
   loading = false,
   variants = [],
   setVariants,
+  categoryOptions = [],
+  selectedCategoryIds = [],
+  setSelectedCategoryIds,
+  primaryCategoryId = null,
+  setPrimaryCategoryId,
 }) => {
   const updateVariantValue = (index, field, rawValue, vatRateValue) => {
     const parsedValue = rawValue === '' ? '' : Number(rawValue)
@@ -92,6 +97,52 @@ const ProductFormView = ({
             </div>
 
             <Textarea id="description" placeholder="Opis" />
+
+            {Array.isArray(categoryOptions) && typeof setSelectedCategoryIds === 'function' ? (
+              <section className="sellerVariantsSection">
+                <div className="sellerToolbar">
+                  <h3>Kategorie</h3>
+                </div>
+                <div className="sellerVariantsGrid">
+                  {categoryOptions.map((category) => {
+                    const isSelected = selectedCategoryIds.includes(Number(category.id))
+                    return (
+                      <div className="sellerVariantCard" key={category.id}>
+                        <label className="sellerVariantDefault">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(event) => {
+                              const nextIds = event.target.checked
+                                ? [...selectedCategoryIds, Number(category.id)]
+                                : selectedCategoryIds.filter((id) => Number(id) !== Number(category.id))
+                              setSelectedCategoryIds([...new Set(nextIds)])
+                              if (!event.target.checked && Number(primaryCategoryId) === Number(category.id)) {
+                                setPrimaryCategoryId(nextIds[0] || null)
+                              }
+                              if (event.target.checked && !primaryCategoryId) {
+                                setPrimaryCategoryId(Number(category.id))
+                              }
+                            }}
+                          />
+                          {category.name}
+                        </label>
+                        <label className="sellerVariantDefault">
+                          <input
+                            type="radio"
+                            name="primaryCategory"
+                            checked={isSelected && Number(primaryCategoryId) === Number(category.id)}
+                            disabled={!isSelected}
+                            onChange={() => setPrimaryCategoryId(Number(category.id))}
+                          />
+                          Glowna
+                        </label>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+            ) : null}
 
             {typeof setVariants === 'function' ? (
               <section className="sellerVariantsSection">

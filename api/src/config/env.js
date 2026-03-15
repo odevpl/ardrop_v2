@@ -27,6 +27,16 @@ function getEnv() {
       secret: process.env.JWT_SECRET,
       expiresIn: process.env.JWT_EXPIRES_IN || "1d",
     },
+    businessRegistry: {
+      ceidgBaseUrl:
+        process.env.CEIDG_API_BASE_URL || "https://dane.biznes.gov.pl/api/ceidg/v3/firmy",
+      ceidgToken: process.env.CEIDG_API_TOKEN || "",
+      gusBaseUrl:
+        process.env.GUS_BIR_API_URL ||
+        "https://wyszukiwarkaregon.stat.gov.pl/wsBIR/UslugaBIRzewnPubl.svc",
+      gusUserKey: process.env.GUS_BIR_USER_KEY || "",
+      requestTimeoutMs: Number(process.env.BUSINESS_REGISTRY_TIMEOUT_MS || 10000),
+    },
   };
 }
 

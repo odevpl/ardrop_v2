@@ -4,7 +4,9 @@ import { useNotification } from "components/GlobalNotification/index.js";
 import Popup2 from "components/Popup2";
 import FastProductView from "modules/FastProductView";
 import { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import CartsService from "services/carts";
 import ProductsService from "services/products";
 import "./AllProducts.scss";
@@ -22,14 +24,30 @@ const getMainImage = (product) => {
 
 const AllProductsView = ({ payload, filters, setFilters }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const products = Array.isArray(payload?.data) ? payload.data : [];
   const pagination = payload?.meta?.pagination || {};
   const page = Number(pagination.page || filters?.page || 1);
   const totalPages = Number(pagination.totalPages || 1);
   const searchValue = filters?.search || "";
+  const selectedCategory = searchParams.get("category") || "";
   const [pendingId, setPendingId] = useState(null);
   const [inlineCartConfig, setInlineCartConfig] = useState(null);
   const notification = useNotification();
+
+  useEffect(() => {
+    const currentCategory = filters?.category || "";
+    if (currentCategory === selectedCategory) {
+      return;
+    }
+
+    setFilters({
+      ...(filters || {}),
+      category: selectedCategory,
+      page: 1,
+      limit: filters?.limit || 20,
+    });
+  }, [filters, selectedCategory, setFilters]);
 
   const addToCart = async ({ productId, variantId = null, quantity = 1 }) => {
     setPendingId(productId);
@@ -83,6 +101,9 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
           }
         />
       </div>
+      {selectedCategory ? (
+        <p className="allProductsMessage">Wybrana kategoria: {selectedCategory}</p>
+      ) : null}
       <div className="allProductsGrid">
         {products.map((product) => {
           const mainImage = getMainImage(product);
@@ -247,6 +268,9 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
           );
         })}
       </div>
+      {selectedCategory && products.length === 0 ? (
+        <p className="allProductsMessage">W tej kategorii nie ma jeszcze produktow.</p>
+      ) : null}
 
       <Pagination
         page={page}
@@ -271,7 +295,7 @@ const AllProducts = () => (
     name="AllProducts"
     component={AllProductsView}
     connector={ProductsService.getProducts}
-    filters={{ page: 1, limit: 20, search: "" }}
+    filters={{ page: 1, limit: 20, search: "", category: "" }}
   />
 );
 

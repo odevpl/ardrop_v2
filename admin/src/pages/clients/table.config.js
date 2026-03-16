@@ -1,7 +1,5 @@
 export const getClientsTableConfig = () => {
   return [
-    { key: 'id', title: 'ID' },
-    { key: 'userId', title: 'Uzytkownik' },
     { key: 'name', title: 'Nazwa' },
     { key: 'email', title: 'Email' },
     { key: 'phone', title: 'Telefon' },

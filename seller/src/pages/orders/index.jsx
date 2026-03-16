@@ -11,7 +11,6 @@ const OrdersList = ({ payload }) => {
   const orders = Array.isArray(payload?.data || payload?.orders) ? payload?.data || payload?.orders : []
 
   const tableConfig = [
-    { key: 'id', title: 'Nr zamowienia', onRender: (row) => `#${row.id}` },
     {
       key: 'createdAt',
       title: 'Data',

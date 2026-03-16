@@ -24,11 +24,6 @@ const DeliveriesListView = ({ payload }) => {
 
   const tableConfig = [
     {
-      key: "id",
-      title: "Nr zamowienia",
-      onRender: (row) => `#${row.id}`,
-    },
-    {
       key: "createdAt",
       title: "Data",
       onRender: (row) => formatDate(row.createdAt),

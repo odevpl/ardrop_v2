@@ -1,6 +1,5 @@
 export const getProductsTableConfig = () => {
   return [
-    { key: "id", title: "ID" },
     {
       key: "thumbnail",
       title: "Miniatura",

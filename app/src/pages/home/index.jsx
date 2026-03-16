@@ -7,8 +7,8 @@ const HomePage = () => {
   return (
     <section className="homePage">
       <MarketingBanner />
-      <CategoriesView />
-      <SuggestedProducts />
+      {/* <CategoriesView /> */}
+      {/* <SuggestedProducts /> */}
       <AllProducts />
     </section>
   );

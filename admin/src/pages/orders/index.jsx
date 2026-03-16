@@ -11,7 +11,6 @@ const OrdersTable = ({ payload }) => {
   const orders = Array.isArray(payload?.data || payload?.orders) ? payload?.data || payload?.orders : []
 
   const config = [
-    { key: 'id', title: 'Nr zamowienia', onRender: (row) => `#${row.id}` },
     {
       key: 'createdAt',
       title: 'Data',
@@ -19,8 +18,6 @@ const OrdersTable = ({ payload }) => {
     },
     { key: 'status', title: 'Status' },
     { key: 'paymentStatus', title: 'Platnosc' },
-    { key: 'clientId', title: 'Klient' },
-    { key: 'sellerId', title: 'Sprzedawca' },
     { key: 'totalGross', title: 'Brutto', onRender: (row) => formatPrice(row.totalGross) },
   ]
 

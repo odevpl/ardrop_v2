@@ -1,6 +1,5 @@
 export const getSellersTableConfig = () => {
   return [
-    { key: 'id', title: 'ID' },
     { key: 'companyName', title: 'Firma' },
     { key: 'nip', title: 'NIP' },
     { key: 'email', title: 'Email' },

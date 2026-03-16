@@ -3,6 +3,7 @@ import Input from 'components/FormikWrapper/FormControls/Input'
 import Select from 'components/FormikWrapper/FormControls/Select'
 import Textarea from 'components/FormikWrapper/FormControls/Textarea'
 import ImageDropzone from './ImageDropzone'
+import CategoryTreeSelector from './CategoryTreeSelector'
 import { parseNumber, round2 } from './helpers'
 
 export const STATUS_OPTIONS = {
@@ -110,44 +111,13 @@ const ProductFormView = ({
                 <div className="adminToolbar">
                   <h3>Kategorie</h3>
                 </div>
-                <div className="adminVariantsGrid">
-                  {categoryOptions.map((category) => {
-                    const isSelected = selectedCategoryIds.includes(Number(category.id))
-                    return (
-                      <div className="adminVariantCard" key={category.id}>
-                        <label className="adminVariantDefault">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={(event) => {
-                              const nextIds = event.target.checked
-                                ? [...selectedCategoryIds, Number(category.id)]
-                                : selectedCategoryIds.filter((id) => Number(id) !== Number(category.id))
-                              setSelectedCategoryIds([...new Set(nextIds)])
-                              if (!event.target.checked && Number(primaryCategoryId) === Number(category.id)) {
-                                setPrimaryCategoryId(nextIds[0] || null)
-                              }
-                              if (event.target.checked && !primaryCategoryId) {
-                                setPrimaryCategoryId(Number(category.id))
-                              }
-                            }}
-                          />
-                          {category.name}
-                        </label>
-                        <label className="adminVariantDefault">
-                          <input
-                            type="radio"
-                            name="primaryCategory"
-                            checked={isSelected && Number(primaryCategoryId) === Number(category.id)}
-                            disabled={!isSelected}
-                            onChange={() => setPrimaryCategoryId(Number(category.id))}
-                          />
-                          Glowna
-                        </label>
-                      </div>
-                    )
-                  })}
-                </div>
+                <CategoryTreeSelector
+                  categoryOptions={categoryOptions}
+                  selectedCategoryIds={selectedCategoryIds}
+                  setSelectedCategoryIds={setSelectedCategoryIds}
+                  primaryCategoryId={primaryCategoryId}
+                  setPrimaryCategoryId={setPrimaryCategoryId}
+                />
               </section>
             ) : null}
 

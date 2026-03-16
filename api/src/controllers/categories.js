@@ -24,6 +24,7 @@ const withImageUrls = (req, category) => {
   if (!category) return category;
   const baseUrl = getBaseUrl(req);
   const images = Array.isArray(category.images) ? category.images : [];
+  const children = Array.isArray(category.children) ? category.children : [];
   return {
     ...category,
     images: images.map((image) => ({
@@ -31,6 +32,7 @@ const withImageUrls = (req, category) => {
       url: `${baseUrl}/uploads/categories/${image.fileName}`,
       thumbUrl: `${baseUrl}/uploads/categories/thumbs/${getThumbFileName(image.fileName)}`,
     })),
+    children: children.map((child) => withImageUrls(req, child)),
   };
 };
 
@@ -47,12 +49,19 @@ router.get(
       sortOrder: req.query.sortOrder,
       parentId: req.query.parentId,
       activeOnly: req.query.activeOnly === "1",
+      view: req.query.view === "tree" ? "tree" : "flat",
     });
 
+    const normalizedData = result.data.map((category) => withImageUrls(req, category));
+    const normalizedTree = Array.isArray(result.tree)
+      ? result.tree.map((category) => withImageUrls(req, category))
+      : null;
+
     res.status(200).json({
-      data: result.data.map((category) => withImageUrls(req, category)),
+      data: req.query.view === "tree" && normalizedTree ? normalizedTree : normalizedData,
       meta: {
         pagination: result.pagination,
+        view: req.query.view === "tree" ? "tree" : "flat",
       },
     });
   },

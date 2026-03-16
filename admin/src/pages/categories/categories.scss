@@ -4,6 +4,86 @@
   gap: 20px;
 }
 
+.adminCategoriesTreePanel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 10px 25px rgba(20, 35, 56, 0.08);
+}
+
+.adminCategoriesTreeToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.adminCategoriesTreeSearch {
+  width: min(100%, 420px);
+  border: 1px solid #d8e1ea;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.adminCategoriesTreeCount {
+  color: #526273;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+.adminCategoriesTreeList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.adminCategoriesTreeItem > .adminCategoriesTreeList {
+  margin-top: 10px;
+  margin-left: 22px;
+  padding-left: 14px;
+  border-left: 2px solid #dbe4eb;
+}
+
+.adminCategoriesTreeCard {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  padding: 14px 16px;
+  border: 1px solid #d9e3ea;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbfd 100%);
+  cursor: pointer;
+}
+
+.adminCategoriesTreeCard:hover {
+  border-color: #0a64c9;
+  box-shadow: 0 8px 20px rgba(10, 100, 201, 0.08);
+}
+
+.adminCategoriesTreeName {
+  color: #153047;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.adminCategoriesTreeMeta {
+  color: #5f7080;
+  font-size: 0.9rem;
+}
+
+.adminCategoriesTreeEmpty {
+  border: 1px dashed #d9e3ea;
+  border-radius: 12px;
+  padding: 22px;
+  text-align: center;
+  color: #5f7080;
+}
+
 .adminCategoriesEditor {
   background: #fff;
   border-radius: 16px;
@@ -141,6 +221,15 @@
 }
 
 @media (max-width: 720px) {
+  .adminCategoriesTreeToolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .adminCategoriesTreeSearch {
+    width: 100%;
+  }
+
   .adminCategoriesFieldGrid {
     grid-template-columns: 1fr;
   }

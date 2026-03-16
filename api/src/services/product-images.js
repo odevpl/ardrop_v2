@@ -1,7 +1,7 @@
 const fs = require("fs/promises");
 const path = require("path");
-const { Jimp } = require("jimp");
 const db = require("../config/db");
+const { processSquareImageVariants } = require("./image-processor");
 
 const uploadsDir = path.resolve(__dirname, "../../uploads/images");
 const thumbsDir = path.resolve(__dirname, "../../uploads/images/thumbs");
@@ -66,31 +66,14 @@ const saveProductImage = async ({ productId, file, role, userId }) => {
       await ensureProductExists(productId);
     }
 
-    const sourceImage = await Jimp.read(filePath);
-    sourceImage.scaleToFit({ w: MAIN_MAX_SIZE, h: MAIN_MAX_SIZE });
-
-    const image = new Jimp({
-      width: MAIN_MAX_SIZE,
-      height: MAIN_MAX_SIZE,
-      color: 0xffffffff,
+    await processSquareImageVariants({
+      sourcePath: filePath,
+      mainOutputPath: filePath,
+      thumbOutputPath: thumbPath,
+      mainSize: MAIN_MAX_SIZE,
+      thumbSize: THUMB_SIZE,
+      quality: JPEG_QUALITY,
     });
-    const mainX = Math.round((MAIN_MAX_SIZE - sourceImage.bitmap.width) / 2);
-    const mainY = Math.round((MAIN_MAX_SIZE - sourceImage.bitmap.height) / 2);
-    image.composite(sourceImage, mainX, mainY);
-    await image.write(filePath, { quality: JPEG_QUALITY });
-
-    const thumbSource = image.clone();
-    thumbSource.contain({
-      w: THUMB_SIZE,
-      h: THUMB_SIZE,
-    });
-    const thumb = new Jimp({
-      width: THUMB_SIZE,
-      height: THUMB_SIZE,
-      color: 0xffffffff,
-    });
-    thumb.composite(thumbSource, 0, 0);
-    await thumb.write(thumbPath, { quality: JPEG_QUALITY });
 
     const existingImagesCountRow = await db("products_image")
       .count({ total: "id" })

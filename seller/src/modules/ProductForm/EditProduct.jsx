@@ -33,7 +33,7 @@ const EditProduct = ({ id }) => {
     const load = async () => {
       const [productResponse, categoriesResponse] = await Promise.all([
         ProductsService.getProductById(id),
-        CategoriesService.getCategories({ page: 1, limit: 500, sortBy: 'position', sortOrder: 'asc' }),
+        CategoriesService.getCategories({ page: 1, limit: 500, sortBy: 'position', sortOrder: 'asc', view: 'tree' }),
       ])
       setCategories(categoriesResponse?.data || [])
       if (productResponse?.status && productResponse.status >= 400) {
@@ -71,9 +71,10 @@ const EditProduct = ({ id }) => {
           loadedVariants.map((variant) => Number(variant.id)).filter(Boolean),
         )
         const productCategories = Array.isArray(product.categories) ? product.categories : []
-        setSelectedCategoryIds(productCategories.map((category) => Number(category.id)).filter(Boolean))
         const primaryCategory = productCategories.find((category) => category.isPrimary) || productCategories[0]
-        setPrimaryCategoryId(primaryCategory ? Number(primaryCategory.id) : null)
+        const selectedCategoryId = primaryCategory ? Number(primaryCategory.id) : null
+        setSelectedCategoryIds(selectedCategoryId ? [selectedCategoryId] : [])
+        setPrimaryCategoryId(selectedCategoryId)
       }
       setLoading(false)
     }
@@ -88,8 +89,9 @@ const EditProduct = ({ id }) => {
       setSubmitting(false)
       return
     }
-    if (selectedCategoryIds.length === 0) {
-      setStatus('Wybierz przynajmniej jedna kategorie')
+    const selectedCategoryId = Number(selectedCategoryIds[0] || primaryCategoryId || 0)
+    if (!selectedCategoryId) {
+      setStatus('Wybierz kategorie')
       setSubmitting(false)
       return
     }
@@ -110,8 +112,8 @@ const EditProduct = ({ id }) => {
       unit: currentUnit,
       stockQuantity: Number(values.stockQuantity || 0),
       description: values.description?.trim() || null,
-      categoryIds: selectedCategoryIds,
-      primaryCategoryId: primaryCategoryId || selectedCategoryIds[0],
+      categoryIds: [selectedCategoryId],
+      primaryCategoryId: selectedCategoryId,
     }
 
     const result = await ProductsService.updateProduct({ id, payload })

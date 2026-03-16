@@ -148,6 +148,47 @@ const getVariantsByProductIds = async (productIds, { onlyActive = false } = {}) 
   }, {});
 };
 
+const getCategoryIdsForFilter = async (categoryFilter) => {
+  const normalizedFilter = String(categoryFilter || "").trim();
+  if (!normalizedFilter) {
+    return [];
+  }
+
+  const rootCategory = await db("categories")
+    .select("id")
+    .where((qb) => {
+      qb.where("name", normalizedFilter).orWhere("slug", normalizedFilter);
+    })
+    .first();
+
+  if (!rootCategory) {
+    return [];
+  }
+
+  const categoryIds = new Set([Number(rootCategory.id)]);
+  const queue = [Number(rootCategory.id)];
+
+  while (queue.length > 0) {
+    const parentIds = [...queue];
+    queue.length = 0;
+
+    const children = await db("categories")
+      .select("id")
+      .whereIn("parentId", parentIds);
+
+    children.forEach((child) => {
+      const childId = Number(child.id);
+      if (categoryIds.has(childId)) {
+        return;
+      }
+      categoryIds.add(childId);
+      queue.push(childId);
+    });
+  }
+
+  return [...categoryIds];
+};
+
 const getProducts = async ({
   userId,
   role,
@@ -169,15 +210,30 @@ const getProducts = async ({
     .leftJoin("sellers", "products.sellerId", "sellers.id");
 
   if (category) {
+    const categoryIds = await getCategoryIdsForFilter(category);
+    if (categoryIds.length === 0) {
+      return {
+        data: [],
+        pagination: {
+          page: normalizedPage,
+          limit: normalizedLimit,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: normalizedPage > 1,
+        },
+        sort: {
+          by: normalizedSortBy,
+          order: normalizedSortOrder,
+        },
+      };
+    }
+
     baseQuery.whereExists(function applyCategoryFilter() {
       this.select(db.raw("1"))
         .from("product_categories")
-        .innerJoin("categories", "categories.id", "product_categories.categoryId")
         .whereRaw("product_categories.productId = products.id")
-        .andWhere((qb) => {
-          qb.where("categories.name", String(category).trim())
-            .orWhere("categories.slug", String(category).trim());
-        });
+        .whereIn("product_categories.categoryId", categoryIds);
     });
   }
 

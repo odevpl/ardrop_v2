@@ -27,7 +27,8 @@ const CategoriesViewBody = ({ payload }) => {
       <div className="categoriesViewTrack">
         {categories.map((category) => {
           const mainImage = getMainImage(category);
-          const isActive = selectedCategory === String(category.name || "");
+          const categoryKey = String(category.slug || category.name || "");
+          const isActive = selectedCategory === categoryKey;
 
           return (
             <button
@@ -36,7 +37,7 @@ const CategoriesViewBody = ({ payload }) => {
               className={`categoriesViewTile${isActive ? " categoriesViewTileActive" : ""}`}
               onClick={() => {
                 const nextSearchParams = new URLSearchParams(searchParams);
-                nextSearchParams.set("category", String(category.name || ""));
+                nextSearchParams.set("category", categoryKey);
                 nextSearchParams.delete("page");
                 setSearchParams(nextSearchParams, { replace: false });
               }}

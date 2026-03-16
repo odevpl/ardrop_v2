@@ -1,41 +1,62 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import FetchWrapper from "components/FetchWrapper";
-import Table from "components/Table";
 import { useNavigate } from "react-router-dom";
 import CategoriesService from "services/categories";
 import "./categories.scss";
 
-const getTableConfig = () => [
-  { key: "name", title: "Kategoria" },
-  { key: "slug", title: "Slug" },
-  { key: "parentLabel", title: "Rodzic" },
-  { key: "productsCount", title: "Produkty" },
-  { key: "statusLabel", title: "Status" },
-];
+const flattenTree = (nodes = []) =>
+  nodes.flatMap((node) => [node, ...flattenTree(node.children || [])]);
 
-const CategoriesList = ({ payload, filters, setFilters }) => {
+const filterTree = (nodes = [], searchTerm = "") => {
+  const normalizedSearchTerm = String(searchTerm || "").trim().toLowerCase();
+  if (!normalizedSearchTerm) {
+    return nodes;
+  }
+
+  return nodes.reduce((acc, node) => {
+    const children = filterTree(node.children || [], normalizedSearchTerm);
+    const haystack = `${node.name || ""} ${node.slug || ""}`.toLowerCase();
+    if (haystack.includes(normalizedSearchTerm) || children.length > 0) {
+      acc.push({
+        ...node,
+        children,
+      });
+    }
+    return acc;
+  }, []);
+};
+
+const CategoryBranch = ({ nodes, onSelect }) => (
+  <ol className="adminCategoriesTreeList">
+    {nodes.map((category) => (
+      <li key={category.id} className="adminCategoriesTreeItem">
+        <button
+          type="button"
+          className="adminCategoriesTreeCard"
+          onClick={() => onSelect(category)}
+        >
+          <span className="adminCategoriesTreeName">{category.name}</span>
+          <span className="adminCategoriesTreeMeta">
+            {category.slug}
+            {category.isActive ? " | Aktywna" : " | Ukryta"}
+            {category.productsCount ? ` | Produkty: ${category.productsCount}` : ""}
+          </span>
+        </button>
+        {Array.isArray(category.children) && category.children.length > 0 ? (
+          <CategoryBranch nodes={category.children} onSelect={onSelect} />
+        ) : null}
+      </li>
+    ))}
+  </ol>
+);
+
+const CategoriesList = ({ payload }) => {
   const navigate = useNavigate();
-  const categories = Array.isArray(payload?.data) ? payload.data : [];
-  const pagination = payload?.meta?.pagination;
+  const [searchValue, setSearchValue] = useState("");
+  const tree = Array.isArray(payload?.data) ? payload.data : [];
 
-  const categoryOptions = useMemo(
-    () =>
-      categories.reduce((acc, category) => {
-        acc[category.id] = category.name;
-        return acc;
-      }, {}),
-    [categories],
-  );
-
-  const preparedData = useMemo(
-    () =>
-      categories.map((category) => ({
-        ...category,
-        parentLabel: category.parentId ? categoryOptions[category.parentId] || `#${category.parentId}` : "-",
-        statusLabel: category.isActive ? "Aktywna" : "Ukryta",
-      })),
-    [categories, categoryOptions],
-  );
+  const filteredTree = useMemo(() => filterTree(tree, searchValue), [tree, searchValue]);
+  const visibleCount = useMemo(() => flattenTree(filteredTree).length, [filteredTree]);
 
   return (
     <section className="adminPageSection adminCategoriesPage">
@@ -52,16 +73,27 @@ const CategoriesList = ({ payload, filters, setFilters }) => {
         </div>
       </div>
 
-      <Table
-        config={getTableConfig()}
-        data={preparedData}
-        onRowClick={(row) => navigate(`/categories/${row.id}`)}
-        searchValue={filters?.search || ""}
-        onSearchChange={(value) => setFilters({ ...filters, search: value, page: 1 })}
-        pagination={pagination}
-        onPageChange={(page) => setFilters({ ...filters, page })}
-        onLimitChange={(limit) => setFilters({ ...filters, page: 1, limit })}
-      />
+      <section className="adminCategoriesTreePanel">
+        <div className="adminCategoriesTreeToolbar">
+          <input
+            className="adminCategoriesTreeSearch"
+            type="search"
+            value={searchValue}
+            placeholder="Szukaj po nazwie lub slug"
+            onChange={(event) => setSearchValue(event.target.value)}
+          />
+          <span className="adminCategoriesTreeCount">Widoczne: {visibleCount}</span>
+        </div>
+
+        {filteredTree.length === 0 ? (
+          <div className="adminCategoriesTreeEmpty">Brak kategorii do wyswietlenia.</div>
+        ) : (
+          <CategoryBranch
+            nodes={filteredTree}
+            onSelect={(category) => navigate(`/categories/${category.id}`)}
+          />
+        )}
+      </section>
     </section>
   );
 };
@@ -71,7 +103,7 @@ const CategoriesPage = () => (
     component={CategoriesList}
     name="AdminCategories"
     connector={CategoriesService.getCategories}
-    filters={{ page: 1, limit: 20, search: "" }}
+    filters={{ page: 1, limit: 500, sortBy: "position", sortOrder: "asc", view: "tree" }}
   />
 );
 

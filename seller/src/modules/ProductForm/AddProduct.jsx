@@ -29,7 +29,7 @@ const AddProduct = () => {
 
   useEffect(() => {
     const loadCategories = async () => {
-      const response = await CategoriesService.getCategories({ page: 1, limit: 500, sortBy: 'position', sortOrder: 'asc' })
+      const response = await CategoriesService.getCategories({ page: 1, limit: 500, sortBy: 'position', sortOrder: 'asc', view: 'tree' })
       setCategories(response?.data || [])
       setIsLoading(false)
     }
@@ -44,8 +44,9 @@ const AddProduct = () => {
       setSubmitting(false)
       return
     }
-    if (selectedCategoryIds.length === 0) {
-      setStatus('Wybierz przynajmniej jedna kategorie')
+    const selectedCategoryId = Number(selectedCategoryIds[0] || primaryCategoryId || 0)
+    if (!selectedCategoryId) {
+      setStatus('Wybierz kategorie')
       setSubmitting(false)
       return
     }
@@ -69,8 +70,8 @@ const AddProduct = () => {
       stockQuantity: Number(values.stockQuantity || 0),
       description: values.description?.trim() || null,
       variants: normalizedVariants,
-      categoryIds: selectedCategoryIds,
-      primaryCategoryId: primaryCategoryId || selectedCategoryIds[0],
+      categoryIds: [selectedCategoryId],
+      primaryCategoryId: selectedCategoryId,
     }
 
     const result = await ProductsService.createProduct(payload)

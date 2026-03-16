@@ -119,6 +119,70 @@ const getImagesByCategoryIds = async (categoryIds) => {
   }, {});
 };
 
+const attachHierarchyMeta = (category) => ({
+  ...category,
+  parentId: category.parentId ? Number(category.parentId) : null,
+  level: 0,
+  childrenCount: 0,
+});
+
+const buildCategoryTree = (categories = []) => {
+  const byId = new Map();
+  const roots = [];
+
+  categories.forEach((category) => {
+    byId.set(Number(category.id), {
+      ...attachHierarchyMeta(category),
+      children: [],
+    });
+  });
+
+  byId.forEach((category) => {
+    if (!category.parentId) {
+      roots.push(category);
+      return;
+    }
+
+    const parent = byId.get(Number(category.parentId));
+    if (!parent) {
+      roots.push(category);
+      return;
+    }
+
+    category.level = parent.level + 1;
+    parent.children.push(category);
+  });
+
+  const assignMeta = (nodes, level = 0) =>
+    nodes.map((node) => {
+      const children = assignMeta(
+        [...node.children].sort((left, right) => {
+          if (Number(left.position) !== Number(right.position)) {
+            return Number(left.position) - Number(right.position);
+          }
+          return String(left.name || "").localeCompare(String(right.name || ""), "pl");
+        }),
+        level + 1,
+      );
+
+      return {
+        ...node,
+        level,
+        children,
+        childrenCount: children.length,
+      };
+    });
+
+  return assignMeta(
+    roots.sort((left, right) => {
+      if (Number(left.position) !== Number(right.position)) {
+        return Number(left.position) - Number(right.position);
+      }
+      return String(left.name || "").localeCompare(String(right.name || ""), "pl");
+    }),
+  );
+};
+
 const listCategories = async ({
   role,
   search,
@@ -128,9 +192,11 @@ const listCategories = async ({
   sortOrder = "asc",
   parentId,
   activeOnly = false,
+  view = "flat",
 }) => {
   const normalizedPage = Number(page) > 0 ? Number(page) : 1;
-  const normalizedLimit = Number(limit) > 0 ? Math.min(Number(limit), 200) : 50;
+  const maxLimit = view === "tree" ? 1000 : 200;
+  const normalizedLimit = Number(limit) > 0 ? Math.min(Number(limit), maxLimit) : 50;
   const normalizedSortBy = SORT_FIELD_MAP[sortBy] ? sortBy : "position";
   const normalizedSortOrder = String(sortOrder).toLowerCase() === "desc" ? "desc" : "asc";
 
@@ -166,14 +232,18 @@ const listCategories = async ({
 
   const data = rows.map((row) => ({
     ...row,
+    parentId: row.parentId ? Number(row.parentId) : null,
     isActive: Boolean(row.isActive),
     images: imagesByCategoryId[Number(row.id)] || [],
     products: assignmentsByCategoryId[Number(row.id)] || [],
     productsCount: (assignmentsByCategoryId[Number(row.id)] || []).length,
   }));
 
+  const tree = view === "tree" ? buildCategoryTree(data) : null;
+
   return {
     data,
+    tree,
     pagination: {
       page: normalizedPage,
       limit: normalizedLimit,
@@ -340,4 +410,5 @@ module.exports = {
   deleteCategory,
   assignProductCategories,
   getCategoriesForProductIds,
+  buildCategoryTree,
 };

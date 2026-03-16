@@ -34,7 +34,7 @@ const AddProduct = () => {
     const loadSellers = async () => {
       const [sellersResponse, categoriesResponse] = await Promise.all([
         SellersService.getSellers({ page: 1, limit: 1000, sortBy: 'companyName' }),
-        CategoriesService.getCategories({ page: 1, limit: 500, sortBy: 'position', sortOrder: 'asc' }),
+        CategoriesService.getCategories({ page: 1, limit: 500, sortBy: 'position', sortOrder: 'asc', view: 'tree' }),
       ])
       setSellers(sellersResponse?.data || [])
       setCategories(categoriesResponse?.data || [])
@@ -63,8 +63,9 @@ const AddProduct = () => {
       setSubmitting(false)
       return
     }
-    if (selectedCategoryIds.length === 0) {
-      setStatus('Wybierz przynajmniej jedna kategorie')
+    const selectedCategoryId = Number(selectedCategoryIds[0] || primaryCategoryId || 0)
+    if (!selectedCategoryId) {
+      setStatus('Wybierz kategorie')
       setSubmitting(false)
       return
     }
@@ -89,8 +90,8 @@ const AddProduct = () => {
       stockQuantity: Number(values.stockQuantity || 0),
       description: values.description?.trim() || null,
       variants: normalizedVariants,
-      categoryIds: selectedCategoryIds,
-      primaryCategoryId: primaryCategoryId || selectedCategoryIds[0],
+      categoryIds: [selectedCategoryId],
+      primaryCategoryId: selectedCategoryId,
     }
 
     const result = await ProductsService.createProduct(payload)

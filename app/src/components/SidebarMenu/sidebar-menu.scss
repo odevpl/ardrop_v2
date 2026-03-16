@@ -12,6 +12,8 @@
   padding: 16px 12px;
   position: static;
   color: #ffffff;
+  gap: 14px;
+  overflow: hidden;
 }
 
 .sidebarMenuNav {
@@ -54,6 +56,101 @@
 
 .sidebarMenuItemActive i {
   color: #ffffff;
+}
+
+.sidebarMenuCategories {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: block;
+  gap: 10px;
+}
+
+.sidebarMenuCategoriesHead h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sidebarMenuCategoriesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.sidebarMenuCategories > .sidebarMenuCategoriesList {
+  max-height: calc(100vh - 220px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.sidebarMenuCategoriesItem > .sidebarMenuCategoriesList {
+  margin-top: 6px;
+  margin-left: 12px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.sidebarMenuCategoryRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sidebarMenuCategoryButton {
+  flex: 1;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #ffffff;
+  text-align: left;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.sidebarMenuCategoryButton:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.sidebarMenuCategoryButtonActive {
+  background: rgba(255, 255, 255, 0.24);
+  font-weight: 700;
+}
+
+.sidebarMenuCategoryToggle {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.sidebarMenuCategoryToggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.sidebarMenuCategoryToggle i {
+  transition: transform 0.2s ease;
+}
+
+.sidebarMenuCategoryToggleExpanded i {
+  transform: rotate(90deg);
+}
+
+.sidebarMenuCategoriesEmpty {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.88rem;
 }
 
 @media (max-width: 760px) {
@@ -99,5 +196,9 @@
   .sidebarMenuItem i {
     width: auto;
     font-size: 0.95rem;
+  }
+
+  .sidebarMenuCategories {
+    display: none;
   }
 }

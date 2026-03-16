@@ -1,11 +1,12 @@
 const fs = require("fs/promises");
 const path = require("path");
-const { Jimp } = require("jimp");
 const db = require("../config/db");
+const { processSquareImageVariants } = require("./image-processor");
 
 const uploadsDir = path.resolve(__dirname, "../../uploads/categories");
 const thumbsDir = path.resolve(__dirname, "../../uploads/categories/thumbs");
-const IMAGE_SIZE = 400;
+const THUMB_SIZE = 400;
+const MAIN_SIZE = 800;
 const JPEG_QUALITY = 75;
 
 const getThumbFileName = (fileName) => {
@@ -49,13 +50,14 @@ const saveCategoryImage = async ({ categoryId, file }) => {
       .where({ categoryId: Number(categoryId) })
       .first();
 
-    const image = await Jimp.read(filePath);
-    image.contain({ w: IMAGE_SIZE, h: IMAGE_SIZE });
-    await image.write(filePath, { quality: JPEG_QUALITY });
-
-    const thumb = image.clone();
-    thumb.contain({ w: IMAGE_SIZE, h: IMAGE_SIZE });
-    await thumb.write(thumbPath, { quality: JPEG_QUALITY });
+    await processSquareImageVariants({
+      sourcePath: filePath,
+      mainOutputPath: filePath,
+      thumbOutputPath: thumbPath,
+      mainSize: MAIN_SIZE,
+      thumbSize: THUMB_SIZE,
+      quality: JPEG_QUALITY,
+    });
 
     if (existingImage) {
       await db("categories_image").where({ id: Number(existingImage.id) }).del();

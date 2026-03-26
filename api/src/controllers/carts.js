@@ -103,4 +103,26 @@ router.patch(
   },
 );
 
+router.patch(
+  "/carts/shipments/:sellerId",
+  roleMiddleware("ADMIN", "CLIENT"),
+  async (req, res) => {
+    const cart = await cartsService.updateCurrentCartShipment({
+      userId: req.user.userId,
+      role: req.user.role,
+      clientId: req.body.clientId,
+      sellerId: Number(req.params.sellerId),
+      deliveryAddressId: req.body.deliveryAddressId,
+      shippingMethodName: req.body.shippingMethodName,
+      shippingNet: req.body.shippingNet,
+      shippingGross: req.body.shippingGross,
+      clientNote: req.body.clientNote,
+      estimatedDeliveryFrom: req.body.estimatedDeliveryFrom,
+      estimatedDeliveryTo: req.body.estimatedDeliveryTo,
+    });
+
+    res.status(200).json({ data: cart, cart });
+  },
+);
+
 module.exports = router;

@@ -1,11 +1,15 @@
-import FormikWrapper from 'components/FormikWrapper'
-import Input from 'components/FormikWrapper/FormControls/Input'
-import Select from 'components/FormikWrapper/FormControls/Select'
-import Textarea from 'components/FormikWrapper/FormControls/Textarea'
-import { addProductValidationSchema, STATUS_OPTIONS, UNIT_OPTIONS } from './validation'
-import ImageDropzone from './ImageDropzone'
-import CategoryTreeSelector from './CategoryTreeSelector'
-import { parseNumber, round2 } from './helpers'
+import FormikWrapper from "components/FormikWrapper";
+import Input from "components/FormikWrapper/FormControls/Input";
+import Select from "components/FormikWrapper/FormControls/Select";
+import Textarea from "components/FormikWrapper/FormControls/Textarea";
+import {
+  addProductValidationSchema,
+  STATUS_OPTIONS,
+  UNIT_OPTIONS,
+} from "./validation";
+import ImageDropzone from "./ImageDropzone";
+import CategoryTreeSelector from "./CategoryTreeSelector";
+import { parseNumber, round2 } from "./helpers";
 
 const ProductFormView = ({
   title,
@@ -29,40 +33,40 @@ const ProductFormView = ({
   setPrimaryCategoryId,
 }) => {
   const updateVariantValue = (index, field, rawValue, vatRateValue) => {
-    const parsedValue = rawValue === '' ? '' : Number(rawValue)
-    const vat = parseNumber(vatRateValue)
-    const multiplier = vat !== null && vat >= 0 ? 1 + vat / 100 : null
+    const parsedValue = rawValue === "" ? "" : Number(rawValue);
+    const vat = parseNumber(vatRateValue);
+    const multiplier = vat !== null && vat >= 0 ? 1 + vat / 100 : null;
 
     setVariants(
       variants.map((item, itemIndex) => {
-        if (itemIndex !== index) return item
+        if (itemIndex !== index) return item;
 
-        if (field === 'netPrice') {
-          if (parsedValue === '' || multiplier === null) {
-            return { ...item, netPrice: parsedValue }
+        if (field === "netPrice") {
+          if (parsedValue === "" || multiplier === null) {
+            return { ...item, netPrice: parsedValue };
           }
           return {
             ...item,
             netPrice: parsedValue,
             grossPrice: round2(parsedValue * multiplier),
-          }
+          };
         }
 
-        if (field === 'grossPrice') {
-          if (parsedValue === '' || multiplier === null || multiplier === 0) {
-            return { ...item, grossPrice: parsedValue }
+        if (field === "grossPrice") {
+          if (parsedValue === "" || multiplier === null || multiplier === 0) {
+            return { ...item, grossPrice: parsedValue };
           }
           return {
             ...item,
             grossPrice: parsedValue,
             netPrice: round2(parsedValue / multiplier),
-          }
+          };
         }
 
-        return { ...item, [field]: parsedValue }
+        return { ...item, [field]: parsedValue };
       }),
-    )
-  }
+    );
+  };
 
   if (loading) {
     return (
@@ -72,7 +76,7 @@ const ProductFormView = ({
         </div>
         <p>Ladowanie...</p>
       </section>
-    )
+    );
   }
 
   return (
@@ -93,14 +97,23 @@ const ProductFormView = ({
               <Input id="name" placeholder="Nazwa" />
               <Input id="vatRate" placeholder="Stawka VAT (%)" type="decimal" />
               <Select id="unit" placeholder="Jednostka" config={UNIT_OPTIONS} />
-              <Input id="stockQuantity" placeholder="Stan magazynowy" type="decimal" />
-              <Select id="status" placeholder="Status" config={STATUS_OPTIONS} />
+              <Input
+                id="stockQuantity"
+                placeholder="Stan magazynowy"
+                type="decimal"
+              />
+              <Select
+                id="status"
+                placeholder="Status"
+                config={STATUS_OPTIONS}
+              />
             </div>
 
             <Textarea id="description" placeholder="Opis" />
 
-            {Array.isArray(categoryOptions) && typeof setSelectedCategoryIds === 'function' ? (
-              <section className="sellerVariantsSection">
+            {Array.isArray(categoryOptions) &&
+            typeof setSelectedCategoryIds === "function" ? (
+              <section className="sellerFormSection categories">
                 <div className="sellerToolbar">
                   <h3>Kategorie</h3>
                 </div>
@@ -114,8 +127,8 @@ const ProductFormView = ({
               </section>
             ) : null}
 
-            {typeof setVariants === 'function' ? (
-              <section className="sellerVariantsSection">
+            {typeof setVariants === "function" ? (
+              <section className="sellerFormSection">
                 <div className="sellerToolbar">
                   <h3>Warianty produktu</h3>
                   <button
@@ -125,14 +138,14 @@ const ProductFormView = ({
                         ...variants,
                         {
                           id: null,
-                          name: '',
+                          name: "",
                           unitAmount: 1,
-                          unit: values.unit || 'pcs',
+                          unit: values.unit || "pcs",
                           netPrice: 0,
                           grossPrice: 0,
                           vatRate: values.vatRate || 23,
                           stockQuantity: values.stockQuantity || 0,
-                          status: values.status || 'draft',
+                          status: values.status || "draft",
                           isDefault: variants.length === 0,
                           position: variants.length,
                         },
@@ -144,37 +157,24 @@ const ProductFormView = ({
                 </div>
                 <div className="sellerVariantsGrid">
                   {variants.map((variant, index) => (
-                    <div className="sellerVariantCard" key={variant.id || `new-${index}`}>
+                    <div
+                      className="sellerVariantCard"
+                      key={variant.id || `new-${index}`}
+                    >
                       <div className="sellerVariantField">
-                        <label htmlFor={`variant-name-${index}`}>Nazwa wariantu</label>
+                        <label htmlFor={`variant-name-${index}`}>
+                          Nazwa wariantu
+                        </label>
                         <input
                           id={`variant-name-${index}`}
                           type="text"
                           placeholder="np. 250 g"
-                          value={variant.name || ''}
-                          onChange={(event) =>
-                            setVariants(
-                              variants.map((item, itemIndex) =>
-                                itemIndex === index ? { ...item, name: event.target.value } : item,
-                              ),
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="sellerVariantField">
-                        <label htmlFor={`variant-unit-amount-${index}`}>Waga/objetosc</label>
-                        <input
-                          id={`variant-unit-amount-${index}`}
-                          type="number"
-                          step="0.001"
-                          min="0.001"
-                          placeholder="0.250"
-                          value={variant.unitAmount ?? ''}
+                          value={variant.name || ""}
                           onChange={(event) =>
                             setVariants(
                               variants.map((item, itemIndex) =>
                                 itemIndex === index
-                                  ? { ...item, unitAmount: (event.target.value === "" ? "" : Number(event.target.value)) }
+                                  ? { ...item, name: event.target.value }
                                   : item,
                               ),
                             )
@@ -182,47 +182,97 @@ const ProductFormView = ({
                         />
                       </div>
                       <div className="sellerVariantField">
-                        <label htmlFor={`variant-net-price-${index}`}>Cena netto</label>
+                        <label htmlFor={`variant-unit-amount-${index}`}>
+                          Waga/objetosc
+                        </label>
+                        <input
+                          id={`variant-unit-amount-${index}`}
+                          type="number"
+                          step="0.001"
+                          min="0.001"
+                          placeholder="0.250"
+                          value={variant.unitAmount ?? ""}
+                          onChange={(event) =>
+                            setVariants(
+                              variants.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      unitAmount:
+                                        event.target.value === ""
+                                          ? ""
+                                          : Number(event.target.value),
+                                    }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="sellerVariantField">
+                        <label htmlFor={`variant-net-price-${index}`}>
+                          Cena netto
+                        </label>
                         <input
                           id={`variant-net-price-${index}`}
                           type="number"
                           step="0.01"
                           min="0"
                           placeholder="0.00"
-                          value={variant.netPrice ?? ''}
+                          value={variant.netPrice ?? ""}
                           onChange={(event) =>
-                            updateVariantValue(index, 'netPrice', event.target.value, values.vatRate)
+                            updateVariantValue(
+                              index,
+                              "netPrice",
+                              event.target.value,
+                              values.vatRate,
+                            )
                           }
                         />
                       </div>
                       <div className="sellerVariantField">
-                        <label htmlFor={`variant-gross-price-${index}`}>Cena brutto</label>
+                        <label htmlFor={`variant-gross-price-${index}`}>
+                          Cena brutto
+                        </label>
                         <input
                           id={`variant-gross-price-${index}`}
                           type="number"
                           step="0.01"
                           min="0"
                           placeholder="0.00"
-                          value={variant.grossPrice ?? ''}
+                          value={variant.grossPrice ?? ""}
                           onChange={(event) =>
-                            updateVariantValue(index, 'grossPrice', event.target.value, values.vatRate)
+                            updateVariantValue(
+                              index,
+                              "grossPrice",
+                              event.target.value,
+                              values.vatRate,
+                            )
                           }
                         />
                       </div>
                       <div className="sellerVariantField">
-                        <label htmlFor={`variant-stock-quantity-${index}`}>Stan magazynowy</label>
+                        <label htmlFor={`variant-stock-quantity-${index}`}>
+                          Stan magazynowy
+                        </label>
                         <input
                           id={`variant-stock-quantity-${index}`}
                           type="number"
                           step="0.001"
                           min="0"
                           placeholder="0"
-                          value={variant.stockQuantity ?? ''}
+                          value={variant.stockQuantity ?? ""}
                           onChange={(event) =>
                             setVariants(
                               variants.map((item, itemIndex) =>
                                 itemIndex === index
-                                  ? { ...item, stockQuantity: (event.target.value === "" ? "" : Number(event.target.value)) }
+                                  ? {
+                                      ...item,
+                                      stockQuantity:
+                                        event.target.value === ""
+                                          ? ""
+                                          : Number(event.target.value),
+                                    }
                                   : item,
                               ),
                             )
@@ -248,7 +298,11 @@ const ProductFormView = ({
                       <button
                         type="button"
                         onClick={() =>
-                          setVariants(variants.filter((_, itemIndex) => itemIndex !== index))
+                          setVariants(
+                            variants.filter(
+                              (_, itemIndex) => itemIndex !== index,
+                            ),
+                          )
                         }
                         disabled={variants.length <= 1}
                       >
@@ -273,11 +327,19 @@ const ProductFormView = ({
             {status ? <p className="sellerFormError">{status}</p> : null}
 
             <div className="sellerActions sellerFormActions">
-              <button type="submit" className="sellerPrimaryButton" disabled={isSubmitting}>
+              <button
+                type="submit"
+                className="sellerPrimaryButton"
+                disabled={isSubmitting}
+              >
                 Zapisz
               </button>
-              {typeof onDelete === 'function' ? (
-                <button type="button" onClick={onDelete} disabled={isSubmitting}>
+              {typeof onDelete === "function" ? (
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  disabled={isSubmitting}
+                >
                   Usun produkt
                 </button>
               ) : null}
@@ -289,7 +351,7 @@ const ProductFormView = ({
         )}
       </FormikWrapper>
     </section>
-  )
-}
+  );
+};
 
-export default ProductFormView
+export default ProductFormView;

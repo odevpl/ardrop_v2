@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNotification } from "components/GlobalNotification/index.js";
-import { NavLink } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import AccountService from "services/account";
 import CartsService from "services/carts";
 import OrdersService from "services/orders";
 import ProductsService from "services/products";
 import "./Cart.scss";
-
-const SHIPPING_COST = 20;
 
 const formatPrice = (value) => {
   const numericValue = Number(value);
@@ -23,19 +20,32 @@ const formatDate = (date) => {
   return `${day}.${month}.${year}`;
 };
 
+const formatEta = (from, to) => {
+  if (from && to) return `${from} - ${to}`;
+  if (from) return from;
+  if (to) return to;
+  return "Do ustalenia";
+};
+
 const Cart = () => {
   const navigate = useNavigate();
   const [cart, setCart] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [pendingItemId, setPendingItemId] = useState(null);
-  const [note, setNote] = useState("");
+  const [pendingShipmentSellerId, setPendingShipmentSellerId] = useState(null);
   const [thumbByProductId, setThumbByProductId] = useState({});
   const [deliveryAddresses, setDeliveryAddresses] = useState([]);
   const [selectedDeliveryAddressId, setSelectedDeliveryAddressId] = useState(null);
   const [deliveryError, setDeliveryError] = useState("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [shipmentNotes, setShipmentNotes] = useState({});
   const notification = useNotification();
+
+  const applyCartResponse = (response) => {
+    setCart(response?.data || response?.cart || null);
+    window.dispatchEvent(new Event("cart:updated"));
+  };
 
   const fetchCart = async () => {
     setIsLoading(true);
@@ -48,8 +58,7 @@ const Cart = () => {
       return;
     }
 
-    setCart(response?.data || response?.cart || null);
-    window.dispatchEvent(new Event("cart:updated"));
+    applyCartResponse(response);
     setIsLoading(false);
   };
 
@@ -69,15 +78,32 @@ const Cart = () => {
       setDeliveryAddresses(normalized);
 
       const defaultAddress = normalized.find((item) => item.isDefault) || normalized[0];
-      setSelectedDeliveryAddressId(defaultAddress?.id || null);
+      setSelectedDeliveryAddressId((prev) => prev || defaultAddress?.id || null);
     };
 
     loadDeliveryAddresses();
   }, []);
 
   const items = useMemo(() => cart?.items || [], [cart]);
-  const productsTotalGross = Number(cart?.totalGross || 0);
-  const orderTotalGross = productsTotalGross + SHIPPING_COST;
+  const shipments = useMemo(() => cart?.shipments || [], [cart]);
+  const productsTotalGross = useMemo(
+    () => shipments.reduce((sum, shipment) => sum + Number(shipment?.totals?.itemsGross || 0), 0),
+    [shipments],
+  );
+  const shippingTotalGross = useMemo(
+    () => shipments.reduce((sum, shipment) => sum + Number(shipment?.shippingGross || 0), 0),
+    [shipments],
+  );
+  const orderTotalGross = Number(cart?.totalGross || 0);
+
+  useEffect(() => {
+    setShipmentNotes(
+      shipments.reduce((acc, shipment) => {
+        acc[shipment.sellerId] = shipment.clientNote || "";
+        return acc;
+      }, {}),
+    );
+  }, [shipments]);
 
   useEffect(() => {
     let isMounted = true;
@@ -118,48 +144,6 @@ const Cart = () => {
     };
   }, [items]);
 
-  const updateQuantity = async (itemId, quantity) => {
-    setPendingItemId(itemId);
-    const response = await CartsService.updateCartItem({ itemId, quantity });
-    if (response?.status && response.status >= 400) {
-      notification.error(response?.data?.error || "Nie udalo sie zaktualizowac pozycji.");
-      setPendingItemId(null);
-      return;
-    }
-
-    setCart(response?.data || response?.cart || null);
-    window.dispatchEvent(new Event("cart:updated"));
-    setPendingItemId(null);
-  };
-
-  const removeItem = async (itemId) => {
-    setPendingItemId(itemId);
-    const response = await CartsService.removeCartItem({ itemId });
-    if (response?.status && response.status >= 400) {
-      notification.error(response?.data?.error || "Nie udalo sie usunac pozycji.");
-      setPendingItemId(null);
-      return;
-    }
-
-    setCart(response?.data || response?.cart || null);
-    window.dispatchEvent(new Event("cart:updated"));
-    setPendingItemId(null);
-  };
-
-  const clearAll = async () => {
-    setPendingItemId("all");
-    const response = await CartsService.clearCart();
-    if (response?.status && response.status >= 400) {
-      notification.error(response?.data?.error || "Nie udalo sie wyczyscic koszyka.");
-      setPendingItemId(null);
-      return;
-    }
-
-    setCart(response?.data || response?.cart || null);
-    window.dispatchEvent(new Event("cart:updated"));
-    setPendingItemId(null);
-  };
-
   const selectedDeliveryAddress = useMemo(
     () =>
       deliveryAddresses.find((item) => Number(item.id) === Number(selectedDeliveryAddressId)) ||
@@ -183,6 +167,87 @@ const Cart = () => {
     });
   }, [selectedDeliveryAddress]);
 
+  const syncShipment = async (sellerId, payload, errorMessage) => {
+    setPendingShipmentSellerId(sellerId);
+    const response = await CartsService.updateCartShipment({ sellerId, payload });
+
+    if (response?.status && response.status >= 400) {
+      notification.error(response?.data?.error || errorMessage);
+      setPendingShipmentSellerId(null);
+      return false;
+    }
+
+    applyCartResponse(response);
+    setPendingShipmentSellerId(null);
+    return true;
+  };
+
+  const syncAllShipmentsAddress = async (deliveryAddressId) => {
+    for (const shipment of shipments) {
+      const ok = await syncShipment(
+        shipment.sellerId,
+        { deliveryAddressId },
+        "Nie udalo sie zaktualizowac adresu dostawy.",
+      );
+      if (!ok) break;
+    }
+  };
+
+  const updateQuantity = async (itemId, quantity) => {
+    setPendingItemId(itemId);
+    const response = await CartsService.updateCartItem({ itemId, quantity });
+    if (response?.status && response.status >= 400) {
+      notification.error(response?.data?.error || "Nie udalo sie zaktualizowac pozycji.");
+      setPendingItemId(null);
+      return;
+    }
+
+    applyCartResponse(response);
+    setPendingItemId(null);
+  };
+
+  const removeItem = async (itemId) => {
+    setPendingItemId(itemId);
+    const response = await CartsService.removeCartItem({ itemId });
+    if (response?.status && response.status >= 400) {
+      notification.error(response?.data?.error || "Nie udalo sie usunac pozycji.");
+      setPendingItemId(null);
+      return;
+    }
+
+    applyCartResponse(response);
+    setPendingItemId(null);
+  };
+
+  const clearAll = async () => {
+    setPendingItemId("all");
+    const response = await CartsService.clearCart();
+    if (response?.status && response.status >= 400) {
+      notification.error(response?.data?.error || "Nie udalo sie wyczyscic koszyka.");
+      setPendingItemId(null);
+      return;
+    }
+
+    applyCartResponse(response);
+    setPendingItemId(null);
+  };
+
+  const handleDeliveryAddressChange = async (nextDeliveryAddressId) => {
+    setSelectedDeliveryAddressId(nextDeliveryAddressId);
+    setDeliveryError("");
+
+    if (!nextDeliveryAddressId || shipments.length === 0) return;
+    await syncAllShipmentsAddress(nextDeliveryAddressId);
+  };
+
+  const handleShipmentNoteBlur = async (sellerId) => {
+    await syncShipment(
+      sellerId,
+      { clientNote: shipmentNotes[sellerId] || null },
+      "Nie udalo sie zapisac notatki do dostawy.",
+    );
+  };
+
   const handleSubmitOrder = async () => {
     if (!isDeliveryAddressValid) {
       const message = "Uzupelnij dane dostawy i wybierz poprawny adres.";
@@ -195,7 +260,6 @@ const Cart = () => {
     setIsSubmittingOrder(true);
     const response = await OrdersService.createOrder({
       deliveryAddressId: selectedDeliveryAddressId,
-      note: note || null,
     });
 
     if (response?.status && response.status >= 400) {
@@ -247,99 +311,168 @@ const Cart = () => {
           {items.length === 0 ? (
             <p className="cartEmpty">Koszyk jest pusty.</p>
           ) : (
-            <div className="cartTableWrap">
-              <table className="cartTable">
-                <thead>
-                  <tr>
-                    <th>Produkt</th>
-                    <th>Ilosc</th>
-                    <th>Netto</th>
-                    <th>Brutto</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item) => (
-                    <tr key={item.id}>
-                      <td>
-                        <div className="cartProductCell">
-                          <div className="cartThumbWrap">
-                            {thumbByProductId[Number(item.productId)] ? (
-                              <img
-                                src={thumbByProductId[Number(item.productId)]}
-                                alt={item.productNameSnapshot}
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="cartThumbPlaceholder">Brak</div>
-                            )}
-                          </div>
-                          <p className="cartProductName">{item.productNameSnapshot}</p>
-                          {item.variantNameSnapshot ? (
-                            <p className="cartProductVariant">{item.variantNameSnapshot}</p>
-                          ) : null}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="cartQtyControl">
-                          <button
-                            type="button"
-                            className="cartQtyButton"
-                            onClick={() =>
-                              updateQuantity(
-                                item.id,
-                                Math.max(1, Number(item.quantity) - 1),
-                              )
-                            }
-                            disabled={pendingItemId === item.id}
-                            aria-label="Zmniejsz ilosc"
-                          >
-                            <i className="fa-solid fa-minus" aria-hidden="true" />
-                          </button>
-                          <input
-                            className="cartQtyInput"
-                            type="number"
-                            min={1}
-                            value={item.quantity}
-                            disabled={pendingItemId === item.id}
-                            onChange={(event) => {
-                              const nextValue = Number(event.target.value);
-                              if (Number.isInteger(nextValue) && nextValue > 0) {
-                                updateQuantity(item.id, nextValue);
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="cartQtyButton"
-                            onClick={() => updateQuantity(item.id, Number(item.quantity) + 1)}
-                            disabled={pendingItemId === item.id}
-                            aria-label="Zwikszez ilosc"
-                          >
-                            <i className="fa-solid fa-plus" aria-hidden="true" />
-                          </button>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="cartPriceValue">{formatPrice(item.lineNet)} zl</span>
-                      </td>
-                      <td>
-                        <div className="cartPriceCell cartPriceCellWithDelete">
-                          <span className="cartPriceValue">{formatPrice(item.lineGross)} zl</span>
-                          <button
-                            type="button"
-                            className="cartDeleteButton"
-                            onClick={() => removeItem(item.id)}
-                            disabled={pendingItemId === item.id}
-                            aria-label="Usun pozycje"
-                          >
-                            <i className="fa-solid fa-trash" aria-hidden="true" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="cartShipmentList">
+              {shipments.map((shipment) => (
+                <section className="cartShipmentCard" key={shipment.sellerId}>
+                  <div className="cartShipmentHeader">
+                    <div>
+                      <p className="cartShipmentEyebrow">Sprzedawca</p>
+                      <h2>{shipment?.seller?.companyName || `Seller #${shipment.sellerId}`}</h2>
+                    </div>
+                    <div className="cartShipmentMeta">
+                      <span>Produkty: {formatPrice(shipment?.totals?.itemsGross || 0)} zl</span>
+                      <span>Dostawa: {formatPrice(shipment?.shippingGross || 0)} zl</span>
+                    </div>
+                  </div>
+
+                  <div className="cartTableWrap">
+                    <table className="cartTable">
+                      <thead>
+                        <tr>
+                          <th>Produkt</th>
+                          <th>Ilosc</th>
+                          <th>Netto</th>
+                          <th>Brutto</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {shipment.items.map((item) => (
+                          <tr key={item.id}>
+                            <td>
+                              <div className="cartProductCell">
+                                <div className="cartThumbWrap">
+                                  {thumbByProductId[Number(item.productId)] ? (
+                                    <img
+                                      src={thumbByProductId[Number(item.productId)]}
+                                      alt={item.productNameSnapshot}
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <div className="cartThumbPlaceholder">Brak</div>
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="cartProductName">{item.productNameSnapshot}</p>
+                                  {item.variantNameSnapshot ? (
+                                    <p className="cartProductVariant">{item.variantNameSnapshot}</p>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <div className="cartQtyControl">
+                                <button
+                                  type="button"
+                                  className="cartQtyButton"
+                                  onClick={() =>
+                                    updateQuantity(item.id, Math.max(1, Number(item.quantity) - 1))
+                                  }
+                                  disabled={pendingItemId === item.id}
+                                  aria-label="Zmniejsz ilosc"
+                                >
+                                  <i className="fa-solid fa-minus" aria-hidden="true" />
+                                </button>
+                                <input
+                                  className="cartQtyInput"
+                                  type="number"
+                                  min={1}
+                                  value={item.quantity}
+                                  disabled={pendingItemId === item.id}
+                                  onChange={(event) => {
+                                    const nextValue = Number(event.target.value);
+                                    if (Number.isInteger(nextValue) && nextValue > 0) {
+                                      updateQuantity(item.id, nextValue);
+                                    }
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  className="cartQtyButton"
+                                  onClick={() => updateQuantity(item.id, Number(item.quantity) + 1)}
+                                  disabled={pendingItemId === item.id}
+                                  aria-label="Zwikszez ilosc"
+                                >
+                                  <i className="fa-solid fa-plus" aria-hidden="true" />
+                                </button>
+                              </div>
+                            </td>
+                            <td>
+                              <span className="cartPriceValue">{formatPrice(item.lineNet)} zl</span>
+                            </td>
+                            <td>
+                              <div className="cartPriceCell cartPriceCellWithDelete">
+                                <span className="cartPriceValue">
+                                  {formatPrice(item.lineGross)} zl
+                                </span>
+                                <button
+                                  type="button"
+                                  className="cartDeleteButton"
+                                  onClick={() => removeItem(item.id)}
+                                  disabled={pendingItemId === item.id}
+                                  aria-label="Usun pozycje"
+                                >
+                                  <i className="fa-solid fa-trash" aria-hidden="true" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="cartShipmentDetails">
+                    <div className="cartShipmentSummaryBox">
+                      <span>Wartosc produktow</span>
+                      <strong>{formatPrice(shipment?.totals?.itemsGross || 0)} zl</strong>
+                      <span>Dostawa</span>
+                      <strong>{formatPrice(shipment?.shippingGross || 0)} zl</strong>
+                      <span>Razem dla sprzedawcy</span>
+                      <strong>{formatPrice(shipment?.totals?.totalGross || 0)} zl</strong>
+                    </div>
+
+                    <div className="cartShipmentInfoBox">
+                      <div className="cartInfoGrid">
+                        <span>Adres dostawy</span>
+                        <span>
+                          {selectedDeliveryAddress
+                            ? selectedDeliveryAddress.label ||
+                              selectedDeliveryAddress.recipientName ||
+                              "Wybrany adres"
+                            : "Brak"}
+                        </span>
+                        <span>Metoda dostawy</span>
+                        <span>{shipment.shippingMethodName || "Do ustalenia"}</span>
+                        <span>Przyblizony termin</span>
+                        <span>
+                          {formatEta(
+                            shipment.estimatedDeliveryFrom,
+                            shipment.estimatedDeliveryTo,
+                          )}
+                        </span>
+                      </div>
+
+                      <label className="cartShipmentNoteLabel" htmlFor={`shipment-note-${shipment.sellerId}`}>
+                        Notatka do dostawy
+                      </label>
+                      <textarea
+                        id={`shipment-note-${shipment.sellerId}`}
+                        className="cartShipmentNote"
+                        value={shipmentNotes[shipment.sellerId] || ""}
+                        disabled={pendingShipmentSellerId === shipment.sellerId}
+                        onChange={(event) =>
+                          setShipmentNotes((prev) => ({
+                            ...prev,
+                            [shipment.sellerId]: event.target.value,
+                          }))
+                        }
+                        onBlur={() => handleShipmentNoteBlur(shipment.sellerId)}
+                        placeholder="Instrukcje dla tego sprzedawcy"
+                      />
+                    </div>
+                  </div>
+                </section>
+              ))}
             </div>
           )}
 
@@ -357,9 +490,9 @@ const Cart = () => {
                 <select
                   id="cartDeliveryAddressSelect"
                   value={selectedDeliveryAddressId || ""}
+                  disabled={pendingShipmentSellerId !== null}
                   onChange={(event) => {
-                    setSelectedDeliveryAddressId(Number(event.target.value) || null);
-                    setDeliveryError("");
+                    handleDeliveryAddressChange(Number(event.target.value) || null);
                   }}
                 >
                   {deliveryAddresses.map((address) => (
@@ -396,22 +529,13 @@ const Cart = () => {
             <div className="cartInfoGrid">
               <span>Data zamowienia</span>
               <span>{formatDate(new Date())}</span>
-              <span>Przyblizony czas dostarczenia</span>
-              <span>3 dni robocze</span>
+              <span>Liczba dostaw</span>
+              <span>{shipments.length}</span>
               <span>Metoda platnosci</span>
               <span>Przedplata</span>
-              <span>Metoda dostawy</span>
-              <span>Kurier</span>
+              <span>Status dostawy</span>
+              <span>Rozdzielona per sprzedawca</span>
             </div>
-          </section>
-
-          <section className="cartNoteSection">
-            <h2>Notatka do zamowienia:</h2>
-            <textarea
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder="Wpisz tresc wiadomosci"
-            />
           </section>
         </div>
 
@@ -423,7 +547,7 @@ const Cart = () => {
             </div>
             <div className="cartSummaryRow">
               <span>Dostawa</span>
-              <strong>{formatPrice(SHIPPING_COST)} zl</strong>
+              <strong>{formatPrice(shippingTotalGross)} zl</strong>
             </div>
 
             <div className="cartTotalLine">
@@ -431,11 +555,20 @@ const Cart = () => {
               <strong>{formatPrice(orderTotalGross)} zl</strong>
             </div>
 
+            <div className="cartSummaryShipmentList">
+              {shipments.map((shipment) => (
+                <div className="cartSummaryShipmentRow" key={`summary-${shipment.sellerId}`}>
+                  <span>{shipment?.seller?.companyName || `Seller #${shipment.sellerId}`}</span>
+                  <strong>{formatPrice(shipment?.totals?.totalGross || 0)} zl</strong>
+                </div>
+              ))}
+            </div>
+
             <div className="cartSubmitWrap">
               <button
                 type="button"
                 className="cartSubmitButton"
-                disabled={items.length === 0 || isSubmittingOrder}
+                disabled={items.length === 0 || isSubmittingOrder || pendingShipmentSellerId !== null}
                 onClick={handleSubmitOrder}
               >
                 {isSubmittingOrder ? "Wysylanie..." : "Wyslij zamowienie"}
@@ -446,7 +579,7 @@ const Cart = () => {
           <section className="cartSummaryCard">
             <p className="cartSummaryInfoTitle">Bezpieczne zakupy</p>
             <p className="cartSummaryInfoText">
-              Wygodne zwroty, reklamacje online i ochrona zakupu.
+              Kazdy sprzedawca ma wlasna dostawe, koszt i termin realizacji.
             </p>
           </section>
         </aside>
@@ -456,4 +589,3 @@ const Cart = () => {
 };
 
 export default Cart;
-

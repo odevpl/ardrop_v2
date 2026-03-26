@@ -45,6 +45,23 @@
   margin: 0 0 10px;
 }
 
+.orderViewAddressBox,
+.orderViewNoteBox {
+  border: 1px solid #d7e7f9;
+  background: #fbfdff;
+  padding: 12px;
+}
+
+.orderViewAddressBox p,
+.orderViewNoteText {
+  margin: 0 0 4px;
+}
+
+.orderViewNoteTitle {
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
 .orderViewItemsList {
   display: grid;
 }
@@ -163,6 +180,12 @@
 
 .orderItemProductName {
   margin: 0;
+}
+
+.orderItemProductVariant {
+  margin: 3px 0 0;
+  color: #4b6375;
+  font-size: 0.85rem;
 }
 
 @media (max-width: 1100px) {

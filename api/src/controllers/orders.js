@@ -12,6 +12,8 @@ router.post(
       userId: req.user.userId,
       role: req.user.role,
       clientId: req.body.clientId,
+      deliveryAddressId: req.body.deliveryAddressId,
+      clientNote: req.body.clientNote ?? req.body.note,
     });
 
     res.status(201).json({

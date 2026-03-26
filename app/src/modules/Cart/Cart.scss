@@ -50,6 +50,47 @@
   border: 1px solid #d7e7f9;
 }
 
+.cartShipmentList {
+  display: grid;
+  gap: 12px;
+}
+
+.cartShipmentCard {
+  background: #ffffff;
+  border: 1px solid #d7e7f9;
+}
+
+.cartShipmentHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 14px;
+  border-bottom: 1px solid #e7f0fb;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.cartShipmentHeader h2 {
+  margin: 4px 0 0;
+  font-size: 1.1rem;
+}
+
+.cartShipmentEyebrow {
+  margin: 0;
+  color: #5a7282;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.cartShipmentMeta {
+  display: grid;
+  gap: 4px;
+  text-align: right;
+  color: #33536a;
+  font-weight: 600;
+}
+
 .cartTable {
   width: 100%;
   border-collapse: collapse;
@@ -183,6 +224,47 @@
   border: 1px solid #d7e7f9;
 }
 
+.cartShipmentDetails {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 12px;
+  padding: 0 14px 14px;
+}
+
+.cartShipmentSummaryBox,
+.cartShipmentInfoBox {
+  border: 1px solid #d7e7f9;
+  background: #fbfdff;
+  padding: 12px;
+}
+
+.cartShipmentSummaryBox {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  align-content: start;
+}
+
+.cartShipmentInfoBox {
+  display: grid;
+  gap: 10px;
+}
+
+.cartShipmentNoteLabel {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.cartShipmentNote {
+  width: 100%;
+  min-height: 78px;
+  border: 1px solid #0a64c9;
+  border-radius: 16px;
+  padding: 12px 14px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
 .cartDeliverySection h2,
 .cartNoteSection h2 {
   margin: 0 0 8px;
@@ -281,6 +363,21 @@
   color: #4b6375;
 }
 
+.cartSummaryShipmentList {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #d7e7f9;
+}
+
+.cartSummaryShipmentRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #35566d;
+}
+
 .cartSubmitWrap {
   display: flex;
   justify-content: center;
@@ -320,6 +417,10 @@
   .cartSummaryColumn {
     position: static;
   }
+
+  .cartShipmentDetails {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 786px) {
@@ -346,9 +447,15 @@
 
   .cartDeliveryHead,
   .cartTotalLine,
-  .cartSummaryRow {
+  .cartSummaryRow,
+  .cartShipmentHeader,
+  .cartSummaryShipmentRow {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+
+  .cartShipmentMeta {
+    text-align: left;
   }
 }

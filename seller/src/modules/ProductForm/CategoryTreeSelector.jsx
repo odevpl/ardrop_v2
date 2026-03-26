@@ -3,18 +3,18 @@ const sortNodes = (nodes = []) =>
     if (Number(left.position || 0) !== Number(right.position || 0)) {
       return Number(left.position || 0) - Number(right.position || 0);
     }
-    return String(left.name || "").localeCompare(String(right.name || ""), "pl");
+    return String(left.name || "").localeCompare(
+      String(right.name || ""),
+      "pl",
+    );
   });
 
-const CategoryBranch = ({
-  nodes,
-  selectedCategoryIds,
-  onToggle,
-}) => (
+const CategoryBranch = ({ nodes, selectedCategoryIds, onToggle }) => (
   <ol className="sellerCategoryTreeList">
     {sortNodes(nodes).map((category) => {
       const isSelected = selectedCategoryIds.includes(Number(category.id));
-      const hasChildren = Array.isArray(category.children) && category.children.length > 0;
+      const hasChildren =
+        Array.isArray(category.children) && category.children.length > 0;
 
       return (
         <li key={category.id} className="sellerCategoryTreeItem">
@@ -24,7 +24,6 @@ const CategoryBranch = ({
             onClick={() => onToggle(category)}
           >
             <span className="sellerCategoryTreeName">{category.name}</span>
-            <span className="sellerCategoryTreeMeta">{category.slug}</span>
           </button>
           {hasChildren ? (
             <CategoryBranch
@@ -55,7 +54,9 @@ const CategoryTreeSelector = ({
   };
 
   if (!Array.isArray(categoryOptions) || categoryOptions.length === 0) {
-    return <div className="sellerCategoryTreeEmpty">Brak kategorii do wyboru.</div>;
+    return (
+      <div className="sellerCategoryTreeEmpty">Brak kategorii do wyboru.</div>
+    );
   }
 
   return (

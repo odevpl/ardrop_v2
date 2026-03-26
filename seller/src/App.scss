@@ -228,19 +228,23 @@
   color: #6b7280;
 }
 
-.sellerVariantsSection {
+.sellerFormSection {
   margin: 12px 0;
   border: 1px solid #d1d5db;
   border-radius: 10px;
   padding: 10px;
 }
 
-.sellerVariantsSection h3 {
+.sellerFormSection.categories {
+  max-width: 300px;
+}
+
+.sellerFormSection h3 {
   margin: 0;
   font-size: 1rem;
 }
 
-.sellerVariantsSection .sellerToolbar button {
+.sellerFormSection .sellerToolbar button {
   border: 1px solid #0a64c9;
   background: #0a64c9;
   color: #ffffff;
@@ -250,7 +254,7 @@
   font-weight: 600;
 }
 
-.sellerVariantsSection .sellerToolbar button:hover {
+.sellerFormSection .sellerToolbar button:hover {
   background: #0956ab;
   border-color: #0956ab;
 }
@@ -302,12 +306,15 @@
   display: grid;
   gap: 4px;
   text-align: left;
-  padding: 14px 16px;
+  padding: 4px 6px;
   border: 1px solid #d1d5db;
   border-radius: 10px;
   background: #fff;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .sellerCategoryTreeCard:hover {

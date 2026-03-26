@@ -16,6 +16,13 @@ const formatDate = (rawDate) => {
   return `${day}.${month}.${year}`;
 };
 
+const formatEta = (from, to) => {
+  if (from && to) return `${formatDate(from)} - ${formatDate(to)}`;
+  if (from) return formatDate(from);
+  if (to) return formatDate(to);
+  return "-";
+};
+
 const DeliveriesListView = ({ payload }) => {
   const navigate = useNavigate();
   const orders = Array.isArray(payload?.data || payload?.orders)
@@ -33,8 +40,19 @@ const DeliveriesListView = ({ payload }) => {
       title: "Status",
     },
     {
+      key: "orderGroupId",
+      title: "Grupa",
+      onRender: (row) => row?.orderGroupId || "-",
+    },
+    {
       key: "paymentStatus",
       title: "Platnosc",
+    },
+    {
+      key: "delivery",
+      title: "Dostawa",
+      onRender: (row) =>
+        row?.shippingMethodName || formatEta(row?.estimatedDeliveryFrom, row?.estimatedDeliveryTo),
     },
     {
       key: "itemsCount",

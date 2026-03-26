@@ -2,6 +2,8 @@ const db = require("../config/db");
 
 const roundMoney = (value) => Number((Number(value) || 0).toFixed(2));
 
+let orderColumnsCache = null;
+
 const resolveClientIdByUserId = async (userId, trx = db) => {
   const client = await trx("clients").select("id").where({ userId: Number(userId) }).first();
   if (!client) {
@@ -32,6 +34,86 @@ const parseSnapshot = (raw) => {
   }
 };
 
+const getOrderColumnCapabilities = async (trx = db) => {
+  if (orderColumnsCache) return orderColumnsCache;
+
+  const [
+    hasDeliveryAddressSnapshotJson,
+    hasShippingMethodName,
+    hasClientNote,
+    hasEstimatedDeliveryFrom,
+    hasEstimatedDeliveryTo,
+  ] = await Promise.all([
+    trx.schema.hasColumn("orders", "deliveryAddressSnapshotJson"),
+    trx.schema.hasColumn("orders", "shippingMethodName"),
+    trx.schema.hasColumn("orders", "clientNote"),
+    trx.schema.hasColumn("orders", "estimatedDeliveryFrom"),
+    trx.schema.hasColumn("orders", "estimatedDeliveryTo"),
+  ]);
+
+  orderColumnsCache = {
+    hasDeliveryAddressSnapshotJson,
+    hasShippingMethodName,
+    hasClientNote,
+    hasEstimatedDeliveryFrom,
+    hasEstimatedDeliveryTo,
+  };
+
+  return orderColumnsCache;
+};
+
+const getOrderSelectColumns = async (trx = db) => {
+  const capabilities = await getOrderColumnCapabilities(trx);
+  const columns = [
+    "orders.id",
+    "orders.orderGroupId",
+    "orders.sellerId",
+    "orders.clientId",
+    "orders.totalNet",
+    "orders.totalGross",
+    "orders.totalShipping",
+    "orders.paymentStatus",
+    "orders.status",
+    "orders.createdAt",
+    "orders.updatedAt",
+  ];
+
+  if (capabilities.hasDeliveryAddressSnapshotJson) {
+    columns.push("orders.deliveryAddressSnapshotJson");
+  }
+  if (capabilities.hasShippingMethodName) {
+    columns.push("orders.shippingMethodName");
+  }
+  if (capabilities.hasClientNote) {
+    columns.push("orders.clientNote");
+  }
+  if (capabilities.hasEstimatedDeliveryFrom) {
+    columns.push("orders.estimatedDeliveryFrom");
+  }
+  if (capabilities.hasEstimatedDeliveryTo) {
+    columns.push("orders.estimatedDeliveryTo");
+  }
+
+  return columns;
+};
+
+const mapDeliveryAddressSnapshot = (address) => {
+  if (!address) return null;
+
+  return {
+    id: Number(address.id),
+    clientId: Number(address.clientId),
+    label: address.label || "",
+    recipientName: address.recipientName || "",
+    phone: address.phone || "",
+    addressLine1: address.addressLine1 || "",
+    addressLine2: address.addressLine2 || "",
+    city: address.city || "",
+    postalCode: address.postalCode || "",
+    countryCode: address.countryCode || "PL",
+  };
+};
+
 const mapOrder = (order) => ({
   id: Number(order.id),
   orderGroupId: Number(order.orderGroupId),
@@ -42,6 +124,11 @@ const mapOrder = (order) => ({
   totalShipping: Number(order.totalShipping),
   paymentStatus: order.paymentStatus,
   status: order.status,
+  deliveryAddressSnapshot: parseSnapshot(order.deliveryAddressSnapshotJson),
+  shippingMethodName: order.shippingMethodName || null,
+  clientNote: order.clientNote || null,
+  estimatedDeliveryFrom: order.estimatedDeliveryFrom || null,
+  estimatedDeliveryTo: order.estimatedDeliveryTo || null,
   createdAt: order.createdAt,
   updatedAt: order.updatedAt,
 });
@@ -104,8 +191,29 @@ const resolveCheckoutClientId = async ({ userId, role, clientId }, trx = db) => 
   throw error;
 };
 
-const createOrderFromCurrentCart = async ({ userId, role, clientId }, trxDb = db) => {
+const getClientDeliveryAddresses = async ({ clientId }, trx = db) => {
+  return trx("clients_delivery_address")
+    .where({ clientId: Number(clientId) })
+    .orderBy([{ column: "isDefault", order: "desc" }, { column: "id", order: "desc" }]);
+};
+
+const resolveDeliveryAddressForShipment = ({
+  shipment,
+  fallbackDeliveryAddressId,
+  availableAddresses,
+}) => {
+  const addressId = Number(shipment?.deliveryAddressId || fallbackDeliveryAddressId || 0);
+  if (!addressId) return null;
+
+  return availableAddresses.find((address) => Number(address.id) === addressId) || null;
+};
+
+const createOrderFromCurrentCart = async (
+  { userId, role, clientId, deliveryAddressId, clientNote },
+  trxDb = db,
+) => {
   return trxDb.transaction(async (trx) => {
+    const orderColumns = await getOrderColumnCapabilities(trx);
     const resolvedClientId = await resolveCheckoutClientId({ userId, role, clientId }, trx);
     const cart = await trx("carts")
       .where({ status: "active", clientId: resolvedClientId })
@@ -122,11 +230,17 @@ const createOrderFromCurrentCart = async ({ userId, role, clientId }, trxDb = db
       .where({ cartId: Number(cart.id) })
       .orderBy("id", "asc");
 
+    const cartShipments = await trx("cart_shipments")
+      .where({ cartId: Number(cart.id) })
+      .orderBy("id", "asc");
+
     if (cartItems.length === 0) {
       const error = new Error("Cart is empty");
       error.status = 400;
       throw error;
     }
+
+    const availableAddresses = await getClientDeliveryAddresses({ clientId: resolvedClientId }, trx);
 
     const productIds = [...new Set(cartItems.map((item) => Number(item.productId)).filter(Boolean))];
     const products = await trx("products")
@@ -192,23 +306,53 @@ const createOrderFromCurrentCart = async ({ userId, role, clientId }, trxDb = db
 
     for (const [sellerIdKey, sellerItems] of Object.entries(groupedBySeller)) {
       const sellerId = Number(sellerIdKey);
-      const totalNet = roundMoney(
+      const shipment = cartShipments.find((item) => Number(item.sellerId) === sellerId) || null;
+      const resolvedAddress = resolveDeliveryAddressForShipment({
+        shipment,
+        fallbackDeliveryAddressId: deliveryAddressId,
+        availableAddresses,
+      });
+      const shipmentNet = roundMoney(shipment?.shippingNet || 0);
+      const shipmentGross = roundMoney(shipment?.shippingGross || 0);
+      const itemsNet = roundMoney(
         sellerItems.reduce((sum, item) => sum + Number(item.lineNet || 0), 0),
       );
-      const totalGross = roundMoney(
+      const itemsGross = roundMoney(
         sellerItems.reduce((sum, item) => sum + Number(item.lineGross || 0), 0),
       );
+      const totalNet = roundMoney(itemsNet + shipmentNet);
+      const totalGross = roundMoney(itemsGross + shipmentGross);
 
-      const insertedOrder = await trx("orders").insert({
+      const orderPayload = {
         orderGroupId,
         sellerId,
         clientId: resolvedClientId,
         totalNet,
         totalGross,
-        totalShipping: 0,
+        totalShipping: shipmentGross,
         paymentStatus: "pending",
         status: "new",
-      });
+      };
+
+      if (orderColumns.hasDeliveryAddressSnapshotJson) {
+        orderPayload.deliveryAddressSnapshotJson = JSON.stringify(
+          mapDeliveryAddressSnapshot(resolvedAddress),
+        );
+      }
+      if (orderColumns.hasShippingMethodName) {
+        orderPayload.shippingMethodName = shipment?.shippingMethodName || null;
+      }
+      if (orderColumns.hasClientNote) {
+        orderPayload.clientNote = shipment?.clientNote || clientNote || null;
+      }
+      if (orderColumns.hasEstimatedDeliveryFrom) {
+        orderPayload.estimatedDeliveryFrom = shipment?.estimatedDeliveryFrom || null;
+      }
+      if (orderColumns.hasEstimatedDeliveryTo) {
+        orderPayload.estimatedDeliveryTo = shipment?.estimatedDeliveryTo || null;
+      }
+
+      const insertedOrder = await trx("orders").insert(orderPayload);
       const orderId = Array.isArray(insertedOrder) ? insertedOrder[0] : insertedOrder;
       createdOrderIds.push(Number(orderId));
 
@@ -261,28 +405,20 @@ const createOrderFromCurrentCart = async ({ userId, role, clientId }, trxDb = db
     }
 
     await trx("cart_items").where({ cartId: Number(cart.id) }).del();
+    await trx("cart_shipments").where({ cartId: Number(cart.id) }).del();
     await trx("carts")
       .where({ id: Number(cart.id) })
       .update({
+        shippingNet: 0,
+        shippingGross: 0,
         totalNet: 0,
         totalGross: 0,
         updatedAt: trx.fn.now(),
       });
 
+    const orderSelectColumns = await getOrderSelectColumns(trx);
     const orders = await trx("orders")
-      .select(
-        "id",
-        "orderGroupId",
-        "sellerId",
-        "clientId",
-        "totalNet",
-        "totalGross",
-        "totalShipping",
-        "paymentStatus",
-        "status",
-        "createdAt",
-        "updatedAt",
-      )
+      .select(...orderSelectColumns)
       .whereIn("id", createdOrderIds)
       .orderBy("id", "asc");
 
@@ -295,20 +431,9 @@ const createOrderFromCurrentCart = async ({ userId, role, clientId }, trxDb = db
 };
 
 const getOrders = async ({ userId, role }) => {
+  const orderSelectColumns = await getOrderSelectColumns(db);
   const query = db("orders")
-    .select(
-      "orders.id",
-      "orders.orderGroupId",
-      "orders.sellerId",
-      "orders.clientId",
-      "orders.totalNet",
-      "orders.totalGross",
-      "orders.totalShipping",
-      "orders.paymentStatus",
-      "orders.status",
-      "orders.createdAt",
-      "orders.updatedAt",
-    )
+    .select(...orderSelectColumns)
     .orderBy("orders.createdAt", "desc")
     .orderBy("orders.id", "desc");
 
@@ -379,20 +504,9 @@ const getOrderById = async ({ userId, role, orderId }) => {
     throw error;
   }
 
+  const orderSelectColumns = await getOrderSelectColumns(db);
   const query = db("orders")
-    .select(
-      "orders.id",
-      "orders.orderGroupId",
-      "orders.sellerId",
-      "orders.clientId",
-      "orders.totalNet",
-      "orders.totalGross",
-      "orders.totalShipping",
-      "orders.paymentStatus",
-      "orders.status",
-      "orders.createdAt",
-      "orders.updatedAt",
-    )
+    .select(...orderSelectColumns)
     .where("orders.id", normalizedOrderId)
     .first();
 

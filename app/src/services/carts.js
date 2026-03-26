@@ -31,10 +31,17 @@ export const clearCart = () =>
     url: 'carts/current/items',
   })
 
+export const updateCartShipment = ({ sellerId, payload = {} }) =>
+  apiPatch({
+    url: `carts/shipments/${sellerId}`,
+    data: payload,
+  })
+
 export default {
   getCurrentCart,
   addItemToCart,
   updateCartItem,
   removeCartItem,
   clearCart,
+  updateCartShipment,
 }

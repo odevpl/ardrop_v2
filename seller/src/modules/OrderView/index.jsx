@@ -12,10 +12,30 @@ const resolveThumbUrl = (item) => {
   return `${apiBaseUrl}/uploads/images/thumbs/${main.fileName.replace(/\.[^.]+$/, '.jpg')}`
 }
 
+const formatDateTime = (rawDate) => {
+  if (!rawDate) return '-'
+  const date = new Date(rawDate)
+  if (Number.isNaN(date.getTime())) return rawDate
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${day}.${month}.${year} ${hours}:${minutes}`
+}
+
+const formatEta = (from, to) => {
+  if (from && to) return `${formatDateTime(from)} - ${formatDateTime(to)}`
+  if (from) return formatDateTime(from)
+  if (to) return formatDateTime(to)
+  return 'Do ustalenia'
+}
+
 const OrderView = ({ payload }) => {
   const navigate = useNavigate()
   const order = payload?.data || payload?.order || payload || {}
   const items = Array.isArray(order?.items) ? order.items : []
+  const address = order?.deliveryAddressSnapshot || null
   const orderTotalFromItems = items.reduce(
     (sum, item) => sum + Number(item.grossPrice || 0) * Number(item.quantity || 0),
     0,
@@ -42,21 +62,46 @@ const OrderView = ({ payload }) => {
                 <span>Status platnosci</span>
                 <span>{order?.paymentStatus || '-'}</span>
                 <span>Data utworzenia</span>
-                <span>{order?.createdAt || '-'}</span>
+                <span>{formatDateTime(order?.createdAt)}</span>
               </div>
             </div>
 
             <div className="orderViewCard">
-              <h2>Adres</h2>
-              <p className="orderViewMuted">
-                W payloadzie zamowienia brak dedykowanych pol adresowych.
-              </p>
+              <h2>Dostawa klienta</h2>
               <div className="orderViewInfoGrid">
-                <span>ID klienta</span>
-                <span>{order?.clientId || '-'}</span>
-                <span>ID sprzedawcy</span>
-                <span>{order?.sellerId || '-'}</span>
+                <span>Metoda dostawy</span>
+                <span>{order?.shippingMethodName || 'Do ustalenia'}</span>
+                <span>Przyblizony termin</span>
+                <span>{formatEta(order?.estimatedDeliveryFrom, order?.estimatedDeliveryTo)}</span>
+                <span>Koszt dostawy</span>
+                <span>{formatPrice(order?.totalShipping)}</span>
               </div>
+              {order?.clientNote ? (
+                <div className="orderViewNoteBox">
+                  <p className="orderViewNoteTitle">Notatka klienta</p>
+                  <p className="orderViewNoteText">{order.clientNote}</p>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="orderViewCard">
+              <h2>Adres dostawy</h2>
+              {address ? (
+                <div className="orderViewAddressBox">
+                  <p>
+                    <strong>{address.recipientName || '-'}</strong>
+                  </p>
+                  {address.phone ? <p>{address.phone}</p> : null}
+                  {address.label ? <p>{address.label}</p> : null}
+                  <p>{address.addressLine1 || '-'}</p>
+                  {address.addressLine2 ? <p>{address.addressLine2}</p> : null}
+                  <p>
+                    {address.postalCode || '-'} {address.city || '-'}, {address.countryCode || 'PL'}
+                  </p>
+                </div>
+              ) : (
+                <p className="orderViewMuted">Brak snapshotu adresu dostawy w tym zamowieniu.</p>
+              )}
             </div>
 
             <div className="orderViewCard">
@@ -85,9 +130,14 @@ const OrderView = ({ payload }) => {
                                   <div className="orderItemThumbPlaceholder">Brak</div>
                                 )}
                               </div>
-                              <p className="orderItemProductName">
-                                {item?.productSnapshot?.name || `Produkt #${item.productId}`}
-                              </p>
+                              <div>
+                                <p className="orderItemProductName">
+                                  {item?.productSnapshot?.name || `Produkt #${item.productId}`}
+                                </p>
+                                {item?.variantNameSnapshot ? (
+                                  <p className="orderItemProductVariant">{item.variantNameSnapshot}</p>
+                                ) : null}
+                              </div>
                             </div>
                           </td>
                           <td>{item.quantity}</td>

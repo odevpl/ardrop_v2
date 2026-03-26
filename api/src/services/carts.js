@@ -62,18 +62,100 @@ const createCart = async ({ clientId, currency = "PLN" }, trx = db) => {
   return trx("carts").where({ id: cartId }).first();
 };
 
-const getCartByIdWithItems = async ({ cartId }, trx = db) => {
-  const cart = await trx("carts").where({ id: cartId }).first();
+const mapShipment = (shipment) => ({
+  id: Number(shipment.id),
+  cartId: Number(shipment.cartId),
+  sellerId: Number(shipment.sellerId),
+  deliveryAddressId:
+    shipment.deliveryAddressId !== null && shipment.deliveryAddressId !== undefined
+      ? Number(shipment.deliveryAddressId)
+      : null,
+  shippingMethodName: shipment.shippingMethodName || null,
+  shippingNet: roundMoney(shipment.shippingNet),
+  shippingGross: roundMoney(shipment.shippingGross),
+  clientNote: shipment.clientNote || null,
+  estimatedDeliveryFrom: shipment.estimatedDeliveryFrom || null,
+  estimatedDeliveryTo: shipment.estimatedDeliveryTo || null,
+  createdAt: shipment.createdAt,
+  updatedAt: shipment.updatedAt,
+});
+
+const getCartShipments = async ({ cartId }, trx = db) => {
+  const shipments = await trx("cart_shipments as cs")
+    .leftJoin("sellers as s", "s.id", "cs.sellerId")
+    .select(
+      "cs.id",
+      "cs.cartId",
+      "cs.sellerId",
+      "cs.deliveryAddressId",
+      "cs.shippingMethodName",
+      "cs.shippingNet",
+      "cs.shippingGross",
+      "cs.clientNote",
+      "cs.estimatedDeliveryFrom",
+      "cs.estimatedDeliveryTo",
+      "cs.createdAt",
+      "cs.updatedAt",
+      "s.companyName as sellerCompanyName",
+    )
+    .where("cs.cartId", Number(cartId))
+    .orderBy("cs.id", "asc");
+
+  return shipments.map((shipment) => ({
+    ...mapShipment(shipment),
+    seller: {
+      id: Number(shipment.sellerId),
+      companyName: shipment.sellerCompanyName || null,
+    },
+  }));
+};
+
+const buildCartResponse = async ({ cart }, trx = db) => {
   if (!cart) return null;
 
-  const items = await trx("cart_items")
-    .where({ cartId: Number(cartId) })
-    .orderBy("id", "asc");
+  const [items, shipments] = await Promise.all([
+    trx("cart_items").where({ cartId: Number(cart.id) }).orderBy("id", "asc"),
+    getCartShipments({ cartId: cart.id }, trx),
+  ]);
+
+  const itemsBySellerId = {};
+  items.forEach((item) => {
+    const sellerId = Number(item.sellerId);
+    if (!itemsBySellerId[sellerId]) itemsBySellerId[sellerId] = [];
+    itemsBySellerId[sellerId].push(item);
+  });
+
+  const groupedShipments = shipments.map((shipment) => {
+    const shipmentItems = itemsBySellerId[shipment.sellerId] || [];
+    const itemsNet = roundMoney(
+      shipmentItems.reduce((sum, item) => sum + Number(item.lineNet || 0), 0),
+    );
+    const itemsGross = roundMoney(
+      shipmentItems.reduce((sum, item) => sum + Number(item.lineGross || 0), 0),
+    );
+
+    return {
+      ...shipment,
+      items: shipmentItems,
+      totals: {
+        itemsNet,
+        itemsGross,
+        totalNet: roundMoney(itemsNet + Number(shipment.shippingNet || 0)),
+        totalGross: roundMoney(itemsGross + Number(shipment.shippingGross || 0)),
+      },
+    };
+  });
 
   return {
     ...cart,
     items,
+    shipments: groupedShipments,
   };
+};
+
+const getCartByIdWithItems = async ({ cartId }, trx = db) => {
+  const cart = await trx("carts").where({ id: cartId }).first();
+  return buildCartResponse({ cart }, trx);
 };
 
 const recalculateTotals = async ({ cartId }, trx = db) => {
@@ -85,10 +167,15 @@ const recalculateTotals = async ({ cartId }, trx = db) => {
   const cart = await trx("carts").where({ id: cartId }).first();
   if (!cart) return null;
 
+  const shipmentTotalsRow = await trx("cart_shipments")
+    .where({ cartId })
+    .sum({ shippingNet: "shippingNet", shippingGross: "shippingGross" })
+    .first();
+
   const itemsNet = roundMoney(totalsRow?.itemsNet || 0);
   const itemsGross = roundMoney(totalsRow?.itemsGross || 0);
-  const shippingNet = roundMoney(cart.shippingNet || 0);
-  const shippingGross = roundMoney(cart.shippingGross || 0);
+  const shippingNet = roundMoney(shipmentTotalsRow?.shippingNet || 0);
+  const shippingGross = roundMoney(shipmentTotalsRow?.shippingGross || 0);
   const discountNet = roundMoney(cart.discountNet || 0);
   const discountGross = roundMoney(cart.discountGross || 0);
 
@@ -98,6 +185,8 @@ const recalculateTotals = async ({ cartId }, trx = db) => {
   await trx("carts")
     .where({ id: cartId })
     .update({
+      shippingNet,
+      shippingGross,
       totalNet,
       totalGross,
       updatedAt: trx.fn.now(),
@@ -118,6 +207,46 @@ const getOrCreateCurrentCart = async ({
     cart = await createCart({ ...scope, currency: currency || "PLN" });
   }
   return getCartByIdWithItems({ cartId: cart.id });
+};
+
+const ensureCartShipment = async ({ cartId, sellerId }, trx = db) => {
+  const normalizedSellerId = Number(sellerId);
+  if (!normalizedSellerId) return null;
+
+  const existing = await trx("cart_shipments")
+    .where({
+      cartId: Number(cartId),
+      sellerId: normalizedSellerId,
+    })
+    .first();
+
+  if (existing) return existing;
+
+  const inserted = await trx("cart_shipments").insert({
+    cartId: Number(cartId),
+    sellerId: normalizedSellerId,
+  });
+  const shipmentId = Array.isArray(inserted) ? inserted[0] : inserted;
+
+  return trx("cart_shipments").where({ id: shipmentId }).first();
+};
+
+const removeEmptyCartShipment = async ({ cartId, sellerId }, trx = db) => {
+  const remainingItem = await trx("cart_items")
+    .where({
+      cartId: Number(cartId),
+      sellerId: Number(sellerId),
+    })
+    .first();
+
+  if (remainingItem) return;
+
+  await trx("cart_shipments")
+    .where({
+      cartId: Number(cartId),
+      sellerId: Number(sellerId),
+    })
+    .del();
 };
 
 const addItemToCurrentCart = async ({
@@ -212,6 +341,8 @@ const addItemToCurrentCart = async ({
 
     const pricingSource = selectedVariant || product;
     const targetVariantId = selectedVariant ? Number(selectedVariant.id) : null;
+
+    await ensureCartShipment({ cartId: cart.id, sellerId: product.sellerId }, trx);
 
     const existingItem = await trx("cart_items")
       .where({
@@ -359,6 +490,8 @@ const removeItemFromCurrentCart = async ({
       throw error;
     }
 
+    await removeEmptyCartShipment({ cartId: cart.id, sellerId: item.sellerId }, trx);
+
     return recalculateTotals({ cartId: cart.id }, trx);
   });
 };
@@ -375,6 +508,71 @@ const clearCurrentCart = async ({ userId, role, clientId }) => {
     }
 
     await trx("cart_items").where({ cartId: cart.id }).del();
+    await trx("cart_shipments").where({ cartId: cart.id }).del();
+    return recalculateTotals({ cartId: cart.id }, trx);
+  });
+};
+
+const updateCurrentCartShipment = async ({
+  userId,
+  role,
+  clientId,
+  sellerId,
+  deliveryAddressId,
+  shippingMethodName,
+  shippingNet,
+  shippingGross,
+  clientNote,
+  estimatedDeliveryFrom,
+  estimatedDeliveryTo,
+}) => {
+  const normalizedSellerId = Number(sellerId);
+  if (!normalizedSellerId) {
+    const error = new Error("sellerId is required");
+    error.status = 400;
+    throw error;
+  }
+
+  const scope = await resolveScope({ userId, role, clientId });
+
+  return db.transaction(async (trx) => {
+    const cart = await findActiveCart(scope, trx);
+    if (!cart) {
+      const error = new Error("Active cart not found");
+      error.status = 404;
+      throw error;
+    }
+
+    const shipment = await ensureCartShipment({ cartId: cart.id, sellerId: normalizedSellerId }, trx);
+    const updates = {};
+
+    if (deliveryAddressId !== undefined) {
+      updates.deliveryAddressId = deliveryAddressId ? Number(deliveryAddressId) : null;
+    }
+    if (shippingMethodName !== undefined) {
+      updates.shippingMethodName = shippingMethodName ? String(shippingMethodName).trim() : null;
+    }
+    if (shippingNet !== undefined) {
+      updates.shippingNet = roundMoney(shippingNet);
+    }
+    if (shippingGross !== undefined) {
+      updates.shippingGross = roundMoney(shippingGross);
+    }
+    if (clientNote !== undefined) {
+      updates.clientNote = clientNote ? String(clientNote).trim() : null;
+    }
+    if (estimatedDeliveryFrom !== undefined) {
+      updates.estimatedDeliveryFrom = estimatedDeliveryFrom || null;
+    }
+    if (estimatedDeliveryTo !== undefined) {
+      updates.estimatedDeliveryTo = estimatedDeliveryTo || null;
+    }
+
+    if (Object.keys(updates).length) {
+      updates.updatedAt = trx.fn.now();
+      await trx("cart_shipments").where({ id: shipment.id }).update(updates);
+    }
+
     return recalculateTotals({ cartId: cart.id }, trx);
   });
 };
@@ -427,5 +625,6 @@ module.exports = {
   updateCurrentCartItem,
   removeItemFromCurrentCart,
   clearCurrentCart,
+  updateCurrentCartShipment,
   updateCurrentCartMeta,
 };

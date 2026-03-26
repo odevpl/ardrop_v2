@@ -15,21 +15,26 @@ const SidebarMenu = ({ config }) => {
         </div>
       </div>
 
-      <p className="sidebarMenuSectionLabel">Menu</p>
-      <nav className="sidebarMenuNav" aria-label="Main navigation">
-        {config.map((item) => (
-          <NavLink
-            key={item.title}
-            to={item.path}
-            className={({ isActive }) =>
-              `sidebarMenuItem${isActive ? ' sidebarMenuItemActive' : ''}`
-            }
-          >
-            <i className={`fa-solid ${item.icon}`} aria-hidden="true" />
-            <span className="sidebarMenuItemText">{item.title}</span>
-          </NavLink>
-        ))}
-      </nav>
+      {config.map((section) => (
+        <div key={section.label} className="sidebarMenuGroup">
+          <p className="sidebarMenuSectionLabel">{section.label}</p>
+          <nav className="sidebarMenuNav" aria-label={section.label}>
+            {section.items.map((item) => (
+              <NavLink
+                key={item.title}
+                to={item.path}
+                end={item.path === '/configuration'}
+                className={({ isActive }) =>
+                  `sidebarMenuItem${isActive ? ' sidebarMenuItemActive' : ''}`
+                }
+              >
+                <i className={`fa-solid ${item.icon}`} aria-hidden="true" />
+                <span className="sidebarMenuItemText">{item.title}</span>
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+      ))}
 
       <button type="button" className="sidebarLogoutButton" onClick={logout}>
         <i className="fa-solid fa-right-from-bracket" aria-hidden="true" />

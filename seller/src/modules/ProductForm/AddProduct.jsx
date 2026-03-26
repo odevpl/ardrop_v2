@@ -1,12 +1,13 @@
 import ProductsService from 'services/products'
 import CategoriesService from 'services/categories'
+import SellerSettingsService from 'services/sellerSettings'
 import { useNotification } from 'components/GlobalNotification/index.js'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { round2 } from './helpers'
 import ProductFormView from './ProductFormView'
 
-const initialValues = {
+const defaultInitialValues = {
   name: '',
   description: '',
   netPrice: '',
@@ -26,11 +27,28 @@ const AddProduct = () => {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([])
   const [primaryCategoryId, setPrimaryCategoryId] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [initialValues, setInitialValues] = useState(defaultInitialValues)
 
   useEffect(() => {
     const loadCategories = async () => {
-      const response = await CategoriesService.getCategories({ page: 1, limit: 500, sortBy: 'position', sortOrder: 'asc', view: 'tree' })
-      setCategories(response?.data || [])
+      const [categoriesResponse, settingsResponse] = await Promise.all([
+        CategoriesService.getCategories({ page: 1, limit: 500, sortBy: 'position', sortOrder: 'asc', view: 'tree' }),
+        SellerSettingsService.getSellerSettings(),
+      ])
+      setCategories(categoriesResponse?.data || [])
+      if (!(settingsResponse?.status && settingsResponse.status >= 400)) {
+        setInitialValues((prev) => ({
+          ...prev,
+          vatRate:
+            settingsResponse?.data?.settings?.defaultVatRate ??
+            settingsResponse?.settings?.defaultVatRate ??
+            prev.vatRate,
+          unit:
+            settingsResponse?.data?.settings?.defaultUnit ||
+            settingsResponse?.settings?.defaultUnit ||
+            prev.unit,
+        }))
+      }
       setIsLoading(false)
     }
     loadCategories()

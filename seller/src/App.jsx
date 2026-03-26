@@ -7,16 +7,29 @@ import AddProductPage from './pages/products/AddProduct'
 import ProductDetailsPage from './pages/products/Details'
 import OrdersPage from './pages/orders'
 import OrderDetailsPage from './pages/orders/Details'
-import SettingsPage from './pages/settings'
+import CompanySupportPage from './pages/configuration/CompanySupportPage'
+import FulfillmentPage from './pages/configuration/FulfillmentPage'
+import ShippingPage from './pages/configuration/ShippingPage'
+import ReturnsPage from './pages/configuration/ReturnsPage'
+import PricingPage from './pages/configuration/PricingPage'
+import CommunicationPage from './pages/configuration/CommunicationPage'
+import FinancePage from './pages/configuration/FinancePage'
+import AutomationsPage from './pages/configuration/AutomationsPage'
 import { useAuth } from './providers/authProvider'
 import './App.scss'
+
+const FLAT_MENU_ITEMS = SIDEBAR_MENU_CONFIG.flatMap((section) => section.items)
+
+const resolveCurrentItem = (pathname) =>
+  FLAT_MENU_ITEMS
+    .filter((item) => pathname === item.path || pathname.startsWith(`${item.path}/`))
+    .sort((a, b) => b.path.length - a.path.length)[0] || FLAT_MENU_ITEMS[0]
 
 function App() {
   const { role, logout } = useAuth()
   const { pathname } = useLocation()
   const nowLabel = dayjs().format('DD.MM.YYYY HH:mm')
-  const currentItem =
-    SIDEBAR_MENU_CONFIG.find((item) => item.path === pathname) ?? SIDEBAR_MENU_CONFIG[0]
+  const currentItem = resolveCurrentItem(pathname)
 
   return (
     <div className="sellerLayout">
@@ -44,7 +57,14 @@ function App() {
           <Route path="/products/:id" element={<ProductDetailsPage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/orders/:id" element={<OrderDetailsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/configuration/company-support" element={<CompanySupportPage />} />
+          <Route path="/configuration/fulfillment" element={<FulfillmentPage />} />
+          <Route path="/configuration/shipping" element={<ShippingPage />} />
+          <Route path="/configuration/returns" element={<ReturnsPage />} />
+          <Route path="/configuration/pricing" element={<PricingPage />} />
+          <Route path="/configuration/communication" element={<CommunicationPage />} />
+          <Route path="/configuration/finance" element={<FinancePage />} />
+          <Route path="/configuration/automations" element={<AutomationsPage />} />
           <Route path="*" element={<Navigate to="/products" replace />} />
         </Routes>
       </main>

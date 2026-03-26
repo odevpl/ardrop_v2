@@ -48,7 +48,7 @@ const validateForm = (values) => {
   return errors
 }
 
-const SettingsPage = () => {
+const CompanySupportPage = () => {
   const notification = useNotification()
   const [initialValues, setInitialValues] = useState(createInitialValues())
   const [isLoading, setIsLoading] = useState(true)
@@ -107,7 +107,7 @@ const SettingsPage = () => {
     return (
       <section className="sellerPageSection">
         <div className="sellerToolbar">
-          <h2>Ustawienia</h2>
+          <h2>Firma i obsluga</h2>
         </div>
         <p>Ladowanie ustawien...</p>
       </section>
@@ -117,7 +117,7 @@ const SettingsPage = () => {
   return (
     <section className="sellerPageSection">
       <div className="sellerToolbar">
-        <h2>Ustawienia operacyjne</h2>
+        <h2>Firma i obsluga</h2>
       </div>
 
       <FormikWrapper initialValues={initialValues} onSubmit={handleSubmit} validate={validateForm}>
@@ -192,4 +192,4 @@ const SettingsPage = () => {
   )
 }
 
-export default SettingsPage
+export default CompanySupportPage

@@ -1,11 +1,15 @@
 import { useFormikContext, getIn } from "formik";
 
-const TextInput = ({ id, placeholder, wrapperStyle, ...props }) => {
+const TextInput = ({ id, placeholder, wrapperStyle, onChange, checked, ...props }) => {
   const formikContext = useFormikContext();
   const value = getIn(formikContext.values, id);
   const error = getIn(formikContext.errors, id);
 
   const handleChange = (e) => {
+    if (typeof onChange === "function") {
+      onChange(e);
+      return;
+    }
     formikContext.setFieldValue(id, e.target.checked);
   };
 
@@ -15,7 +19,7 @@ const TextInput = ({ id, placeholder, wrapperStyle, ...props }) => {
         id={id}
         type="checkbox"
         onChange={handleChange}
-        checked={Boolean(value)}
+        checked={checked !== undefined ? Boolean(checked) : Boolean(value)}
         {...props}
       />
       <label htmlFor={id}>{placeholder}</label>

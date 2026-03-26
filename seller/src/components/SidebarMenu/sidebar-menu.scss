@@ -50,6 +50,10 @@
   text-transform: uppercase;
 }
 
+.sidebarMenuGroup {
+  margin-bottom: 16px;
+}
+
 .sidebarMenuNav {
   width: 100%;
   display: flex;
@@ -149,6 +153,10 @@
 
   .sidebarMenuSectionLabel {
     display: none;
+  }
+
+  .sidebarMenuGroup {
+    margin-bottom: 0;
   }
 
   .sidebarMenuNav {

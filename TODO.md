@@ -3,60 +3,60 @@
 ## Etap 1: Ustawienia operacyjne sprzedawcy
 
 ### Punkt 1: Dane firmy i obslugi klienta
-- Podpunkt 1.1: Dane kontaktowe do obslugi zamowien.
-- Podpunkt 1.2: Osobny e-mail i telefon do reklamacji i zwrotow.
-- Podpunkt 1.3: Godziny pracy obslugi klienta.
-- Podpunkt 1.4: Domyslny podpis i stopka do wiadomosci dla klienta.
-- Podpunkt 1.5: Publiczna informacja o czasie odpowiedzi sprzedawcy.
+- Podpunkt 1.1: Dane kontaktowe do obslugi zamowien. - zrobione
+- Podpunkt 1.2: Osobny e-mail i telefon do reklamacji i zwrotow. - zrobione
+- Podpunkt 1.3: Godziny pracy obslugi klienta. - zrobione
+- Podpunkt 1.4: Domyslny podpis i stopka do wiadomosci dla klienta. - zrobione
+- Podpunkt 1.5: Publiczna informacja o czasie odpowiedzi sprzedawcy. - zrobione
 
 ### Punkt 2: Ustawienia realizacji zamowien
-- Podpunkt 2.1: Domyslny czas przygotowania zamowienia.
-- Podpunkt 2.2: Dni robocze wysylek.
-- Podpunkt 2.3: Godzina graniczna na wysylke tego samego dnia.
-- Podpunkt 2.4: Dni wylaczone z realizacji, np. urlop lub inwentaryzacja.
-- Podpunkt 2.5: Tryb urlopowy z komunikatem dla klienta.
+- Podpunkt 2.1: Domyslny czas przygotowania zamowienia. - zrobione
+- Podpunkt 2.2: Dni robocze wysylek. - zrobione
+- Podpunkt 2.3: Godzina graniczna na wysylke tego samego dnia. - zrobione
+- Podpunkt 2.4: Dni wylaczone z realizacji, np. urlop lub inwentaryzacja. - zrobione
+- Podpunkt 2.5: Tryb urlopowy z komunikatem dla klienta. - zrobione
 
 ### Punkt 3: Ustawienia wysylki
-- Podpunkt 3.1: Lista aktywnych metod dostawy per sprzedawca.
-- Podpunkt 3.2: Cennik dostaw per metoda.
-- Podpunkt 3.3: Darmowa dostawa od progu kwotowego.
-- Podpunkt 3.4: Darmowa dostawa od liczby sztuk lub wagi.
-- Podpunkt 3.5: Osobne stawki dla regionow lub krajow.
-- Podpunkt 3.6: ETA per metoda dostawy.
-- Podpunkt 3.7: Blokada wybranych metod dla niektorych produktow.
+- Podpunkt 3.1: Lista aktywnych metod dostawy per sprzedawca. - zrobione
+- Podpunkt 3.2: Cennik dostaw per metoda. - zrobione
+- Podpunkt 3.3: Darmowa dostawa od progu kwotowego. - zrobione
+- Podpunkt 3.4: Darmowa dostawa od liczby sztuk lub wagi. - zrobione
+- Podpunkt 3.5: Osobne stawki dla regionow lub krajow. - zrobione
+- Podpunkt 3.6: ETA per metoda dostawy. - zrobione
+- Podpunkt 3.7: Blokada wybranych metod dla niektorych produktow. - zrobione
 
 ### Punkt 4: Zwroty i reklamacje
-- Podpunkt 4.1: Czy sprzedawca przyjmuje zwroty online.
-- Podpunkt 4.2: Okno czasowe na zwrot.
-- Podpunkt 4.3: Adres do zwrotow.
-- Podpunkt 4.4: Instrukcja zwrotu wyswietlana klientowi.
-- Podpunkt 4.5: Czy koszt zwrotu pokrywa klient czy sprzedawca.
-- Podpunkt 4.6: Osobny proces dla reklamacji.
+- Podpunkt 4.1: Czy sprzedawca przyjmuje zwroty online. - zrobione
+- Podpunkt 4.2: Okno czasowe na zwrot. - zrobione
+- Podpunkt 4.3: Adres do zwrotow. - zrobione
+- Podpunkt 4.4: Instrukcja zwrotu wyswietlana klientowi. - zrobione
+- Podpunkt 4.5: Czy koszt zwrotu pokrywa klient czy sprzedawca. - zrobione
+- Podpunkt 4.6: Osobny proces dla reklamacji. - zrobione
 
 ## Etap 2: Ustawienia sprzedazowe
 
 ### Punkt 1: Polityka cenowa
-- Podpunkt 1.1: Domyslne marze lub narzuty pomocnicze.
-- Podpunkt 1.2: Minimalna cena sprzedazy lub ochrona marzy.
-- Podpunkt 1.3: Automatyczne zaokraglanie cen.
-- Podpunkt 1.4: Domyslna stawka VAT i jednostki.
+- Podpunkt 1.1: Domyslne marze lub narzuty pomocnicze. - zrobione
+- Podpunkt 1.2: Minimalna cena sprzedazy lub ochrona marzy. - zrobione
+- Podpunkt 1.3: Automatyczne zaokraglanie cen. - zrobione
+- Podpunkt 1.4: Domyslna stawka VAT i jednostki. - zrobione
 
 ### Punkt 2: Rabaty i promocje automatyczne
-- Podpunkt 2.1: Rabat od progu koszyka dla produktow danego sprzedawcy.
-- Podpunkt 2.2: Rabat od liczby sztuk lub ilosci wariantow.
-- Podpunkt 2.3: Rabat dla pierwszego zakupu u danego sprzedawcy.
-- Podpunkt 2.4: Rabat dla stalych klientow.
-- Podpunkt 2.5: Rabat dla klientow B2B.
-- Podpunkt 2.6: Happy hours lub promocje czasowe.
-- Podpunkt 2.7: Gratis lub bonus po przekroczeniu progu.
+- Podpunkt 2.1: Rabat od progu koszyka dla produktow danego sprzedawcy. - zrobione
+- Podpunkt 2.2: Rabat od liczby sztuk lub ilosci wariantow. - zrobione
+- Podpunkt 2.3: Rabat dla pierwszego zakupu u danego sprzedawcy. - zrobione
+- Podpunkt 2.4: Rabat dla stalych klientow. - zrobione
+- Podpunkt 2.5: Rabat dla klientow B2B. - zrobione
+- Podpunkt 2.6: Happy hours lub promocje czasowe. - zrobione
+- Podpunkt 2.7: Gratis lub bonus po przekroczeniu progu. - zrobione
 - Podpunkt 2.8: Wykluczenia rabatowe dla wybranych produktow lub kategorii.
 
 ### Punkt 3: Strategia koszyka i AOV
-- Podpunkt 3.1: Progi darmowej dostawy.
-- Podpunkt 3.2: Komunikaty upsellowe typu "dobierz jeszcze X zl".
-- Podpunkt 3.3: Powiazane produkty i cross-sell.
-- Podpunkt 3.4: Oferty pakietowe.
-- Podpunkt 3.5: Minimalna wartosc zamowienia u sprzedawcy.
+- Podpunkt 3.1: Progi darmowej dostawy. - zrobione
+- Podpunkt 3.2: Komunikaty upsellowe typu "dobierz jeszcze X zl". - zrobione
+- Podpunkt 3.3: Powiazane produkty i cross-sell. - zrobione
+- Podpunkt 3.4: Oferty pakietowe. - zrobione
+- Podpunkt 3.5: Minimalna wartosc zamowienia u sprzedawcy. - zrobione
 
 ## Etap 3: Ustawienia komunikacji z klientem
 
@@ -72,6 +72,7 @@
 - Podpunkt 2.2: Prosba o opinie po dostawie.
 - Podpunkt 2.3: Wiadomosc reaktywacyjna dla nieaktywnych klientow.
 - Podpunkt 2.4: Informacja o nowosciach i bestselerach sprzedawcy.
+- Podpunkt 2.5: Sprzedawca moze wskazac do 5 produktow do faworyzacji pod reklamy.
 
 ### Punkt 3: Transparentnosc dla klienta
 - Podpunkt 3.1: Publiczna polityka wysylki.
@@ -176,3 +177,20 @@
 - Podpunkt 2.2: Rabat progowy.
 - Podpunkt 2.3: Rabat dla stalych klientow.
 - Podpunkt 2.4: Cross-sell i komunikat upsellowy.
+
+## Etap 10: Silnik wykonawczy promocji i snapshotow
+
+### Punkt 1: Naliczanie regul sprzedazowych w koszyku
+- Podpunkt 1.1: Stosowac aktywne reguly rabatowe sprzedawcy do `cart_shipments` i `carts`.
+- Podpunkt 1.2: Wyliczac darmowa dostawe, progi ilosciowe i inne automatyczne warunki.
+- Podpunkt 1.3: Uwzgledniac wykluczenia produktowe, segmentowe i czasowe.
+
+### Punkt 2: Snapshoty i historia w zamowieniu
+- Podpunkt 2.1: Zapisywac snapshot zastosowanych polityk i rabatow w `orders`.
+- Podpunkt 2.2: Zapisywac snapshot zastosowanych polityk i rabatow w `order_items` lub tabelach pomocniczych.
+- Podpunkt 2.3: Zachowac historyczna zgodnosc zamowienia po zmianie konfiguracji sprzedawcy.
+
+### Punkt 3: Transparentnosc dla klienta i sprzedawcy
+- Podpunkt 3.1: Pokazywac klientowi zastosowane rabaty i reguly w koszyku oraz checkout.
+- Podpunkt 3.2: Pokazywac sprzedawcy, ktore reguly zadzialaly dla zamowienia.
+- Podpunkt 3.3: Rozwazyc tabele `order_discounts` lub `shipment_discounts`, jesli promocje beda skladane.

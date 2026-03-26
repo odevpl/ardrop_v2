@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 
 const DateInput = ({ id, placeholder }) => {
   const formikContext = useFormikContext();
+  const error = getIn(formikContext.errors, id);
 
   const value = getIn(formikContext.values, id) || "";
 
@@ -18,9 +19,9 @@ const DateInput = ({ id, placeholder }) => {
     <div className="date-input-wrapper">
       <label htmlFor={id}>{placeholder}</label>
       <input id={id} type="date" onChange={handleChange} value={value} />
-      {formikContext.errors[id] && (
+      {error && (
         <span className="validation-error-description">
-          {formikContext.errors[id]}
+          {error}
         </span>
       )}
     </div>

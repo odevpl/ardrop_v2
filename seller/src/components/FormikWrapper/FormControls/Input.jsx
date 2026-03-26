@@ -4,6 +4,7 @@ import { sanitizeQuantity } from "./utils";
 const TextInput = ({ id, placeholder, type, wrapperStyle, ...props }) => {
   const formikContext = useFormikContext();
   const value = getIn(formikContext.values, id);
+  const error = getIn(formikContext.errors, id);
 
   const handleChange = (e) => {
     if (type === "decimal") {
@@ -18,9 +19,9 @@ const TextInput = ({ id, placeholder, type, wrapperStyle, ...props }) => {
     <div className="text-input-wrapper" style={wrapperStyle}>
       <label htmlFor={id}>{placeholder}</label>
       <input id={id} onChange={handleChange} value={value ?? ""} {...props} />
-      {formikContext.errors[id] && (
+      {error && (
         <span className="validation-error-description">
-          {formikContext.errors[id]}
+          {error}
         </span>
       )}
     </div>

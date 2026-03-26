@@ -5,6 +5,7 @@ const MAX_LENGTH = 5000;
 const TextareaInput = ({ id, placeholder }) => {
   const formikContext = useFormikContext();
   const value = getIn(formikContext.values, id);
+  const error = getIn(formikContext.errors, id);
   const currentLength = String(value ?? "").length;
 
   const handleChange = (e) => {
@@ -22,9 +23,9 @@ const TextareaInput = ({ id, placeholder }) => {
         value={value ?? ""}
       />
       <div className="textarea-counter">{`${currentLength}/${MAX_LENGTH}`}</div>
-      {formikContext.errors[id] && (
+      {error && (
         <span className="validation-error-description">
-          {formikContext.errors[id]}
+          {error}
         </span>
       )}
     </div>

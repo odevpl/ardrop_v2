@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 
 const TimeInput = ({ id, placeholder }) => {
   const formikContext = useFormikContext();
+  const error = getIn(formikContext.errors, id);
 
   const currentValue = getIn(formikContext.values, id);
   const value = currentValue
@@ -19,9 +20,9 @@ const TimeInput = ({ id, placeholder }) => {
     <div className="time-input-wrapper">
       <label htmlFor={id}>{placeholder}</label>
       <input id={id} type="time" step={300} onChange={handleChange} value={value} />
-      {formikContext.errors[id] && (
+      {error && (
         <span className="validation-error-description">
-          {formikContext.errors[id]}
+          {error}
         </span>
       )}
     </div>

@@ -3,6 +3,7 @@ import { useFormikContext, getIn } from "formik";
 const TextInput = ({ id, placeholder, wrapperStyle, ...props }) => {
   const formikContext = useFormikContext();
   const value = getIn(formikContext.values, id);
+  const error = getIn(formikContext.errors, id);
 
   const handleChange = (e) => {
     formikContext.setFieldValue(id, e.target.checked);
@@ -18,9 +19,9 @@ const TextInput = ({ id, placeholder, wrapperStyle, ...props }) => {
         {...props}
       />
       <label htmlFor={id}>{placeholder}</label>
-      {formikContext.errors[id] && (
+      {error && (
         <span className="validation-error-description">
-          {formikContext.errors[id]}
+          {error}
         </span>
       )}
     </div>

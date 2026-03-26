@@ -7,6 +7,7 @@ import AddProductPage from './pages/products/AddProduct'
 import ProductDetailsPage from './pages/products/Details'
 import OrdersPage from './pages/orders'
 import OrderDetailsPage from './pages/orders/Details'
+import SettingsPage from './pages/settings'
 import { useAuth } from './providers/authProvider'
 import './App.scss'
 
@@ -43,6 +44,7 @@ function App() {
           <Route path="/products/:id" element={<ProductDetailsPage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/orders/:id" element={<OrderDetailsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/products" replace />} />
         </Routes>
       </main>

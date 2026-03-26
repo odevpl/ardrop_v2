@@ -14,6 +14,7 @@ const clientDeliveryAddressesController = require("./controllers/client-delivery
 const deliveriesController = require("./controllers/deliveries");
 const ordersController = require("./controllers/orders");
 const marketingController = require("./controllers/marketing");
+const sellerSettingsController = require("./controllers/seller-settings");
 
 const {
   errorHandler,
@@ -102,6 +103,7 @@ app.use("/", clientDeliveryAddressesController);
 app.use("/", deliveriesController);
 app.use("/", ordersController);
 app.use("/", marketingController);
+app.use("/", sellerSettingsController);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

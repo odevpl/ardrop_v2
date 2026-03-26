@@ -244,6 +244,53 @@
   font-size: 1rem;
 }
 
+.sellerSettingsForm {
+  display: grid;
+  gap: 24px;
+}
+
+.sellerSettingsHoursList {
+  display: grid;
+  gap: 16px;
+}
+
+.sellerSettingsHoursRow {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.sellerSettingsHoursHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sellerSettingsHoursFields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.sellerSettingsTextareaGroup {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.sellerSettingsClearButton {
+  justify-self: start;
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  cursor: pointer;
+  padding: 0;
+}
+
 .sellerFormSection .sellerToolbar button {
   border: 1px solid #0a64c9;
   background: #0a64c9;
@@ -368,6 +415,15 @@
   }
 
   .sellerFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sellerSettingsHoursHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sellerSettingsHoursFields {
     grid-template-columns: 1fr;
   }
 }

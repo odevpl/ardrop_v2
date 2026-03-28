@@ -14,7 +14,6 @@ export const SIDEBAR_MENU_CONFIG = [
       { title: 'Dostawa', icon: 'fa-truck', path: '/configuration/shipping' },
       { title: 'Zwroty', icon: 'fa-rotate-left', path: '/configuration/returns' },
       { title: 'Ceny i rabaty', icon: 'fa-tags', path: '/configuration/pricing' },
-      { title: 'Komunikacja', icon: 'fa-comments', path: '/configuration/communication' },
       { title: 'Finanse', icon: 'fa-wallet', path: '/configuration/finance' },
       { title: 'Automatyzacje', icon: 'fa-bolt', path: '/configuration/automations' },
     ],

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 26, 2026 at 08:57 AM
+-- Generation Time: Mar 26, 2026 at 02:09 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -363,6 +363,168 @@ CREATE TABLE `sellers` (
 ---
 
 --
+-- Table structure for table `seller_business_hours`
+--
+
+CREATE TABLE `seller_business_hours` (
+`id` int(10) UNSIGNED NOT NULL,
+`sellerId` int(11) NOT NULL,
+`dayOfWeek` tinyint(3) UNSIGNED NOT NULL,
+`isOpen` tinyint(1) NOT NULL DEFAULT 0,
+`openTime` time DEFAULT NULL,
+`closeTime` time DEFAULT NULL,
+`note` varchar(120) DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_discount_rules`
+--
+
+CREATE TABLE `seller_discount_rules` (
+`id` int(10) UNSIGNED NOT NULL,
+`sellerId` int(11) NOT NULL,
+`ruleType` varchar(50) NOT NULL,
+`name` varchar(180) NOT NULL,
+`isActive` tinyint(1) NOT NULL DEFAULT 1,
+`configJson` longtext DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_holidays`
+--
+
+CREATE TABLE `seller_holidays` (
+`id` int(10) UNSIGNED NOT NULL,
+`sellerId` int(11) NOT NULL,
+`holidayDate` date NOT NULL,
+`name` varchar(255) DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_return_policies`
+--
+
+CREATE TABLE `seller_return_policies` (
+`id` int(10) UNSIGNED NOT NULL,
+`sellerId` int(11) NOT NULL,
+`acceptsOnlineReturns` tinyint(1) NOT NULL DEFAULT 0,
+`returnWindowDays` int(10) UNSIGNED DEFAULT NULL,
+`returnsAddressLine1` varchar(255) DEFAULT NULL,
+`returnsAddressLine2` varchar(255) DEFAULT NULL,
+`returnsCity` varchar(100) DEFAULT NULL,
+`returnsPostalCode` varchar(20) DEFAULT NULL,
+`returnsCountryCode` varchar(2) NOT NULL DEFAULT 'PL',
+`returnsInstruction` text DEFAULT NULL,
+`returnShippingPaidBy` enum('client','seller') NOT NULL DEFAULT 'client',
+`hasSeparateComplaintProcess` tinyint(1) NOT NULL DEFAULT 0,
+`complaintInstruction` text DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_sales_settings`
+--
+
+CREATE TABLE `seller_sales_settings` (
+`id` int(10) UNSIGNED NOT NULL,
+`sellerId` int(11) NOT NULL,
+`freeShippingThresholdGross` decimal(15,2) DEFAULT NULL,
+`upsellMessageText` text DEFAULT NULL,
+`minimumOrderValueGross` decimal(15,2) DEFAULT NULL,
+`crossSellProductIds` text DEFAULT NULL,
+`bundleOffersText` text DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_settings`
+--
+
+CREATE TABLE `seller_settings` (
+`id` int(10) UNSIGNED NOT NULL,
+`sellerId` int(11) NOT NULL,
+`orderSupportEmail` varchar(255) DEFAULT NULL,
+`orderSupportPhone` varchar(30) DEFAULT NULL,
+`returnsEmail` varchar(255) DEFAULT NULL,
+`returnsPhone` varchar(30) DEFAULT NULL,
+`defaultOrderPreparationDays` int(10) UNSIGNED DEFAULT NULL,
+`shippingWorkdays` varchar(32) DEFAULT NULL,
+`sameDayShippingCutoffTime` time DEFAULT NULL,
+`vacationModeEnabled` tinyint(1) NOT NULL DEFAULT 0,
+`vacationModeMessage` text DEFAULT NULL,
+`defaultMarkupPercent` decimal(8,2) DEFAULT NULL,
+`minimumSalePriceGross` decimal(15,2) DEFAULT NULL,
+`priceRoundingMode` varchar(20) NOT NULL DEFAULT 'none',
+`defaultVatRate` decimal(5,2) DEFAULT NULL,
+`defaultUnit` varchar(10) NOT NULL DEFAULT 'pcs',
+`customerResponseTimeText` varchar(120) DEFAULT NULL,
+`emailSignature` text DEFAULT NULL,
+`emailFooter` text DEFAULT NULL,
+`payoutAccountHolder` varchar(255) DEFAULT NULL,
+`payoutBankAccount` varchar(34) DEFAULT NULL,
+`payoutBankName` varchar(120) DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_shipping_methods`
+--
+
+CREATE TABLE `seller_shipping_methods` (
+`id` int(10) UNSIGNED NOT NULL,
+`sellerId` int(11) NOT NULL,
+`name` varchar(120) NOT NULL,
+`isActive` tinyint(1) NOT NULL DEFAULT 1,
+`priceNet` decimal(15,2) DEFAULT NULL,
+`priceGross` decimal(15,2) DEFAULT NULL,
+`freeShippingAmountGross` decimal(15,2) DEFAULT NULL,
+`freeShippingQuantity` int(10) UNSIGNED DEFAULT NULL,
+`freeShippingWeight` decimal(15,3) DEFAULT NULL,
+`etaMinDays` int(10) UNSIGNED DEFAULT NULL,
+`etaMaxDays` int(10) UNSIGNED DEFAULT NULL,
+`countries` varchar(255) DEFAULT NULL,
+`regions` varchar(255) DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_shipping_method_exclusions`
+--
+
+CREATE TABLE `seller_shipping_method_exclusions` (
+`id` int(10) UNSIGNED NOT NULL,
+`sellerShippingMethodId` int(10) UNSIGNED NOT NULL,
+`productId` int(10) UNSIGNED NOT NULL,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
 -- Table structure for table `users`
 --
 
@@ -409,30 +571,22 @@ CREATE TABLE `user_password_reset_tokens` (
 ---
 
 --
--- Table structure for table `wallets`
+-- Table structure for table `seller_financial_entries`
 --
 
-CREATE TABLE `wallets` (
+CREATE TABLE `seller_financial_entries` (
 `id` int(10) UNSIGNED NOT NULL,
 `sellerId` int(10) UNSIGNED NOT NULL,
+`orderId` int(10) UNSIGNED DEFAULT NULL,
+`orderGroupId` int(10) UNSIGNED DEFAULT NULL,
+`type` enum('order_income','order_refund','manual_adjustment') NOT NULL DEFAULT 'order_income',
+`eventDate` datetime NOT NULL,
+`settlementMonth` char(7) NOT NULL,
 `currency` varchar(10) NOT NULL DEFAULT 'PLN',
-`createdAt` datetime NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
----
-
---
--- Table structure for table `wallet_ledger`
---
-
-CREATE TABLE `wallet_ledger` (
-`id` int(10) UNSIGNED NOT NULL,
-`walletId` int(10) UNSIGNED NOT NULL,
-`sellerOrderId` int(10) UNSIGNED DEFAULT NULL,
-`type` enum('order_income','commission_fee','payout','refund','manual_adjustment') NOT NULL,
-`amount` decimal(15,2) NOT NULL,
-`direction` enum('credit','debit') NOT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp()
+`grossAmount` decimal(15,2) NOT NULL DEFAULT 0.00,
+`notes` varchar(255) DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -450,7 +604,10 @@ ADD PRIMARY KEY (`id`);
 --
 ALTER TABLE `cart_items`
 ADD PRIMARY KEY (`id`),
-ADD KEY `idx_cart_items_variant` (`variantId`);
+ADD KEY `idx_cart_items_variant` (`variantId`),
+ADD KEY `idx_cart_items_cartId` (`cartId`),
+ADD KEY `idx_cart_items_productId` (`productId`),
+ADD KEY `idx_cart_items_sellerId` (`sellerId`);
 
 --
 -- Indexes for table `cart_shipments`
@@ -512,14 +669,21 @@ ADD KEY `idx_mkt_items_campaign` (`campaignId`);
 -- Indexes for table `orders`
 --
 ALTER TABLE `orders`
-ADD PRIMARY KEY (`id`);
+ADD PRIMARY KEY (`id`),
+ADD KEY `idx_orders_clientId` (`clientId`),
+ADD KEY `idx_orders_sellerId` (`sellerId`),
+ADD KEY `idx_orders_orderGroupId` (`orderGroupId`);
 
 --
 -- Indexes for table `order_items`
 --
 ALTER TABLE `order_items`
 ADD PRIMARY KEY (`id`),
-ADD KEY `idx_order_items_variant` (`variantId`);
+ADD KEY `idx_order_items_variant` (`variantId`),
+ADD KEY `idx_order_items_orderId` (`orderId`),
+ADD KEY `idx_order_items_orderGroupId` (`orderGroupId`),
+ADD KEY `idx_order_items_sellerId` (`sellerId`),
+ADD KEY `idx_order_items_productId` (`productId`);
 
 --
 -- Indexes for table `products`
@@ -560,6 +724,63 @@ ADD PRIMARY KEY (`id`),
 ADD KEY `idxSellersUserId` (`userId`);
 
 --
+-- Indexes for table `seller_business_hours`
+--
+ALTER TABLE `seller_business_hours`
+ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `uniqSellerBusinessHoursSellerDay` (`sellerId`,`dayOfWeek`);
+
+--
+-- Indexes for table `seller_discount_rules`
+--
+ALTER TABLE `seller_discount_rules`
+ADD PRIMARY KEY (`id`),
+ADD KEY `idxSellerDiscountRulesSellerId` (`sellerId`);
+
+--
+-- Indexes for table `seller_holidays`
+--
+ALTER TABLE `seller_holidays`
+ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `uniqSellerHolidayDate` (`sellerId`,`holidayDate`);
+
+--
+-- Indexes for table `seller_return_policies`
+--
+ALTER TABLE `seller_return_policies`
+ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `uniqSellerReturnPoliciesSellerId` (`sellerId`);
+
+--
+-- Indexes for table `seller_sales_settings`
+--
+ALTER TABLE `seller_sales_settings`
+ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `uniqSellerSalesSettingsSellerId` (`sellerId`);
+
+--
+-- Indexes for table `seller_settings`
+--
+ALTER TABLE `seller_settings`
+ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `uniqSellerSettingsSellerId` (`sellerId`);
+
+--
+-- Indexes for table `seller_shipping_methods`
+--
+ALTER TABLE `seller_shipping_methods`
+ADD PRIMARY KEY (`id`),
+ADD KEY `idxSellerShippingMethodsSellerId` (`sellerId`);
+
+--
+-- Indexes for table `seller_shipping_method_exclusions`
+--
+ALTER TABLE `seller_shipping_method_exclusions`
+ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `uniqSellerShippingMethodProduct` (`sellerShippingMethodId`,`productId`),
+ADD KEY `idxSellerShippingMethodExclusionsProductId` (`productId`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -583,17 +804,13 @@ ADD UNIQUE KEY `uq_uprt_token_hash` (`tokenHash`),
 ADD KEY `idx_uprt_user_id` (`userId`);
 
 --
--- Indexes for table `wallets`
+-- Indexes for table `seller_financial_entries`
 --
-ALTER TABLE `wallets`
+ALTER TABLE `seller_financial_entries`
 ADD PRIMARY KEY (`id`),
-ADD UNIQUE KEY `unique_wallet_seller` (`sellerId`);
-
---
--- Indexes for table `wallet_ledger`
---
-ALTER TABLE `wallet_ledger`
-ADD PRIMARY KEY (`id`);
+ADD UNIQUE KEY `uniqSellerFinancialEntriesOrderType` (`orderId`,`type`),
+ADD KEY `idxSellerFinancialEntriesSellerDate` (`sellerId`,`eventDate`),
+ADD KEY `idxSellerFinancialEntriesSellerMonth` (`sellerId`,`settlementMonth`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -696,6 +913,54 @@ ALTER TABLE `sellers`
 MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `seller_business_hours`
+--
+ALTER TABLE `seller_business_hours`
+MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_discount_rules`
+--
+ALTER TABLE `seller_discount_rules`
+MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_holidays`
+--
+ALTER TABLE `seller_holidays`
+MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_return_policies`
+--
+ALTER TABLE `seller_return_policies`
+MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_sales_settings`
+--
+ALTER TABLE `seller_sales_settings`
+MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_settings`
+--
+ALTER TABLE `seller_settings`
+MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_shipping_methods`
+--
+ALTER TABLE `seller_shipping_methods`
+MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_shipping_method_exclusions`
+--
+ALTER TABLE `seller_shipping_method_exclusions`
+MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
@@ -714,15 +979,9 @@ ALTER TABLE `user_password_reset_tokens`
 MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `wallets`
+-- AUTO_INCREMENT for table `seller_financial_entries`
 --
-ALTER TABLE `wallets`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `wallet_ledger`
---
-ALTER TABLE `wallet_ledger`
+ALTER TABLE `seller_financial_entries`
 MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -791,6 +1050,62 @@ ADD CONSTRAINT `fk_product_categories_product` FOREIGN KEY (`productId`) REFEREN
 --
 ALTER TABLE `product_variants`
 ADD CONSTRAINT `fk_product_variants_product` FOREIGN KEY (`productId`) REFERENCES `products` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `seller_business_hours`
+--
+ALTER TABLE `seller_business_hours`
+ADD CONSTRAINT `fkSellerBusinessHoursSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `seller_discount_rules`
+--
+ALTER TABLE `seller_discount_rules`
+ADD CONSTRAINT `fkSellerDiscountRulesSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `seller_holidays`
+--
+ALTER TABLE `seller_holidays`
+ADD CONSTRAINT `fkSellerHolidaysSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `seller_return_policies`
+--
+ALTER TABLE `seller_return_policies`
+ADD CONSTRAINT `fkSellerReturnPoliciesSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `seller_sales_settings`
+--
+ALTER TABLE `seller_sales_settings`
+ADD CONSTRAINT `fkSellerSalesSettingsSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `seller_settings`
+--
+ALTER TABLE `seller_settings`
+ADD CONSTRAINT `fkSellerSettingsSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `seller_shipping_methods`
+--
+ALTER TABLE `seller_shipping_methods`
+ADD CONSTRAINT `fkSellerShippingMethodsSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `seller_shipping_method_exclusions`
+--
+ALTER TABLE `seller_shipping_method_exclusions`
+ADD CONSTRAINT `fkSellerShippingMethodExclusionsMethod` FOREIGN KEY (`sellerShippingMethodId`) REFERENCES `seller_shipping_methods` (`id`) ON DELETE CASCADE,
+ADD CONSTRAINT `fkSellerShippingMethodExclusionsProduct` FOREIGN KEY (`productId`) REFERENCES `products` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `seller_financial_entries`
+--
+ALTER TABLE `seller_financial_entries`
+ADD CONSTRAINT `fkSellerFinancialEntriesSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE,
+ADD CONSTRAINT `fkSellerFinancialEntriesOrder` FOREIGN KEY (`orderId`) REFERENCES `orders` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `user_activation_tokens`

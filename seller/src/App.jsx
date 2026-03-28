@@ -12,7 +12,6 @@ import FulfillmentPage from './pages/configuration/FulfillmentPage'
 import ShippingPage from './pages/configuration/ShippingPage'
 import ReturnsPage from './pages/configuration/ReturnsPage'
 import PricingPage from './pages/configuration/PricingPage'
-import CommunicationPage from './pages/configuration/CommunicationPage'
 import FinancePage from './pages/configuration/FinancePage'
 import AutomationsPage from './pages/configuration/AutomationsPage'
 import { useAuth } from './providers/authProvider'
@@ -62,7 +61,6 @@ function App() {
           <Route path="/configuration/shipping" element={<ShippingPage />} />
           <Route path="/configuration/returns" element={<ReturnsPage />} />
           <Route path="/configuration/pricing" element={<PricingPage />} />
-          <Route path="/configuration/communication" element={<CommunicationPage />} />
           <Route path="/configuration/finance" element={<FinancePage />} />
           <Route path="/configuration/automations" element={<AutomationsPage />} />
           <Route path="*" element={<Navigate to="/products" replace />} />

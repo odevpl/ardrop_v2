@@ -370,18 +370,17 @@ async function deleteSeller(id) {
       throw error;
     }
 
-    const [order, walletLedger, productIds] = await Promise.all([
+    const [order, financialEntry, productIds] = await Promise.all([
       trx("orders").select("id").where({ sellerId: normalizedId }).first(),
-      trx("wallet_ledger")
-        .innerJoin("wallets", "wallet_ledger.walletId", "wallets.id")
-        .select("wallet_ledger.id")
-        .where("wallets.sellerId", normalizedId)
+      trx("seller_financial_entries")
+        .select("id")
+        .where({ sellerId: normalizedId })
         .first(),
       trx("products").select("id").where({ sellerId: normalizedId }),
     ]);
 
-    if (order || walletLedger) {
-      const error = new Error("Nie mozna usunac sprzedawcy, bo posiada zamowienia lub historie portfela");
+    if (order || financialEntry) {
+      const error = new Error("Nie mozna usunac sprzedawcy, bo posiada zamowienia lub historie finansowa");
       error.status = 409;
       throw error;
     }
@@ -409,12 +408,7 @@ async function deleteSeller(id) {
       await trx("cart_items").where({ sellerId: normalizedId }).del();
     }
 
-    const walletIds = await trx("wallets").select("id").where({ sellerId: normalizedId });
-    const safeWalletIds = walletIds.map((wallet) => Number(wallet.id)).filter(Boolean);
-    if (safeWalletIds.length > 0) {
-      await trx("wallet_ledger").whereIn("walletId", safeWalletIds).del();
-      await trx("wallets").whereIn("id", safeWalletIds).del();
-    }
+    await trx("seller_financial_entries").where({ sellerId: normalizedId }).del();
 
     await trx("sellers").where({ id: normalizedId }).del();
     await trx("users").where({ id: Number(seller.userId) }).del();

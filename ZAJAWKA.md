@@ -90,6 +90,7 @@ Chronione endpointy (globalny auth middleware + role):
 - konto klienta: `GET/PATCH /account/me`
 - adresy dostawy klienta: `GET/POST/PATCH/DELETE /account/delivery-addresses...`
 - dostawa biezaca klienta: `GET/PUT /deliveries/current`
+- seller settings i historia finansowa: `GET/PATCH /seller/me/settings`, `GET /seller/me/financial-history`
 - admin only: `users`, `clients`, `sellers`
 
 ## 5. Frontendy - podzial odpowiedzialnosci
@@ -97,6 +98,7 @@ Chronione endpointy (globalny auth middleware + role):
 - `app`: flow klienta (logowanie/rejestracja/aktywacja/reset hasla, produkty, koszyk, konto, adresy, zamowienia)
   - rejestracja klienta jest B2B: NIP jest wymagany, a dane firmy sa pobierane z CEIDG/GUS
 - `seller`: produkty i zamowienia sprzedawcy, logowanie tylko dla roli `SELLER`
+  - seller ma tez widok historii finansowej oparty o `seller_financial_entries`; nowe zakupy klienta dopisuja wpis `order_income`
 - `admin`: klienci, sprzedawcy, produkty, zamowienia; ma `ConfigProvider`, ktory probuje pobrac `/configs`, a fallback trzyma w `admin/stories/apiConfigs.json`
 
 ## 6. Baza danych
@@ -112,7 +114,7 @@ Jeśli poprawka się uda, zamieść ją również w `DB_STRUCTURE.md`. Pamiętaj
 
 ## 8. Rekomendowany prompt startowy do nowego chatu
 
-"Pracujemy w `ardrop_v2`. Traktuj `ZAJAWKA.md` jako source of truth na start. Najpierw sprawdz aktualny kod endpointow i serwisow, bo czesc dokumentacji moze byc nieaktualna. `TODO.md` powinien zawierać listę aktualnych zadań do wykonania."
+"Pracujemy w `ardrop_v2`. Traktuj `ZAJAWKA.md` jako source of truth na start. Najpierw sprawdz aktualny kod endpointow i serwisow, bo czesc dokumentacji moze byc nieaktualna. `TODO.md` powinien zawierać listę aktualnych zadań do wykonania. Jeśli wykonasz jakiś podpunkt, dopisz do niego wartość `- zrobione`"
 
 ## 9. Utrzymanie pliku
 

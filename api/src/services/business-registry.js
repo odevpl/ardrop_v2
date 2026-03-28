@@ -1,6 +1,7 @@
 const { getEnv } = require("../config/env");
 const validator = require("../helpers/validator");
 const { ceidgMapper, gusMapper } = require("./business-registry.mappers");
+const GUSClient = require("node-regon");
 
 const SOAP_XML_HEADER = '<?xml version="1.0" encoding="utf-8"?>';
 const SOAP_CONTENT_TYPE = "application/soap+xml; charset=utf-8";
@@ -158,88 +159,16 @@ const lookupCeidgByNip = async ({ nip, signal }) => {
   };
 };
 
-const buildSoapEnvelope = (body) => `${SOAP_XML_HEADER}
-<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-  xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
-  <soap12:Body>
-    ${body}
-  </soap12:Body>
-</soap12:Envelope>`;
-
-const gusSoapRequest = async ({ action, body, sid = "", signal }) => {
-  const env = getEnv();
-  return safeFetchText(env.businessRegistry.gusBaseUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": SOAP_CONTENT_TYPE,
-      SOAPAction: action,
-      sid,
-    },
-    body: buildSoapEnvelope(body),
-    signal,
-  });
-};
-
-const gusLogin = async ({ signal }) => {
-  const env = getEnv();
-  const userKey = env.businessRegistry.gusUserKey;
-  if (!userKey) return "";
-
-  const xml = await gusSoapRequest({
-    action: "http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/Zaloguj",
-    body: `<Zaloguj xmlns="http://CIS/BIR/PUBL/2014/07"><pKluczUzytkownika>${xmlEscape(
-      userKey,
-    )}</pKluczUzytkownika></Zaloguj>`,
-    signal,
-  });
-
-  return extractXmlTag(xml, "ZalogujResult");
-};
-
-const gusLogout = async ({ sid, signal }) => {
-  if (!sid) return;
-  try {
-    await gusSoapRequest({
-      action: "http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/Wyloguj",
-      body: `<Wyloguj xmlns="http://CIS/BIR/PUBL/2014/07"><pIdentyfikatorSesji>${xmlEscape(
-        sid,
-      )}</pIdentyfikatorSesji></Wyloguj>`,
-      sid,
-      signal,
-    });
-  } catch (error) {
-    // Ignore logout failures, the lookup data is already resolved.
+const firstRegistryEntry = (value) => {
+  if (Array.isArray(value)) {
+    return value[0] || null;
   }
-};
 
-const gusSearchByNip = async ({ nip, sid, signal }) => {
-  const xml = await gusSoapRequest({
-    action: "http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/DaneSzukajPodmioty",
-    body: `<DaneSzukajPodmioty xmlns="http://CIS/BIR/PUBL/2014/07" xmlns:dat="http://CIS/BIR/PUBL/2014/07/DataContract">
-      <pParametryWyszukiwania>
-        <dat:Nip>${xmlEscape(nip)}</dat:Nip>
-      </pParametryWyszukiwania>
-    </DaneSzukajPodmioty>`,
-    sid,
-    signal,
-  });
+  if (value && typeof value === "object") {
+    return value;
+  }
 
-  return parseFirstNode(extractXmlTag(xml, "DaneSzukajPodmiotyResult"));
-};
-
-const gusFetchReport = async ({ regon, reportName, sid, signal }) => {
-  const xml = await gusSoapRequest({
-    action: "http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/DanePobierzPelnyRaport",
-    body: `<DanePobierzPelnyRaport xmlns="http://CIS/BIR/PUBL/2014/07">
-      <pRegon>${xmlEscape(regon)}</pRegon>
-      <pNazwaRaportu>${xmlEscape(reportName)}</pNazwaRaportu>
-    </DanePobierzPelnyRaport>`,
-    sid,
-    signal,
-  });
-
-  return parseFirstNode(extractXmlTag(xml, "DanePobierzPelnyRaportResult"));
+  return null;
 };
 
 const lookupGusByNip = async ({ nip, signal }) => {
@@ -252,14 +181,19 @@ const lookupGusByNip = async ({ nip, signal }) => {
     };
   }
 
-  const sid = await gusLogin({ signal });
-  if (!sid) {
-    throw Object.assign(new Error("GUS BIR login failed"), { status: 502 });
-  }
-
   try {
-    const summary = await gusSearchByNip({ nip, sid, signal });
-    if (!summary.Regon && !summary.regon) {
+    const gus = await GUSClient.createClient({
+      key: env.businessRegistry.gusUserKey,
+      birVersion: "1.1",
+    });
+
+    if (signal?.aborted) {
+      throw Object.assign(new Error("Registry provider request timed out"), { status: 504 });
+    }
+
+    const summaryRaw = await gus.findByNip(nip);
+    const summary = firstRegistryEntry(summaryRaw);
+    if (!summary) {
       return {
         provider: "gus",
         configured: true,
@@ -268,89 +202,27 @@ const lookupGusByNip = async ({ nip, signal }) => {
     }
 
     const regon = chooseNonEmpty(summary.Regon, summary.regon);
-    const type = chooseNonEmpty(summary.Typ, summary.typ);
-    let report = {};
+    const mapped = gusMapper(summary);
 
-    if (type === "P") {
-      report = await gusFetchReport({
-        regon,
-        reportName: "BIR11OsPrawna",
-        sid,
-        signal,
-      });
-    } else {
-      report = await gusFetchReport({
-        regon,
-        reportName: "BIR11OsFizycznaDzialalnoscCeidg",
-        sid,
-        signal,
-      });
-
-      if (Object.keys(report).length === 0) {
-        report = await gusFetchReport({
-          regon,
-          reportName: "BIR11OsFizycznaDzialalnoscPozostala",
-          sid,
-          signal,
-        });
-      }
-    }
-
-    const mapped = gusMapper({
-      Nazwa: summary.Nazwa || summary.nazwa || report.praw_nazwa || report.fiz_nazwa,
-      Ulica:
-        summary.Ulica ||
-        summary.ulica ||
-        report.praw_adSiedzUlica_Nazwa ||
-        report.fiz_adSiedzUlica_Nazwa,
-      NrNieruchomosci:
-        summary.NrNieruchomosci ||
-        summary.nrNieruchomosci ||
-        report.praw_adSiedzNumerNieruchomosci ||
-        report.fiz_adSiedzNumerNieruchomosci,
-      NrLokalu:
-        summary.NrLokalu ||
-        summary.nrLokalu ||
-        report.praw_adSiedzNumerLokalu ||
-        report.fiz_adSiedzNumerLokalu,
-      Miejscowosc:
-        summary.Miejscowosc ||
-        summary.miejscowosc ||
-        report.praw_adSiedzMiejscowosc_Nazwa ||
-        report.fiz_adSiedzMiejscowosc_Nazwa,
-      KodPocztowy:
-        summary.KodPocztowy ||
-        summary.kodPocztowy ||
-        report.praw_adSiedzKodPocztowy ||
-        report.fiz_adSiedzKodPocztowy,
-      Nip: summary.Nip || summary.nip || report.praw_nip || report.fiz_nip || nip,
-      Regon: summary.Regon || summary.regon || regon,
-    });
-
-    return {
+   return {
       provider: "gus",
       configured: true,
       data: {
         ...mapped,
         nip: mapped.nip || nip,
         regon: mapped.regon || regon,
-        ownerName:
-          mapped.ownerName ||
-          chooseNonEmpty(
-            `${String(report.fiz_imie1 || "").trim()} ${String(report.fiz_imie2 || "").trim()} ${String(
-              report.fiz_nazwisko || "",
-            ).trim()}`.trim(),
-            report.fiz_nazwaSkrocona,
-          ),
-        status: chooseNonEmpty(report.praw_statusNip, report.fiz_statusNip, summary.StatusNip),
+        ownerName: mapped.ownerName || "",
+        status: chooseNonEmpty(summary.StatusNip, summary.statusNip),
         raw: {
           summary,
-          report,
+          report: null,
         },
       },
     };
-  } finally {
-    await gusLogout({ sid, signal });
+  } catch (error) {
+    const wrapped = new Error(error?.message || "GUS lookup failed");
+    wrapped.status = error?.status || 502;
+    throw wrapped;
   }
 };
 

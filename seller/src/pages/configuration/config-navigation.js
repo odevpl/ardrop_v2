@@ -30,12 +30,6 @@ export const CONFIGURATION_ROUTES = [
     icon: 'fa-tags',
   },
   {
-    title: 'Komunikacja',
-    description: 'Tresci transakcyjne, marketingowe i publiczne komunikaty.',
-    path: '/configuration/communication',
-    icon: 'fa-comments',
-  },
-  {
     title: 'Finanse i rozliczenia',
     description: 'Wyplaty, dokumenty i ustawienia rozliczeniowe.',
     path: '/configuration/finance',

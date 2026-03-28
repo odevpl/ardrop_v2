@@ -1,17 +1,17 @@
-import { NavLink } from 'react-router-dom'
-import { useAuth } from '../../providers/authProvider'
-import './sidebar-menu.scss'
+import { NavLink } from "react-router-dom";
+import { useAuth } from "../../providers/authProvider";
+import "./sidebar-menu.scss";
 
 const SidebarMenu = ({ config }) => {
-  const { logout } = useAuth()
+  const { logout } = useAuth();
 
   return (
     <aside className="sidebarMenu">
       <div className="sidebarMenuBrand">
         <span className="sidebarMenuLogo">A</span>
         <div>
-          <p className="sidebarMenuBrandTitle">AR DROP</p>
-          <p className="sidebarMenuBrandSubtitle">Seller</p>
+          <p className="sidebarMenuBrandTitle">ADMIN</p>
+          <p className="sidebarMenuBrandSubtitle">ADMIN</p>
         </div>
       </div>
 
@@ -22,7 +22,7 @@ const SidebarMenu = ({ config }) => {
             key={item.title}
             to={item.path}
             className={({ isActive }) =>
-              `sidebarMenuItem${isActive ? ' sidebarMenuItemActive' : ''}`
+              `sidebarMenuItem${isActive ? " sidebarMenuItemActive" : ""}`
             }
           >
             <i className={`fa-solid ${item.icon}`} aria-hidden="true" />
@@ -36,7 +36,7 @@ const SidebarMenu = ({ config }) => {
         <span className="sidebarMenuItemText">Wyloguj</span>
       </button>
     </aside>
-  )
-}
+  );
+};
 
-export default SidebarMenu
+export default SidebarMenu;

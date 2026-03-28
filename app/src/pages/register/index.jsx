@@ -16,6 +16,7 @@ function RegisterPage() {
   const [isLookingUpCompany, setIsLookingUpCompany] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const notification = useNotification()
+  const hasResolvedCompany = Boolean(companyData?.data)
 
   const handleLookupCompany = async () => {
     const normalizedNip = normalizeNip(nip)
@@ -36,7 +37,7 @@ function RegisterPage() {
       return false
     }
 
-    setCompanyData(response?.data || null)
+    setCompanyData(response || null)
     setIsLookingUpCompany(false)
     return true
   }
@@ -60,7 +61,7 @@ function RegisterPage() {
       return
     }
 
-    if (normalizeNip(companyData?.data?.nip || companyData?.nip || '') !== normalizedNip) {
+    if (normalizeNip(companyData?.data?.nip || '') !== normalizedNip) {
       const lookupSucceeded = await handleLookupCompany()
       if (!lookupSucceeded) {
         return
@@ -88,19 +89,6 @@ function RegisterPage() {
   return (
     <AuthLayout title="Dolacz do nas" subtitle="Zaloz konto klienta">
       <form onSubmit={handleSubmit}>
-        <label className="authLabel" htmlFor="register-email">
-          Email
-        </label>
-        <input
-          id="register-email"
-          className="authInput"
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-          autoComplete="email"
-        />
-
         <label className="authLabel" htmlFor="register-nip">
           NIP firmy
         </label>
@@ -170,36 +158,55 @@ function RegisterPage() {
           </div>
         ) : null}
 
-        <label className="authLabel" htmlFor="register-password">
-          Haslo
-        </label>
-        <input
-          id="register-password"
-          className="authInput"
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-          autoComplete="new-password"
-        />
+        {hasResolvedCompany ? (
+          <>
+            <label className="authLabel" htmlFor="register-email">
+              Email
+            </label>
+            <input
+              id="register-email"
+              className="authInput"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              autoComplete="email"
+            />
 
-        <label className="authLabel" htmlFor="register-password-repeat">
-          Powtorz haslo
-        </label>
-        <input
-          id="register-password-repeat"
-          className="authInput"
-          type="password"
-          value={passwordRepeat}
-          onChange={(event) => setPasswordRepeat(event.target.value)}
-          required
-          autoComplete="new-password"
-        />
+            <label className="authLabel" htmlFor="register-password">
+              Haslo
+            </label>
+            <input
+              id="register-password"
+              className="authInput"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              autoComplete="new-password"
+            />
+
+            <label className="authLabel" htmlFor="register-password-repeat">
+              Powtorz haslo
+            </label>
+            <input
+              id="register-password-repeat"
+              className="authInput"
+              type="password"
+              value={passwordRepeat}
+              onChange={(event) => setPasswordRepeat(event.target.value)}
+              required
+              autoComplete="new-password"
+            />
+          </>
+        ) : null}
 
         {errorMessage ? <p className="authError">{errorMessage}</p> : null}
-        <button className="authButton" type="submit" disabled={isSubmitting || isLookingUpCompany}>
-          {isSubmitting ? 'Rejestracja...' : 'Zarejestruj'}
-        </button>
+        {hasResolvedCompany ? (
+          <button className="authButton" type="submit" disabled={isSubmitting || isLookingUpCompany}>
+            {isSubmitting ? 'Rejestracja...' : 'Zarejestruj'}
+          </button>
+        ) : null}
 
         <div className="authLinks">
           <Link to="/login">Masz juz konto? Zaloguj sie</Link>

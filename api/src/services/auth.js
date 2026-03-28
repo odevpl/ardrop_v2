@@ -61,8 +61,16 @@ async function register({ email, password, role, name, nip }) {
       throw error;
     }
 
-    const lookupResult = await lookupBusinessByNip({ nip: normalizedNip });
-    businessProfile = lookupResult.data;
+    try {
+      const lookupResult = await lookupBusinessByNip({ nip: normalizedNip });
+      businessProfile = lookupResult.data;
+    } catch (error) {
+      // Allow client registration when registry integrations are unavailable
+      // or when the registry lookup cannot resolve the company data.
+      if (![404, 503].includes(Number(error?.status))) {
+        throw error;
+      }
+    }
   }
 
   return db.transaction(async (trx) => {

@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const sellerFinancialHistoryService = require("./seller-financial-history");
 
 const roundMoney = (value) => Number((Number(value) || 0).toFixed(2));
 
@@ -356,6 +357,17 @@ const createOrderFromCurrentCart = async (
       const orderId = Array.isArray(insertedOrder) ? insertedOrder[0] : insertedOrder;
       createdOrderIds.push(Number(orderId));
 
+      await sellerFinancialHistoryService.createOrderIncomeEntry(
+        {
+          sellerId,
+          orderId: Number(orderId),
+          orderGroupId,
+          grossAmount: totalGross,
+          currency: String(cart.currency || "PLN").trim() || "PLN",
+        },
+        trx,
+      );
+
       for (const item of sellerItems) {
         const product = productsById[Number(item.productId)];
         const productSnapshot = {
@@ -641,6 +653,7 @@ const deleteOrderById = async ({ orderId }) => {
       throw error;
     }
 
+    await trx("seller_financial_entries").where({ orderId: normalizedOrderId }).del();
     await trx("order_items").where({ orderId: normalizedOrderId }).del();
     await trx("orders").where({ id: normalizedOrderId }).del();
 

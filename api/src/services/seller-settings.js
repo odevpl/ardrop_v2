@@ -22,6 +22,9 @@ const SETTINGS_FIELDS = [
   "customerResponseTimeText",
   "emailSignature",
   "emailFooter",
+  "payoutAccountHolder",
+  "payoutBankAccount",
+  "payoutBankName",
 ];
 
 const SETTINGS_SELECT = [
@@ -44,6 +47,9 @@ const SETTINGS_SELECT = [
   "customerResponseTimeText",
   "emailSignature",
   "emailFooter",
+  "payoutAccountHolder",
+  "payoutBankAccount",
+  "payoutBankName",
   "createdAt",
   "updatedAt",
 ];
@@ -202,6 +208,9 @@ const mapSettingsRow = (row) => ({
   customerResponseTimeText: row?.customerResponseTimeText || "",
   emailSignature: row?.emailSignature || "",
   emailFooter: row?.emailFooter || "",
+  payoutAccountHolder: row?.payoutAccountHolder || "",
+  payoutBankAccount: row?.payoutBankAccount || "",
+  payoutBankName: row?.payoutBankName || "",
   createdAt: row?.createdAt || null,
   updatedAt: row?.updatedAt || null,
 });
@@ -605,11 +614,30 @@ const updateSellerSettings = async ({ userId, payload = {} }) => {
       "customerResponseTimeText",
       "emailSignature",
       "emailFooter",
+      "payoutAccountHolder",
+      "payoutBankName",
     ].forEach((field) => {
       if (settingsPayload[field] !== undefined) {
         settingsPayload[field] = normalizeNullableString(settingsPayload[field]);
       }
     });
+
+    if (settingsPayload.payoutBankAccount !== undefined) {
+      const normalizedBankAccount = normalizeNullableString(settingsPayload.payoutBankAccount);
+
+      if (normalizedBankAccount === null) {
+        settingsPayload.payoutBankAccount = null;
+      } else {
+        const compactBankAccount = normalizedBankAccount.replace(/\s+/g, "");
+        if (!/^\d{26}$/.test(compactBankAccount)) {
+          const error = new Error("payoutBankAccount must contain exactly 26 digits");
+          error.status = 400;
+          throw error;
+        }
+
+        settingsPayload.payoutBankAccount = compactBankAccount;
+      }
+    }
 
     const hasSettingsUpdate = Object.keys(settingsPayload).length > 0;
     if (hasSettingsUpdate) {

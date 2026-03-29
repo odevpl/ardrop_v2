@@ -1,25 +1,26 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import fallbackConfig from '../../stories/apiConfigs.json'
-import http from '../services/http'
+import ApplicationLoading from 'components/ApplicationLoading'
+import ConfigService from 'services/config'
 
 const ConfigContext = createContext(null)
 
 export const ConfigProvider = ({ children }) => {
-  const [config, setConfig] = useState(fallbackConfig)
+  const [config, setConfig] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const loadConfig = async () => {
-      try {
-        const response = await http.get('/configs')
-        if (response.data && typeof response.data === 'object') {
-          setConfig(response.data)
-        }
-      } catch (error) {
-        console.error('Nie udalo sie pobrac configow, uzywam fallbacku:', error)
-      } finally {
+      const response = await ConfigService.getConfig()
+
+      if (response?.status && response.status >= 400) {
+        console.error('Nie udalo sie pobrac konfiguracji aplikacji')
+        setConfig({})
         setIsLoading(false)
+        return
       }
+
+      setConfig(response?.data || response || {})
+      setIsLoading(false)
     }
 
     loadConfig()
@@ -32,6 +33,10 @@ export const ConfigProvider = ({ children }) => {
     }),
     [config, isLoading],
   )
+
+  if (isLoading || !config) {
+    return <ApplicationLoading />
+  }
 
   return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>
 }

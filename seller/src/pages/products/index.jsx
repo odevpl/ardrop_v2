@@ -9,8 +9,6 @@ const ProductsPage = () => {
       <div className="sellerToolbar">
         <h2>Produkty</h2>
         <div className="sellerActions">
-          <button type="button">Import</button>
-          <button type="button">Export</button>
           <button
             type="button"
             className="sellerPrimaryButton"

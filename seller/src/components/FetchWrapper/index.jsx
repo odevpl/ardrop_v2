@@ -124,6 +124,7 @@ const FetchWrapper = ({
   return (
     <Component
       payload={data}
+      id={id}
       refetch={fetchElement}
       filters={filters}
       setFilters={(value) => {

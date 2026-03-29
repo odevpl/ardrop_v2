@@ -194,6 +194,16 @@
   gap: 10px;
 }
 
+.authSuccessMessage {
+  padding: 18px;
+  border-radius: 16px;
+  background: #eaf6ee;
+  border: 1px solid #b7dec3;
+  color: #204b2d;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
 .authLinks {
   margin-top: 6px;
   display: grid;

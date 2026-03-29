@@ -27,6 +27,9 @@ const formatEta = (from, to) => {
   return "Do ustalenia";
 };
 
+const ORDERING_TEMPORARILY_DISABLED_MESSAGE =
+  "Sklep daje obecnie mozliwosc przegladania produktow. Skladanie zamowien zostanie wlaczone juz wkrotce.";
+
 const Cart = () => {
   const navigate = useNavigate();
   const [cart, setCart] = useState(null);
@@ -565,10 +568,13 @@ const Cart = () => {
             </div>
 
             <div className="cartSubmitWrap">
+              <p className="cartCheckoutBlockedMessage">
+                {ORDERING_TEMPORARILY_DISABLED_MESSAGE}
+              </p>
               <button
                 type="button"
                 className="cartSubmitButton"
-                disabled={items.length === 0 || isSubmittingOrder || pendingShipmentSellerId !== null}
+                disabled
                 onClick={handleSubmitOrder}
               >
                 {isSubmittingOrder ? "Wysylanie..." : "Wyslij zamowienie"}

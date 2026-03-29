@@ -1,6 +1,6 @@
 const { sendMail } = require("./index");
 
-const getFrontendUrl = () => process.env.CLIENT_APP_URL || "http://localhost:3003";
+const getFrontendUrl = () => process.env.CLIENT_APP_URL || "https://app.ardrop.pl";
 
 const activateAccountTemplate = async ({ email, token }) => {
   const activationLink = `${getFrontendUrl().replace(/\/+$/, "")}/activate?token=${encodeURIComponent(token)}`;

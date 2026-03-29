@@ -52,9 +52,11 @@ router.get(
 
 router.put(
   "/orders/:id",
-  roleMiddleware("ADMIN"),
+  roleMiddleware("ADMIN", "SELLER"),
   async (req, res) => {
     const order = await ordersService.updateOrderById({
+      userId: req.user.userId,
+      role: req.user.role,
       orderId: req.params.id,
       payload: req.body || {},
     });

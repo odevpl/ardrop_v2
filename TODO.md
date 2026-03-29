@@ -1,223 +1,376 @@
 # TODO
 
-## Etap 1: Ustawienia operacyjne sprzedawcy
+## Cel
 
-### Punkt 1: Dane firmy i obslugi klienta
+Wdrozyc po stronie klienta wybor metody dostawy per sprzedawca tak, aby:
 
-- Podpunkt 1.1: Dane kontaktowe do obslugi zamowien. - zrobione
-- Podpunkt 1.2: Osobny e-mail i telefon do reklamacji i zwrotow. - zrobione
-- Podpunkt 1.3: Godziny pracy obslugi klienta. - zrobione
-- Podpunkt 1.4: Domyslny podpis i stopka do wiadomosci dla klienta. - zrobione
-- Podpunkt 1.5: Publiczna informacja o czasie odpowiedzi sprzedawcy. - zrobione
+1. W koszyku dla kazdego sprzedawcy byla lista metod dostawy do wyboru.
+2. Koszt dostawy reagowal na prog darmowej dostawy.
+3. Koszty dostaw byly widoczne i poprawnie sumowane w podsumowaniu koszyka i zamowienia.
 
-### Punkt 2: Ustawienia realizacji zamowien
+## Stan obecny
 
-- Podpunkt 2.1: Domyslny czas przygotowania zamowienia. - zrobione
-- Podpunkt 2.2: Dni robocze wysylek. - zrobione
-- Podpunkt 2.3: Godzina graniczna na wysylke tego samego dnia. - zrobione
-- Podpunkt 2.4: Dni wylaczone z realizacji, np. urlop lub inwentaryzacja. - zrobione
-- Podpunkt 2.5: Tryb urlopowy z komunikatem dla klienta. - zrobione
+### Frontend klienta
 
-### Punkt 3: Ustawienia wysylki
+- [`app/src/modules/Cart/index.jsx`](c:/Projects/ardrop_v2/app/src/modules/Cart/index.jsx)
+  pokazuje dla kazdego shipmentu tylko tekstowe pola:
+  - `shipment.shippingMethodName || "Do ustalenia"`
+  - `shipment.shippingGross`
+- Nie ma pobierania listy metod dostawy sprzedawcy.
+- Nie ma UI do wyboru metody dostawy.
+- Podsumowanie koszyka liczy dostawe z:
+  - `shipments.reduce((sum, shipment) => sum + Number(shipment?.shippingGross || 0), 0)`
+- To znaczy: frontend tylko odczytuje koszty dostawy, ale ich nie wylicza.
 
-- Podpunkt 3.1: Lista aktywnych metod dostawy per sprzedawca. - zrobione
-- Podpunkt 3.2: Cennik dostaw per metoda. - zrobione
-- Podpunkt 3.3: Darmowa dostawa od progu kwotowego. - zrobione
-- Podpunkt 3.4: Darmowa dostawa od liczby sztuk lub wagi. - zrobione
-- Podpunkt 3.5: Osobne stawki dla regionow lub krajow. - zrobione
-- Podpunkt 3.6: ETA per metoda dostawy. - zrobione
-- Podpunkt 3.7: Blokada wybranych metod dla niektorych produktow. - zrobione
+### API koszyka
 
-### Punkt 4: Zwroty i reklamacje
+- [`api/src/controllers/carts.js`](c:/Projects/ardrop_v2/api/src/controllers/carts.js)
+  ma endpoint:
+  - `PATCH /carts/shipments/:sellerId`
+- [`api/src/services/carts.js`](c:/Projects/ardrop_v2/api/src/services/carts.js)
+  pozwala recznie zapisac do shipmentu:
+  - `deliveryAddressId`
+  - `shippingMethodName`
+  - `shippingNet`
+  - `shippingGross`
+  - `estimatedDeliveryFrom`
+  - `estimatedDeliveryTo`
+- Obecnie backend nie dobiera metody dostawy sam.
+- Obecnie backend nie liczy progu darmowej dostawy.
+- Obecnie backend nie zapisuje `shippingMethodId` na poziomie shipmentu.
 
-- Podpunkt 4.1: Czy sprzedawca przyjmuje zwroty online. - zrobione
-- Podpunkt 4.2: Okno czasowe na zwrot. - zrobione
-- Podpunkt 4.3: Adres do zwrotow. - zrobione
-- Podpunkt 4.4: Instrukcja zwrotu wyswietlana klientowi. - zrobione
-- Podpunkt 4.5: Czy koszt zwrotu pokrywa klient czy sprzedawca. - zrobione
-- Podpunkt 4.6: Osobny proces dla reklamacji. - zrobione
+### API metod dostawy sprzedawcy
 
-## Etap 2: Ustawienia sprzedazowe
+- Metody dostawy sa juz wydzielone do osobnych endpointow:
+  - `GET /seller/me/shipping-methods`
+  - `GET /seller/me/shipping-methods/:id`
+  - `POST /seller/me/shipping-methods`
+  - `PUT /seller/me/shipping-methods/:id`
+  - `DELETE /seller/me/shipping-methods/:id`
+- Brakuje endpointu klienta do pobrania aktywnych metod dostawy dla danego sprzedawcy w checkout/koszyku.
 
-### Punkt 1: Polityka cenowa
+### Tworzenie zamowienia
 
-- Podpunkt 1.1: Domyslne marze lub narzuty pomocnicze. - zrobione
-- Podpunkt 1.2: Minimalna cena sprzedazy lub ochrona marzy. - zrobione
-- Podpunkt 1.3: Automatyczne zaokraglanie cen. - zrobione
-- Podpunkt 1.4: Domyslna stawka VAT i jednostki. - zrobione
+- [`api/src/services/orders.js`](c:/Projects/ardrop_v2/api/src/services/orders.js)
+  bierze wartosci dostawy z `cart_shipments`:
+  - `shippingGross`
+  - `shippingMethodName`
+  - `estimatedDeliveryFrom`
+  - `estimatedDeliveryTo`
+- To jest dobre jako snapshot zamowienia.
+- Ale dane do snapshotu musza byc najpierw policzone poprawnie w koszyku.
 
-### Punkt 2: Rabaty i promocje automatyczne
+## Co jest potrzebne
 
-- Podpunkt 2.1: Rabat od progu koszyka dla produktow danego sprzedawcy. - zrobione
-- Podpunkt 2.2: Rabat od liczby sztuk lub ilosci wariantow. - zrobione
-- Podpunkt 2.3: Rabat dla pierwszego zakupu u danego sprzedawcy. - zrobione
-- Podpunkt 2.4: Rabat dla stalych klientow. - zrobione
-- Podpunkt 2.5: Rabat dla klientow B2B. - zrobione
-- Podpunkt 2.6: Happy hours lub promocje czasowe. - zrobione
-- Podpunkt 2.7: Gratis lub bonus po przekroczeniu progu. - zrobione
-- Podpunkt 2.8: Wykluczenia rabatowe dla wybranych produktow lub kategorii.
+## 1. Endpoint klienta do metod dostawy sprzedawcy
 
-### Punkt 3: Strategia koszyka i AOV
+Potrzebny nowy endpoint publiczny dla klienta, np.:
 
-- Podpunkt 3.1: Progi darmowej dostawy. - zrobione
-- Podpunkt 3.2: Komunikaty upsellowe typu "dobierz jeszcze X zl". - zrobione
-- Podpunkt 3.3: Powiazane produkty i cross-sell. - zrobione
-- Podpunkt 3.4: Oferty pakietowe. - zrobione
-- Podpunkt 3.5: Minimalna wartosc zamowienia u sprzedawcy. - zrobione
+- `GET /sellers/:sellerId/shipping-methods`
 
-## Etap 3: Ustawienia komunikacji z klientem
+Powinien zwracac tylko aktywne metody dostawy danego sprzedawcy, potrzebne do checkoutu:
 
-### Punkt 1: Komunikaty transakcyjne
+- `id`
+- `name`
+- `priceNet`
+- `priceGross`
+- `freeShippingAmountGross`
+- `etaMinDays`
+- `etaMaxDays`
 
-- Podpunkt 1.1: Wlasne tresci statusow zamowienia.
-- Podpunkt 1.2: Szablon wiadomosci po zakupie.
-- Podpunkt 1.3: Szablon wiadomosci po wysylce.
-- Podpunkt 1.4: Szablon wiadomosci przy opoznieniu.
-- Podpunkt 1.5: Szablon wiadomosci przy brakach magazynowych.
+Na ten moment mozna pominac:
 
-### Punkt 2: Komunikacja marketingowa
+- `regions`
+- `countries`
 
-- Podpunkt 2.1: Kupon powrotowy po zakupie.
-- Podpunkt 2.2: Prosba o opinie po dostawie.
-- Podpunkt 2.3: Wiadomosc reaktywacyjna dla nieaktywnych klientow.
-- Podpunkt 2.4: Informacja o nowosciach i bestselerach sprzedawcy.
-- Podpunkt 2.5: Sprzedawca moze wskazac do 5 produktow do faworyzacji pod reklamy.
+Powod:
 
-### Punkt 3: Transparentnosc dla klienta
+- regiony i kraje sa obecnie ukryte w `ShippingEditForm`
+- klient nie ma jeszcze logiki wyboru regionu shipmentu
 
-- Podpunkt 3.1: Publiczna polityka wysylki.
-- Podpunkt 3.2: Publiczna polityka zwrotow.
-- Podpunkt 3.3: Publiczne SLA odpowiedzi.
-- Podpunkt 3.4: Publiczna informacja o czasie realizacji.
+To musi byc endpoint klienta per sprzedawca, bo koszyk jest rozbity na shipmenty sprzedawcow.
 
-## Etap 4: Ustawienia katalogu i dostepnosci
+## 1a. Endpointy klienta do wyboru dostawy per sprzedawca
 
-### Punkt 1: Sterowanie dostepnoscia
+Potrzebujemy jasno wydzielonego API checkoutowego dla klienta, osobno dla kazdego sprzedawcy w koszyku.
 
-- Podpunkt 1.1: Widocznosc produktow przy braku stanu.
-- Podpunkt 1.2: Czy pozwalac na backorder.
-- Podpunkt 1.3: Minimalny stan alarmowy.
-- Podpunkt 1.4: Automatyczna zmiana statusu produktu po wyczerpaniu zapasu.
+Minimalny zestaw:
 
-### Punkt 2: Zarzadzanie wariantami i prezentacja
+- `GET /checkout/shipments/:sellerId/shipping-methods`
+  - zwraca aktywne metody dostawy dla konkretnego sprzedawcy
+  - zwraca dane potrzebne do pokazania opcji klientowi
+- `PATCH /carts/shipments/:sellerId`
+  - powinien przyjmowac tylko identyfikator wybranej metody, np. `shippingMethodId`
+  - nie powinien przyjmowac recznie wyliczonych cen dostawy z frontu
 
-- Podpunkt 2.1: Domyslne zasady tworzenia wariantow.
-- Podpunkt 2.2: Domyslne jednostki i formaty nazw wariantow.
-- Podpunkt 2.3: Kolejnosc wariantow i domyslny wariant sprzedazowy.
-- Podpunkt 2.4: Oznaczenia bestseller, nowosc, promo.
+Frontend ma tylko:
 
-### Punkt 3: Asortyment sezonowy
+- pobrac opcje
+- wyslac wybor
+- odswiezyc koszyk
 
-- Podpunkt 3.1: Automatyczna aktywacja i deaktywacja produktow po dacie.
-- Podpunkt 3.2: Okresowe cenniki.
-- Podpunkt 3.3: Sezonowe metody dostawy i terminy realizacji.
+## 2. Przechowywanie wybranej metody w cart shipment
 
-## Etap 5: Ustawienia finansowe i rozliczeniowe
+Na poziomie `cart_shipments` trzeba zapisywac nie tylko nazwe, ale tez identyfikator metody:
 
-### Punkt 1: Rozliczenia i payout
+- `shippingMethodId`
 
-- Podpunkt 1.1: Dane do wyplat. - zrobione
-- Podpunkt 1.2: Cykle rozliczeniowe.
-- Podpunkt 1.3: Minimalny prog wyplaty.
-- Podpunkt 1.4: Wyświetlanie informacji o wyplacie i saldzie.
+To pozwoli:
 
-### Punkt 2: Dokumenty i formalnosci
+- odtworzyc zaznaczenie checkbox/radio po odswiezeniu koszyka
+- przeliczyc koszty po zmianie ilosci produktow
+- miec stabilne powiazanie z metoda, zamiast samego tekstu `shippingMethodName`
 
-- Podpunkt 2.1: Dane do faktur i korekt.
-- Podpunkt 2.2: Numeracja dokumentow wewnetrznych sprzedawcy.
-- Podpunkt 2.3: Polityka podatkowa i domyslne stawki.
+Do sprawdzenia:
 
-## Etap 6: Ustawienia wspolpracy z klientem
+- w [`api/src/services/carts.js`](c:/Projects/ardrop_v2/api/src/services/carts.js) sa juz slady `shippingMethodId` na poziomie `carts`, ale nie sa wykorzystywane per shipment
+- trzeba przeniesc to jednoznacznie na `cart_shipments`
 
-### Punkt 1: Segmentacja klientow
+## 3. Backendowy kalkulator dostawy per shipment
 
-- Podpunkt 1.1: Cenniki dla grup klientow.
-- Podpunkt 1.2: Oferty indywidualne dla wybranych klientow.
-- Podpunkt 1.3: Ograniczenie widocznosci wybranych produktow do segmentu.
-- Podpunkt 1.4: Indywidualne progi darmowej dostawy.
+Koszt dostawy nie powinien byc wysylany z frontu jako finalna prawda.
 
-### Punkt 2: Obsluga relacji
+Potrzebna funkcja backendowa, ktora dla jednego shipmentu:
 
-- Podpunkt 2.1: Notatki o kliencie po stronie sprzedawcy.
-- Podpunkt 2.2: Oznaczenia VIP i klient problematyczny.
-- Podpunkt 2.3: Historia ustalen handlowych.
-- Podpunkt 2.4: Opiekun klienta po stronie sprzedawcy.
+1. pobiera wybrana metode dostawy
+2. liczy wartosc produktow dla danego sprzedawcy
+3. sprawdza prog darmowej dostawy
+4. ustawia:
+   - `shippingMethodId`
+   - `shippingMethodName`
+   - `shippingNet`
+   - `shippingGross`
+   - `estimatedDeliveryFrom`
+   - `estimatedDeliveryTo`
 
-## Etap 7: Analityka i automatyzacje
+Minimalna logika MVP:
 
-### Punkt 1: Alerty i notyfikacje
+- jesli `itemsGross >= freeShippingAmountGross`, to:
+  - `shippingGross = 0`
+  - `shippingNet = 0`
+- jesli w przyszlosci aktywne beda tez:
+  - `freeShippingQuantity`
+  - `freeShippingWeight`
+  to kalkulator powinien je uwzgledniac, bo pola te istnieja juz w bazie i w modelu metody dostawy
+- w przeciwnym razie:
+  - `shippingGross = method.priceGross`
+  - `shippingNet = method.priceNet`
 
-- Podpunkt 1.1: Alert o niskim stanie magazynowym.
-- Podpunkt 1.2: Alert o spadku konwersji.
-- Podpunkt 1.3: Alert o porzuconym koszyku z produktami sprzedawcy.
-- Podpunkt 1.4: Alert o opoznionych zamowieniach.
-- Podpunkt 1.5: Alert o wzroscie liczby zwrotow.
+Wazne:
 
-### Punkt 2: Automatyczne akcje sprzedazowe
+- to liczenie musi uruchamiac sie nie tylko po wyborze metody dostawy
+- musi tez uruchamiac sie po:
+  - dodaniu produktu do koszyka
+  - zmianie ilosci
+  - usunieciu produktu
+  - wyczyszczeniu koszyka
 
-- Podpunkt 2.1: Auto-rabat przy slabym rotowaniu produktu.
-- Podpunkt 2.2: Auto-wlaczenie promocji dla nadmiaru stanu.
-- Podpunkt 2.3: Auto-wylaczenie produktu przy niskiej marzy.
-- Podpunkt 2.4: Auto-komunikat o opoznionej dostawie.
+Inaczej prog darmowej dostawy nie bedzie aktualny.
 
-## Etap 8: Rekomendacja zmian w bazie
+## 3a. Osobny endpoint backendowy do liczenia wartosci shipmentu i kosztu dostawy
 
-### Punkt 1: Nowa tabela glowna ustawien sprzedawcy
+Poza endpointem wyboru metody potrzebujemy tez backendowego miejsca, ktore liczy wartosci shipmentu na podstawie danych juz zapisanych w systemie.
 
-- Podpunkt 1.1: `seller_settings` dla ustawien ogolnych, SLA, komunikacji i polityk.
-- Podpunkt 1.2: Trzymac pola rzadko edytowane i globalne dla calego sprzedawcy.
+To moze byc:
 
-### Punkt 2: Tabele dziedzinowe
+- osobna funkcja serwisowa wywolywana wewnetrznie z koszyka
+- albo osobny endpoint techniczny, jesli chcemy jawnie rozdzielic wybor metody od przeliczenia
 
-- Podpunkt 2.1: `seller_shipping_methods`
-- Podpunkt 2.2: `seller_shipping_rules`
-- Podpunkt 2.3: `seller_return_policies`
-- Podpunkt 2.4: `seller_discount_rules`
-- Podpunkt 2.5: `seller_customer_segments`
-- Podpunkt 2.6: `seller_customer_pricing`
-- Podpunkt 2.7: `seller_notification_templates`
-- Podpunkt 2.8: `seller_business_hours`
-- Podpunkt 2.9: `seller_holidays`
+Najwazniejsze zalozenie:
 
-### Punkt 3: Powiazania z zamowieniem
+- frontend nie liczy kosztu dostawy
+- frontend nie liczy progu darmowej dostawy jako source of truth
+- frontend tylko pokazuje wynik policzony po stronie backendu
 
-- Podpunkt 3.1: Snapshot polityki dostawy i zwrotu w `orders`, jesli ma miec znaczenie historyczne.
-- Podpunkt 3.2: Snapshot rabatu automatycznego na poziomie `cart_shipments` i `orders`.
-- Podpunkt 3.3: Rozwazyc tabele `order_discounts` lub `shipment_discounts`, jesli promocje beda skladane.
+Backend powinien liczyc na podstawie:
 
-## Etap 9: Najbardziej wartosciowe MVP
+- produktow w shipment
+- wartosci `itemsGross`
+- wybranej metody dostawy
+- ustawien metody dostawy zapisanych w backendzie
 
-### Punkt 1: MVP operacyjne
+## 3b. Przeniesienie pelnego przeliczania koszyka do backendu
 
-- Podpunkt 1.1: Dane kontaktowe sprzedawcy.
-- Podpunkt 1.2: Czas realizacji.
-- Podpunkt 1.3: Metody dostawy i koszt dostawy.
-- Podpunkt 1.4: Polityka zwrotow.
-- Podpunkt 1.5: Notatka i komunikat do klienta.
+To powinno isc szerzej niz sama dostawa.
 
-### Punkt 2: MVP sprzedazowe
+Potrzebny jest jeden backendowy source of truth dla calego koszyka, ktory liczy:
 
-- Podpunkt 2.1: Prog darmowej dostawy.
-- Podpunkt 2.2: Rabat progowy.
-- Podpunkt 2.3: Rabat dla stalych klientow.
-- Podpunkt 2.4: Cross-sell i komunikat upsellowy.
+- wartosc pozycji
+- wartosc shipmentow per sprzedawca
+- koszt dostawy per shipment
+- sume dostaw
+- total koszyka
+- w przyszlosci takze rabaty i inne reguly
 
-## Etap 10: Silnik wykonawczy promocji i snapshotow
+Frontend nie powinien sam liczyc finalnych wartosci finansowych.
 
-### Punkt 1: Naliczanie regul sprzedazowych w koszyku
+Frontend powinien tylko:
 
-- Podpunkt 1.1: Stosowac aktywne reguly rabatowe sprzedawcy do `cart_shipments` i `carts`.
-- Podpunkt 1.2: Wyliczac darmowa dostawe, progi ilosciowe i inne automatyczne warunki.
-- Podpunkt 1.3: Uwzgledniac wykluczenia produktowe, segmentowe i czasowe.
+- wysylac akcje uzytkownika
+- pobierac wynik przeliczenia
+- wyswietlac to, co policzyl backend
 
-### Punkt 2: Snapshoty i historia w zamowieniu
+Minimalny kierunek:
 
-- Podpunkt 2.1: Zapisywac snapshot zastosowanych polityk i rabatow w `orders`.
-- Podpunkt 2.2: Zapisywac snapshot zastosowanych polityk i rabatow w `order_items` lub tabelach pomocniczych.
-- Podpunkt 2.3: Zachowac historyczna zgodnosc zamowienia po zmianie konfiguracji sprzedawcy.
+- po kazdej zmianie koszyka backend uruchamia jedno spojne przeliczenie
+- `GET /carts/current` zwraca juz gotowy, finalny stan koszyka
+- shipmenty i summary w UI sa tylko prezentacja danych z backendu
 
-### Punkt 3: Transparentnosc dla klienta i sprzedawcy
+## 4. Zmiana kontraktu endpointu PATCH /carts/shipments/:sellerId
 
-- Podpunkt 3.1: Pokazywac klientowi zastosowane rabaty i reguly w koszyku oraz checkout.
-- Podpunkt 3.2: Pokazywac sprzedawcy, ktore reguly zadzialaly dla zamowienia.
-- Podpunkt 3.3: Rozwazyc tabele `order_discounts` lub `shipment_discounts`, jesli promocje beda skladane.
+Obecny kontrakt pozwala wysylac z frontu:
+
+- `shippingMethodName`
+- `shippingNet`
+- `shippingGross`
+- `estimatedDeliveryFrom`
+- `estimatedDeliveryTo`
+
+To nalezy uproscic.
+
+Docelowo frontend powinien wysylac tylko:
+
+- `deliveryAddressId`
+- `shippingMethodId`
+- `clientNote`
+
+Backend powinien sam uzupelnic reszte na podstawie:
+
+- metody dostawy sprzedawcy
+- zawartosci shipmentu
+
+## 5. Rozszerzenie odpowiedzi koszyka
+
+Odpowiedz z `GET /carts/current` powinna zwracac dla kazdego shipmentu:
+
+- `shippingMethodId`
+- `shippingMethodName`
+- `shippingGross`
+- `shippingNet`
+- `estimatedDeliveryFrom`
+- `estimatedDeliveryTo`
+
+Opcjonalnie, zeby frontend byl prostszy, mozna tez zwracac:
+
+- `availableShippingMethods`
+
+ale lepiej tego nie duplikowac w payloadzie koszyka, tylko pobierac osobno per seller albo jednym zbiorczym endpointem.
+
+Lepszy kierunek:
+
+- jeden endpoint koszyka
+- jeden endpoint listujacy aktywne metody per sprzedawca
+
+## 6. Frontend koszyka: UI wyboru metody dostawy
+
+W [`app/src/modules/Cart/index.jsx`](c:/Projects/ardrop_v2/app/src/modules/Cart/index.jsx) trzeba dodac dla kazdego shipmentu sekcje wyboru dostawy.
+
+Wymagania UI:
+
+- lista aktywnych metod dostawy danego sprzedawcy
+- wybor jednej metody na shipment
+- prezentacja:
+  - nazwy
+  - ceny
+  - ETA
+  - informacji o darmowej dostawie po progu
+
+Technicznie:
+
+- nie checkboxy, tylko radio
+- klient ma wybrac jedna metode dostawy dla jednego sprzedawcy
+
+Obsługa:
+
+- zaznaczenie metody wywoluje `PATCH /carts/shipments/:sellerId` z `shippingMethodId`
+- po odpowiedzi odswiezamy koszyk i podsumowanie
+
+## 7. Reakcja na prog darmowej wysylki
+
+Frontend powinien tylko wyswietlac wynik, ale nie liczyc go jako source of truth.
+
+Do pokazania w UI:
+
+- jesli dostawa darmowa:
+  - cena metody `0.00 zl`
+  - komunikat typu `Darmowa dostawa od 200.00 zl - osiagnieto`
+- jesli prog jeszcze nieosigniety:
+  - opcjonalny komunikat `Brakuje X zl do darmowej dostawy`
+
+Do tego backend musi zwracac dane pozwalajace to pokazac, np.:
+
+- `freeShippingAmountGross`
+- `shipment.totals.itemsGross`
+
+albo wyliczone pole pomocnicze:
+
+- `isFreeShippingApplied`
+
+Na MVP wystarczy:
+
+- frontend sam porowna `shipment.totals.itemsGross` z `freeShippingAmountGross`
+
+## 8. Podsumowanie kosztow w koszyku
+
+To juz w zasadzie jest gotowe konstrukcyjnie.
+
+W [`app/src/modules/Cart/index.jsx`](c:/Projects/ardrop_v2/app/src/modules/Cart/index.jsx):
+
+- koszt dostawy w summary bierze sie z `shipment.shippingGross`
+- suma zamowienia bierze sie z `cart.totalGross`
+
+Czyli po backendowym poprawnym przeliczeniu shipmentow:
+
+- per sprzedawca ceny dostawy beda poprawne
+- suma dostaw bedzie poprawna
+- total koszyka bedzie poprawny
+
+Tu nie trzeba rewolucji, tylko poprawnego source of truth po stronie API.
+
+## 9. Snapshot zamowienia
+
+Po wdrozeniu kalkulatora w koszyku zamowienie bedzie automatycznie dzialac lepiej, bo:
+
+- [`api/src/services/orders.js`](c:/Projects/ardrop_v2/api/src/services/orders.js)
+  juz kopiuje do orders:
+  - `shippingMethodName`
+  - `totalShipping`
+  - `estimatedDeliveryFrom`
+  - `estimatedDeliveryTo`
+
+Warto jednak rozszerzyc snapshot zamowienia o:
+
+- `shippingMethodId`
+
+To nie jest konieczne dla samego UI klienta, ale bedzie porzadniejsze historycznie.
+
+## 10. Minimalny zakres MVP
+
+Zeby uruchomic to sensownie, minimalny zakres jest taki:
+
+1. Dodac endpoint klienta/listy metod dostawy sprzedawcy.
+2. Dodac `shippingMethodId` do `cart_shipments`.
+3. Przebudowac `PATCH /carts/shipments/:sellerId`, zeby przyjmowal `shippingMethodId`.
+4. Dodac backendowe przeliczanie kosztu dostawy per shipment z progiem `freeShippingAmountGross`.
+5. Uruchamiac przeliczenie po kazdej zmianie koszyka.
+6. Dodac w `app/src/modules/Cart/index.jsx` radio-listy metod dostawy per sprzedawca.
+7. Pokazac koszt i ETA dla wybranej metody oraz sume dostaw w summary.
+
+## 11. Rzeczy do swiadomego odlozenia
+
+Na pozniej:
+
+- regiony i kraje
+- ograniczenia metod dostawy dla wybranych produktow
+
+Te elementy dzisiaj nie sa gotowe po stronie checkoutu klienta.
+
+Nie planujemy roznych adresow dostawy per shipment. Adres dostawy ma pozostac wspolny dla calego koszyka.
+
+## 12. Ryzyka i uwagi
+
+- Obecny koszyk jest zbudowany per shipment sprzedawcy, co jest dobre i wystarczajace do tego feature.
+- Najwiekszy brak nie jest w UI, tylko w backendzie:
+  klient nie ma dzis zadnego wiarygodnego endpointu do pobrania i wyboru metod dostawy.
+- Koszt dostawy nie powinien byc liczony na froncie i wysylany jako finalna wartosc.
+- Jesli zostawimy aktualny model recznego wpisywania `shippingGross` do shipmentu, to backend i frontend beda mogly rozjechac sie co do realnego kosztu dostawy po zmianie koszyka lub konfiguracji metody.

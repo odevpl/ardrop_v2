@@ -1,5 +1,12 @@
 const db = require("../config/db");
 const sellerFinancialHistoryService = require("./seller-financial-history");
+const {
+  ORDER_STATUSES,
+  PAYMENT_STATUSES,
+  ORDER_STATUS_TRANSITIONS,
+  PAYMENT_STATUS_TRANSITIONS,
+  ROLE_ORDER_PERMISSIONS,
+} = require("../config/global-config");
 
 const roundMoney = (value) => Number((Number(value) || 0).toFixed(2));
 
@@ -585,7 +592,7 @@ const getOrderById = async ({ userId, role, orderId }) => {
   };
 };
 
-const updateOrderById = async ({ orderId, payload }) => {
+const updateOrderById = async ({ userId, role, orderId, payload }) => {
   const normalizedOrderId = Number(orderId);
   if (!normalizedOrderId) {
     const error = new Error("orderId is required");
@@ -593,13 +600,34 @@ const updateOrderById = async ({ orderId, payload }) => {
     throw error;
   }
 
-  const allowedStatuses = ["new", "processing", "shipped", "completed", "cancelled"];
-  const allowedPaymentStatuses = ["pending", "paid", "failed"];
+  const normalizedRole = String(role || "").toUpperCase();
+  const rolePermissions =
+    ROLE_ORDER_PERMISSIONS[normalizedRole] || ROLE_ORDER_PERMISSIONS.CLIENT;
+  const allowedStatuses = ORDER_STATUSES.map((item) => item.value);
+  const allowedPaymentStatuses = PAYMENT_STATUSES.map((item) => item.value);
+  const currentOrder = await getOrderById({
+    userId,
+    role: normalizedRole,
+    orderId: normalizedOrderId,
+  });
 
   const updates = {};
   if (payload.status !== undefined) {
     if (!allowedStatuses.includes(payload.status)) {
       const error = new Error("Invalid order status");
+      error.status = 400;
+      throw error;
+    }
+    if (!rolePermissions.status.includes(payload.status)) {
+      const error = new Error("Forbidden order status");
+      error.status = 403;
+      throw error;
+    }
+    const allowedTransitions = Array.isArray(ORDER_STATUS_TRANSITIONS[currentOrder.status])
+      ? ORDER_STATUS_TRANSITIONS[currentOrder.status]
+      : [];
+    if (payload.status !== currentOrder.status && !allowedTransitions.includes(payload.status)) {
+      const error = new Error("Order status transition is not allowed");
       error.status = 400;
       throw error;
     }
@@ -609,6 +637,22 @@ const updateOrderById = async ({ orderId, payload }) => {
   if (payload.paymentStatus !== undefined) {
     if (!allowedPaymentStatuses.includes(payload.paymentStatus)) {
       const error = new Error("Invalid payment status");
+      error.status = 400;
+      throw error;
+    }
+    if (!rolePermissions.paymentStatus.includes(payload.paymentStatus)) {
+      const error = new Error("Forbidden payment status");
+      error.status = 403;
+      throw error;
+    }
+    const allowedTransitions = Array.isArray(PAYMENT_STATUS_TRANSITIONS[currentOrder.paymentStatus])
+      ? PAYMENT_STATUS_TRANSITIONS[currentOrder.paymentStatus]
+      : [];
+    if (
+      payload.paymentStatus !== currentOrder.paymentStatus &&
+      !allowedTransitions.includes(payload.paymentStatus)
+    ) {
+      const error = new Error("Payment status transition is not allowed");
       error.status = 400;
       throw error;
     }
@@ -634,7 +678,11 @@ const updateOrderById = async ({ orderId, payload }) => {
     throw error;
   }
 
-  return getOrderById({ role: "ADMIN", userId: 0, orderId: normalizedOrderId });
+  return getOrderById({
+    role: normalizedRole === "SELLER" ? "SELLER" : "ADMIN",
+    userId,
+    orderId: normalizedOrderId,
+  });
 };
 
 const deleteOrderById = async ({ orderId }) => {

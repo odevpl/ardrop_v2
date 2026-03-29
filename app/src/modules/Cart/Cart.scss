@@ -379,9 +379,23 @@
 }
 
 .cartSubmitWrap {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
   margin-top: 18px;
+}
+
+.cartCheckoutBlockedMessage {
+  margin: 0;
+  width: 100%;
+  border: 1px solid #d7e7f9;
+  background: #f8fbff;
+  color: #35566d;
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-align: center;
+  line-height: 1.45;
+  font-size: 0.95rem;
 }
 
 .cartSubmitButton {

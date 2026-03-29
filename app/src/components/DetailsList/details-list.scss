@@ -1,0 +1,85 @@
+.detailsListCard {
+  background: #ffffff;
+  border: 1px solid #d9e3e9;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(22, 41, 56, 0.08);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.detailsListToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #edf2f6;
+}
+
+.detailsListTitle {
+  margin: 0;
+  color: #213541;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.detailsListAction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detailsListBody {
+  display: flex;
+  flex-direction: column;
+}
+
+.detailsListRow {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #edf2f6;
+}
+
+.detailsListRow:last-child {
+  border-bottom: 0;
+}
+
+.detailsListLabel {
+  color: #6d8291;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detailsListValue {
+  color: #213541;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  min-width: 0;
+}
+
+.detailsListEmpty {
+  padding: 24px 20px;
+  color: #6d8291;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .detailsListToolbar {
+    padding: 16px;
+  }
+
+  .detailsListRow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 14px 16px;
+  }
+
+  .detailsListEmpty {
+    padding: 20px 16px;
+  }
+}

@@ -1,5 +1,6 @@
 import FetchWrapper from "components/FetchWrapper";
 import Table from "components/Table";
+import { useConfig } from "providers/configProvider";
 import { NavLink, useNavigate } from "react-router-dom";
 import OrdersService from "services/orders";
 import "./DeliveriesList.scss";
@@ -25,9 +26,14 @@ const formatEta = (from, to) => {
 
 const DeliveriesListView = ({ payload }) => {
   const navigate = useNavigate();
+  const { config } = useConfig();
   const orders = Array.isArray(payload?.data || payload?.orders)
     ? payload?.data || payload?.orders
     : [];
+  const statusOptions = Array.isArray(config?.orders?.statuses) ? config.orders.statuses : [];
+  const paymentStatusOptions = Array.isArray(config?.orders?.paymentStatuses) ? config.orders.paymentStatuses : [];
+  const mapStatusLabel = (value, options) =>
+    options.find((option) => option.value === value)?.label || value || "-";
 
   const tableConfig = [
     {
@@ -38,6 +44,7 @@ const DeliveriesListView = ({ payload }) => {
     {
       key: "status",
       title: "Status",
+      onRender: (row) => mapStatusLabel(row?.status, statusOptions),
     },
     {
       key: "orderGroupId",
@@ -47,6 +54,7 @@ const DeliveriesListView = ({ payload }) => {
     {
       key: "paymentStatus",
       title: "Platnosc",
+      onRender: (row) => mapStatusLabel(row?.paymentStatus, paymentStatusOptions),
     },
     {
       key: "delivery",

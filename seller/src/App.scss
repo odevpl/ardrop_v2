@@ -101,6 +101,12 @@
   border-color: #0a64c9;
 }
 
+.sellerActions .sellerDangerButton {
+  background: #b42318;
+  color: #ffffff;
+  border-color: #b42318;
+}
+
 .sellerFormGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(220px, 1fr));

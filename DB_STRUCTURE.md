@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: Mar 26, 2026 at 02:09 PM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Host: mysql48.mydevil.net
+-- Generation Time: Mar 29, 2026 at 05:17 PM
+-- Server version: 8.0.43
+-- PHP Version: 8.1.33
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -17,7 +17,7 @@ SET time_zone = "+00:00";
 /_!40101 SET NAMES utf8mb4 _/;
 
 --
--- Database: `ardrop2`
+-- Database: `m1414_ardrop2`
 --
 
 ---
@@ -27,21 +27,21 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `carts` (
-`id` int(10) UNSIGNED NOT NULL,
-`clientId` int(10) UNSIGNED DEFAULT NULL,
-`sessionToken` varchar(128) DEFAULT NULL,
-`currency` varchar(10) NOT NULL DEFAULT 'PLN',
-`status` enum('active','converted','abandoned') NOT NULL DEFAULT 'active',
-`couponCode` varchar(64) DEFAULT NULL,
-`shippingMethodId` int(10) UNSIGNED DEFAULT NULL,
-`shippingNet` decimal(15,2) NOT NULL DEFAULT 0.00,
-`shippingGross` decimal(15,2) NOT NULL DEFAULT 0.00,
-`discountNet` decimal(15,2) NOT NULL DEFAULT 0.00,
-`discountGross` decimal(15,2) NOT NULL DEFAULT 0.00,
-`totalNet` decimal(15,2) NOT NULL DEFAULT 0.00,
-`totalGross` decimal(15,2) NOT NULL DEFAULT 0.00,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+`id` int UNSIGNED NOT NULL,
+`clientId` int UNSIGNED DEFAULT NULL,
+`sessionToken` varchar(128) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`currency` varchar(10) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'PLN',
+`status` enum('active','converted','abandoned') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'active',
+`couponCode` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`shippingMethodId` int UNSIGNED DEFAULT NULL,
+`shippingNet` decimal(15,2) NOT NULL DEFAULT '0.00',
+`shippingGross` decimal(15,2) NOT NULL DEFAULT '0.00',
+`discountNet` decimal(15,2) NOT NULL DEFAULT '0.00',
+`discountGross` decimal(15,2) NOT NULL DEFAULT '0.00',
+`totalNet` decimal(15,2) NOT NULL DEFAULT '0.00',
+`totalGross` decimal(15,2) NOT NULL DEFAULT '0.00',
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 `expiresAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -52,22 +52,22 @@ CREATE TABLE `carts` (
 --
 
 CREATE TABLE `cart_items` (
-`id` int(10) UNSIGNED NOT NULL,
-`cartId` int(10) UNSIGNED NOT NULL,
-`productId` int(10) UNSIGNED NOT NULL,
-`variantId` int(10) UNSIGNED DEFAULT NULL,
-`sellerId` int(10) UNSIGNED NOT NULL,
-`quantity` int(11) NOT NULL DEFAULT 1,
+`id` int UNSIGNED NOT NULL,
+`cartId` int UNSIGNED NOT NULL,
+`productId` int UNSIGNED NOT NULL,
+`variantId` int UNSIGNED DEFAULT NULL,
+`sellerId` int UNSIGNED NOT NULL,
+`quantity` int NOT NULL DEFAULT '1',
 `unitNet` decimal(15,2) NOT NULL,
 `unitGross` decimal(15,2) NOT NULL,
 `vatRate` decimal(5,2) NOT NULL,
 `lineNet` decimal(15,2) NOT NULL,
 `lineGross` decimal(15,2) NOT NULL,
-`productNameSnapshot` varchar(255) NOT NULL,
-`variantNameSnapshot` varchar(255) DEFAULT NULL,
+`productNameSnapshot` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+`variantNameSnapshot` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
 `variantAmountSnapshot` decimal(15,3) DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -77,18 +77,18 @@ CREATE TABLE `cart_items` (
 --
 
 CREATE TABLE `cart_shipments` (
-`id` int(10) UNSIGNED NOT NULL,
-`cartId` int(10) UNSIGNED NOT NULL,
-`sellerId` int(11) NOT NULL,
-`deliveryAddressId` int(11) DEFAULT NULL,
-`shippingMethodName` varchar(120) DEFAULT NULL,
-`shippingNet` decimal(15,2) NOT NULL DEFAULT 0.00,
-`shippingGross` decimal(15,2) NOT NULL DEFAULT 0.00,
-`clientNote` text DEFAULT NULL,
+`id` int UNSIGNED NOT NULL,
+`cartId` int UNSIGNED NOT NULL,
+`sellerId` int NOT NULL,
+`deliveryAddressId` int DEFAULT NULL,
+`shippingMethodName` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`shippingNet` decimal(15,2) NOT NULL DEFAULT '0.00',
+`shippingGross` decimal(15,2) NOT NULL DEFAULT '0.00',
+`clientNote` text COLLATE utf8mb4_general_ci,
 `estimatedDeliveryFrom` datetime DEFAULT NULL,
 `estimatedDeliveryTo` datetime DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -98,18 +98,18 @@ CREATE TABLE `cart_shipments` (
 --
 
 CREATE TABLE `categories` (
-`id` int(10) UNSIGNED NOT NULL,
-`parentId` int(10) UNSIGNED DEFAULT NULL,
-`name` varchar(180) NOT NULL,
-`slug` varchar(180) NOT NULL,
-`description` text DEFAULT NULL,
-`isActive` tinyint(1) NOT NULL DEFAULT 1,
-`position` int(11) NOT NULL DEFAULT 0,
-`seoTitle` varchar(255) DEFAULT NULL,
-`seoDescription` varchar(255) DEFAULT NULL,
-`imageFileName` varchar(255) DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`id` int UNSIGNED NOT NULL,
+`parentId` int UNSIGNED DEFAULT NULL,
+`name` varchar(180) COLLATE utf8mb4_general_ci NOT NULL,
+`slug` varchar(180) COLLATE utf8mb4_general_ci NOT NULL,
+`description` text COLLATE utf8mb4_general_ci,
+`isActive` tinyint(1) NOT NULL DEFAULT '1',
+`position` int NOT NULL DEFAULT '0',
+`seoTitle` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`seoDescription` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`imageFileName` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -119,13 +119,13 @@ CREATE TABLE `categories` (
 --
 
 CREATE TABLE `categories_image` (
-`id` int(10) UNSIGNED NOT NULL,
-`categoryId` int(10) UNSIGNED NOT NULL,
-`fileName` varchar(255) NOT NULL,
-`alt` varchar(255) DEFAULT NULL,
-`isMain` tinyint(1) NOT NULL DEFAULT 0,
-`position` int(11) NOT NULL DEFAULT 0,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp()
+`id` int UNSIGNED NOT NULL,
+`categoryId` int UNSIGNED NOT NULL,
+`fileName` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+`alt` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`isMain` tinyint(1) NOT NULL DEFAULT '0',
+`position` int NOT NULL DEFAULT '0',
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -135,17 +135,17 @@ CREATE TABLE `categories_image` (
 --
 
 CREATE TABLE `clients` (
-`id` int(11) NOT NULL,
-`userId` int(11) NOT NULL,
-`name` varchar(255) NOT NULL,
-`phone` varchar(30) DEFAULT NULL,
-`companyName` varchar(255) DEFAULT NULL,
-`nip` varchar(20) DEFAULT NULL,
-`address` varchar(255) DEFAULT NULL,
-`city` varchar(100) DEFAULT NULL,
-`postalCode` varchar(20) DEFAULT NULL,
-`createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
-`updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`id` int NOT NULL,
+`userId` int NOT NULL,
+`name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+`phone` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`companyName` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`nip` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`address` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`city` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`postalCode` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -155,19 +155,19 @@ CREATE TABLE `clients` (
 --
 
 CREATE TABLE `clients_delivery_address` (
-`id` int(11) NOT NULL,
-`clientId` int(11) NOT NULL,
-`label` varchar(100) DEFAULT NULL,
-`recipientName` varchar(255) NOT NULL,
-`phone` varchar(30) DEFAULT NULL,
-`addressLine1` varchar(255) NOT NULL,
-`addressLine2` varchar(255) DEFAULT NULL,
-`city` varchar(100) NOT NULL,
-`postalCode` varchar(20) NOT NULL,
-`countryCode` varchar(2) NOT NULL DEFAULT 'PL',
-`isDefault` tinyint(1) NOT NULL DEFAULT 0,
-`createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
-`updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`id` int NOT NULL,
+`clientId` int NOT NULL,
+`label` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`recipientName` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+`phone` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`addressLine1` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+`addressLine2` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`city` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+`postalCode` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
+`countryCode` varchar(2) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'PL',
+`isDefault` tinyint(1) NOT NULL DEFAULT '0',
+`createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -177,21 +177,21 @@ CREATE TABLE `clients_delivery_address` (
 --
 
 CREATE TABLE `marketing_campaigns` (
-`id` int(10) UNSIGNED NOT NULL,
-`name` varchar(180) NOT NULL,
-`slug` varchar(180) NOT NULL,
-`placement` enum('home_hero') NOT NULL DEFAULT 'home_hero',
-`status` enum('draft','active','archived') NOT NULL DEFAULT 'draft',
-`layoutMode` enum('auto','hero','tiles') NOT NULL DEFAULT 'auto',
+`id` int UNSIGNED NOT NULL,
+`name` varchar(180) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+`slug` varchar(180) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+`placement` enum('home_hero') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'home_hero',
+`status` enum('draft','active','archived') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'draft',
+`layoutMode` enum('auto','hero','tiles') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'auto',
 `startsAt` datetime DEFAULT NULL,
 `endsAt` datetime DEFAULT NULL,
-`priority` int(11) NOT NULL DEFAULT 100,
-`showOnMobile` tinyint(1) NOT NULL DEFAULT 1,
-`showOnTablet` tinyint(1) NOT NULL DEFAULT 1,
-`showOnDesktop` tinyint(1) NOT NULL DEFAULT 1,
-`maxItems` int(10) UNSIGNED NOT NULL DEFAULT 6,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`priority` int NOT NULL DEFAULT '100',
+`showOnMobile` tinyint(1) NOT NULL DEFAULT '1',
+`showOnTablet` tinyint(1) NOT NULL DEFAULT '1',
+`showOnDesktop` tinyint(1) NOT NULL DEFAULT '1',
+`maxItems` int UNSIGNED NOT NULL DEFAULT '6',
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -201,20 +201,20 @@ CREATE TABLE `marketing_campaigns` (
 --
 
 CREATE TABLE `marketing_campaign_items` (
-`id` int(10) UNSIGNED NOT NULL,
-`campaignId` int(10) UNSIGNED NOT NULL,
-`title` varchar(180) DEFAULT NULL,
-`subtitle` varchar(255) DEFAULT NULL,
-`imageFileName` varchar(255) NOT NULL,
-`imageAlt` varchar(255) DEFAULT NULL,
-`targetType` enum('url','product','category','custom') NOT NULL DEFAULT 'url',
-`targetValue` varchar(500) NOT NULL,
-`position` int(11) NOT NULL DEFAULT 0,
-`isActive` tinyint(1) NOT NULL DEFAULT 1,
+`id` int UNSIGNED NOT NULL,
+`campaignId` int UNSIGNED NOT NULL,
+`title` varchar(180) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+`subtitle` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+`imageFileName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+`imageAlt` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+`targetType` enum('url','product','category','custom') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'url',
+`targetValue` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+`position` int NOT NULL DEFAULT '0',
+`isActive` tinyint(1) NOT NULL DEFAULT '1',
 `startsAt` datetime DEFAULT NULL,
 `endsAt` datetime DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -224,22 +224,22 @@ CREATE TABLE `marketing_campaign_items` (
 --
 
 CREATE TABLE `orders` (
-`id` int(10) UNSIGNED NOT NULL,
-`orderGroupId` int(10) UNSIGNED NOT NULL,
-`sellerId` int(10) UNSIGNED NOT NULL,
-`clientId` int(10) UNSIGNED NOT NULL,
-`deliveryAddressSnapshotJson` longtext DEFAULT NULL,
-`shippingMethodName` varchar(120) DEFAULT NULL,
-`clientNote` text DEFAULT NULL,
+`id` int UNSIGNED NOT NULL,
+`orderGroupId` int UNSIGNED NOT NULL,
+`sellerId` int UNSIGNED NOT NULL,
+`clientId` int UNSIGNED NOT NULL,
+`deliveryAddressSnapshotJson` longtext COLLATE utf8mb4_general_ci,
+`shippingMethodName` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`clientNote` text COLLATE utf8mb4_general_ci,
 `estimatedDeliveryFrom` datetime DEFAULT NULL,
 `estimatedDeliveryTo` datetime DEFAULT NULL,
 `totalNet` decimal(15,2) NOT NULL,
 `totalGross` decimal(15,2) NOT NULL,
-`totalShipping` decimal(15,2) NOT NULL DEFAULT 0.00,
-`paymentStatus` enum('pending','paid','failed') DEFAULT 'pending',
-`status` enum('new','processing','shipped','completed','cancelled') DEFAULT 'new',
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`totalShipping` decimal(15,2) NOT NULL DEFAULT '0.00',
+`paymentStatus` enum('pending','paid','failed') COLLATE utf8mb4_general_ci DEFAULT 'pending',
+`status` enum('new','processing','shipped','completed','cancelled') COLLATE utf8mb4_general_ci DEFAULT 'new',
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -249,20 +249,20 @@ CREATE TABLE `orders` (
 --
 
 CREATE TABLE `order_items` (
-`id` int(10) UNSIGNED NOT NULL,
-`orderId` int(10) UNSIGNED NOT NULL,
-`orderGroupId` int(10) UNSIGNED NOT NULL,
-`sellerId` int(10) UNSIGNED NOT NULL,
-`productId` int(10) UNSIGNED NOT NULL,
-`variantId` int(10) UNSIGNED DEFAULT NULL,
-`productSnapshotJson` longtext DEFAULT NULL,
-`variantNameSnapshot` varchar(255) DEFAULT NULL,
+`id` int UNSIGNED NOT NULL,
+`orderId` int UNSIGNED NOT NULL,
+`orderGroupId` int UNSIGNED NOT NULL,
+`sellerId` int UNSIGNED NOT NULL,
+`productId` int UNSIGNED NOT NULL,
+`variantId` int UNSIGNED DEFAULT NULL,
+`productSnapshotJson` longtext COLLATE utf8mb4_general_ci,
+`variantNameSnapshot` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
 `variantAmountSnapshot` decimal(15,3) DEFAULT NULL,
-`quantity` int(11) NOT NULL,
+`quantity` int NOT NULL,
 `netPrice` decimal(15,2) NOT NULL,
 `grossPrice` decimal(15,2) NOT NULL,
 `vatRate` decimal(5,2) NOT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp()
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -272,19 +272,19 @@ CREATE TABLE `order_items` (
 --
 
 CREATE TABLE `products` (
-`id` int(10) UNSIGNED NOT NULL,
-`sellerId` int(10) UNSIGNED NOT NULL,
-`name` varchar(255) NOT NULL,
-`description` text DEFAULT NULL,
+`id` int UNSIGNED NOT NULL,
+`sellerId` int UNSIGNED NOT NULL,
+`name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+`description` text COLLATE utf8mb4_general_ci,
 `netPrice` decimal(15,2) NOT NULL,
 `grossPrice` decimal(15,2) NOT NULL,
 `vatRate` decimal(5,2) NOT NULL,
-`unit` enum('pcs','g','l') NOT NULL DEFAULT 'pcs',
-`stockQuantity` decimal(15,3) NOT NULL DEFAULT 0.000,
-`hasVariants` tinyint(1) NOT NULL DEFAULT 0,
-`status` enum('draft','active') DEFAULT 'draft',
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`unit` enum('pcs','g','l') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pcs',
+`stockQuantity` decimal(15,3) NOT NULL DEFAULT '0.000',
+`hasVariants` tinyint(1) NOT NULL DEFAULT '0',
+`status` enum('draft','active') COLLATE utf8mb4_general_ci DEFAULT 'draft',
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -294,13 +294,13 @@ CREATE TABLE `products` (
 --
 
 CREATE TABLE `products_image` (
-`id` int(10) UNSIGNED NOT NULL,
-`productId` int(10) UNSIGNED NOT NULL,
-`fileName` varchar(255) NOT NULL,
-`alt` varchar(255) DEFAULT NULL,
-`isMain` tinyint(1) NOT NULL DEFAULT 0,
-`position` int(11) NOT NULL DEFAULT 0,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp()
+`id` int UNSIGNED NOT NULL,
+`productId` int UNSIGNED NOT NULL,
+`fileName` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+`alt` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`isMain` tinyint(1) NOT NULL DEFAULT '0',
+`position` int NOT NULL DEFAULT '0',
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -310,11 +310,11 @@ CREATE TABLE `products_image` (
 --
 
 CREATE TABLE `product_categories` (
-`id` int(10) UNSIGNED NOT NULL,
-`productId` int(10) UNSIGNED NOT NULL,
-`categoryId` int(10) UNSIGNED NOT NULL,
-`isPrimary` tinyint(1) NOT NULL DEFAULT 0,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp()
+`id` int UNSIGNED NOT NULL,
+`productId` int UNSIGNED NOT NULL,
+`categoryId` int UNSIGNED NOT NULL,
+`isPrimary` tinyint(1) NOT NULL DEFAULT '0',
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -324,21 +324,21 @@ CREATE TABLE `product_categories` (
 --
 
 CREATE TABLE `product_variants` (
-`id` int(10) UNSIGNED NOT NULL,
-`productId` int(10) UNSIGNED NOT NULL,
-`sku` varchar(80) NOT NULL,
-`name` varchar(120) NOT NULL,
-`unit` enum('pcs','g','l') NOT NULL DEFAULT 'pcs',
-`unitAmount` decimal(15,3) NOT NULL DEFAULT 1.000,
+`id` int UNSIGNED NOT NULL,
+`productId` int UNSIGNED NOT NULL,
+`sku` varchar(80) COLLATE utf8mb4_general_ci NOT NULL,
+`name` varchar(120) COLLATE utf8mb4_general_ci NOT NULL,
+`unit` enum('pcs','g','l') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pcs',
+`unitAmount` decimal(15,3) NOT NULL DEFAULT '1.000',
 `netPrice` decimal(15,2) NOT NULL,
 `grossPrice` decimal(15,2) NOT NULL,
 `vatRate` decimal(5,2) NOT NULL,
-`stockQuantity` decimal(15,3) NOT NULL DEFAULT 0.000,
-`status` enum('draft','active','archived') NOT NULL DEFAULT 'draft',
-`isDefault` tinyint(1) NOT NULL DEFAULT 0,
-`position` int(11) NOT NULL DEFAULT 0,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`stockQuantity` decimal(15,3) NOT NULL DEFAULT '0.000',
+`status` enum('draft','active','archived') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'draft',
+`isDefault` tinyint(1) NOT NULL DEFAULT '0',
+`position` int NOT NULL DEFAULT '0',
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -348,16 +348,16 @@ CREATE TABLE `product_variants` (
 --
 
 CREATE TABLE `sellers` (
-`id` int(11) NOT NULL,
-`userId` int(11) NOT NULL,
-`companyName` varchar(255) NOT NULL,
-`nip` varchar(20) DEFAULT NULL,
-`phone` varchar(30) DEFAULT NULL,
-`address` varchar(255) DEFAULT NULL,
-`city` varchar(100) DEFAULT NULL,
-`postalCode` varchar(20) DEFAULT NULL,
-`createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
-`updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`id` int NOT NULL,
+`userId` int NOT NULL,
+`companyName` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+`nip` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`phone` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`address` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`city` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`postalCode` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -367,15 +367,15 @@ CREATE TABLE `sellers` (
 --
 
 CREATE TABLE `seller_business_hours` (
-`id` int(10) UNSIGNED NOT NULL,
-`sellerId` int(11) NOT NULL,
-`dayOfWeek` tinyint(3) UNSIGNED NOT NULL,
-`isOpen` tinyint(1) NOT NULL DEFAULT 0,
+`id` int UNSIGNED NOT NULL,
+`sellerId` int NOT NULL,
+`dayOfWeek` tinyint UNSIGNED NOT NULL,
+`isOpen` tinyint(1) NOT NULL DEFAULT '0',
 `openTime` time DEFAULT NULL,
 `closeTime` time DEFAULT NULL,
-`note` varchar(120) DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`note` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -385,187 +385,14 @@ CREATE TABLE `seller_business_hours` (
 --
 
 CREATE TABLE `seller_discount_rules` (
-`id` int(10) UNSIGNED NOT NULL,
-`sellerId` int(11) NOT NULL,
-`ruleType` varchar(50) NOT NULL,
-`name` varchar(180) NOT NULL,
-`isActive` tinyint(1) NOT NULL DEFAULT 1,
-`configJson` longtext DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
----
-
---
--- Table structure for table `seller_holidays`
---
-
-CREATE TABLE `seller_holidays` (
-`id` int(10) UNSIGNED NOT NULL,
-`sellerId` int(11) NOT NULL,
-`holidayDate` date NOT NULL,
-`name` varchar(255) DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
----
-
---
--- Table structure for table `seller_return_policies`
---
-
-CREATE TABLE `seller_return_policies` (
-`id` int(10) UNSIGNED NOT NULL,
-`sellerId` int(11) NOT NULL,
-`acceptsOnlineReturns` tinyint(1) NOT NULL DEFAULT 0,
-`returnWindowDays` int(10) UNSIGNED DEFAULT NULL,
-`returnsAddressLine1` varchar(255) DEFAULT NULL,
-`returnsAddressLine2` varchar(255) DEFAULT NULL,
-`returnsCity` varchar(100) DEFAULT NULL,
-`returnsPostalCode` varchar(20) DEFAULT NULL,
-`returnsCountryCode` varchar(2) NOT NULL DEFAULT 'PL',
-`returnsInstruction` text DEFAULT NULL,
-`returnShippingPaidBy` enum('client','seller') NOT NULL DEFAULT 'client',
-`hasSeparateComplaintProcess` tinyint(1) NOT NULL DEFAULT 0,
-`complaintInstruction` text DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
----
-
---
--- Table structure for table `seller_sales_settings`
---
-
-CREATE TABLE `seller_sales_settings` (
-`id` int(10) UNSIGNED NOT NULL,
-`sellerId` int(11) NOT NULL,
-`freeShippingThresholdGross` decimal(15,2) DEFAULT NULL,
-`upsellMessageText` text DEFAULT NULL,
-`minimumOrderValueGross` decimal(15,2) DEFAULT NULL,
-`crossSellProductIds` text DEFAULT NULL,
-`bundleOffersText` text DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
----
-
---
--- Table structure for table `seller_settings`
---
-
-CREATE TABLE `seller_settings` (
-`id` int(10) UNSIGNED NOT NULL,
-`sellerId` int(11) NOT NULL,
-`orderSupportEmail` varchar(255) DEFAULT NULL,
-`orderSupportPhone` varchar(30) DEFAULT NULL,
-`returnsEmail` varchar(255) DEFAULT NULL,
-`returnsPhone` varchar(30) DEFAULT NULL,
-`defaultOrderPreparationDays` int(10) UNSIGNED DEFAULT NULL,
-`shippingWorkdays` varchar(32) DEFAULT NULL,
-`sameDayShippingCutoffTime` time DEFAULT NULL,
-`vacationModeEnabled` tinyint(1) NOT NULL DEFAULT 0,
-`vacationModeMessage` text DEFAULT NULL,
-`defaultMarkupPercent` decimal(8,2) DEFAULT NULL,
-`minimumSalePriceGross` decimal(15,2) DEFAULT NULL,
-`priceRoundingMode` varchar(20) NOT NULL DEFAULT 'none',
-`defaultVatRate` decimal(5,2) DEFAULT NULL,
-`defaultUnit` varchar(10) NOT NULL DEFAULT 'pcs',
-`customerResponseTimeText` varchar(120) DEFAULT NULL,
-`emailSignature` text DEFAULT NULL,
-`emailFooter` text DEFAULT NULL,
-`payoutAccountHolder` varchar(255) DEFAULT NULL,
-`payoutBankAccount` varchar(34) DEFAULT NULL,
-`payoutBankName` varchar(120) DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
----
-
---
--- Table structure for table `seller_shipping_methods`
---
-
-CREATE TABLE `seller_shipping_methods` (
-`id` int(10) UNSIGNED NOT NULL,
-`sellerId` int(11) NOT NULL,
-`name` varchar(120) NOT NULL,
-`isActive` tinyint(1) NOT NULL DEFAULT 1,
-`priceNet` decimal(15,2) DEFAULT NULL,
-`priceGross` decimal(15,2) DEFAULT NULL,
-`freeShippingAmountGross` decimal(15,2) DEFAULT NULL,
-`freeShippingQuantity` int(10) UNSIGNED DEFAULT NULL,
-`freeShippingWeight` decimal(15,3) DEFAULT NULL,
-`etaMinDays` int(10) UNSIGNED DEFAULT NULL,
-`etaMaxDays` int(10) UNSIGNED DEFAULT NULL,
-`countries` varchar(255) DEFAULT NULL,
-`regions` varchar(255) DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
----
-
---
--- Table structure for table `seller_shipping_method_exclusions`
---
-
-CREATE TABLE `seller_shipping_method_exclusions` (
-`id` int(10) UNSIGNED NOT NULL,
-`sellerShippingMethodId` int(10) UNSIGNED NOT NULL,
-`productId` int(10) UNSIGNED NOT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
----
-
---
--- Table structure for table `users`
---
-
-CREATE TABLE `users` (
-`id` int(11) NOT NULL,
-`email` varchar(255) NOT NULL,
-`passwordHash` text NOT NULL,
-`role` enum('ADMIN','SELLER','CLIENT') NOT NULL,
-`isActive` tinyint(1) DEFAULT 1,
-`createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
-`updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
----
-
---
--- Table structure for table `user_activation_tokens`
---
-
-CREATE TABLE `user_activation_tokens` (
-`id` int(10) UNSIGNED NOT NULL,
-`userId` int(11) NOT NULL,
-`tokenHash` char(64) NOT NULL,
-`expiresAt` datetime NOT NULL,
-`usedAt` datetime DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
----
-
---
--- Table structure for table `user_password_reset_tokens`
---
-
-CREATE TABLE `user_password_reset_tokens` (
-`id` int(10) UNSIGNED NOT NULL,
-`userId` int(11) NOT NULL,
-`tokenHash` char(64) NOT NULL,
-`expiresAt` datetime NOT NULL,
-`usedAt` datetime DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp()
+`id` int UNSIGNED NOT NULL,
+`sellerId` int NOT NULL,
+`ruleType` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+`name` varchar(180) COLLATE utf8mb4_general_ci NOT NULL,
+`isActive` tinyint(1) NOT NULL DEFAULT '1',
+`configJson` longtext COLLATE utf8mb4_general_ci,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -575,18 +402,191 @@ CREATE TABLE `user_password_reset_tokens` (
 --
 
 CREATE TABLE `seller_financial_entries` (
-`id` int(10) UNSIGNED NOT NULL,
-`sellerId` int(10) UNSIGNED NOT NULL,
-`orderId` int(10) UNSIGNED DEFAULT NULL,
-`orderGroupId` int(10) UNSIGNED DEFAULT NULL,
-`type` enum('order_income','order_refund','manual_adjustment') NOT NULL DEFAULT 'order_income',
+`id` int UNSIGNED NOT NULL,
+`sellerId` int NOT NULL,
+`orderId` int UNSIGNED DEFAULT NULL,
+`orderGroupId` int UNSIGNED DEFAULT NULL,
+`type` enum('order_income','order_refund','manual_adjustment') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'order_income',
 `eventDate` datetime NOT NULL,
-`settlementMonth` char(7) NOT NULL,
-`currency` varchar(10) NOT NULL DEFAULT 'PLN',
-`grossAmount` decimal(15,2) NOT NULL DEFAULT 0.00,
-`notes` varchar(255) DEFAULT NULL,
-`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+`settlementMonth` char(7) COLLATE utf8mb4_general_ci NOT NULL,
+`currency` varchar(10) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'PLN',
+`grossAmount` decimal(15,2) NOT NULL DEFAULT '0.00',
+`notes` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_holidays`
+--
+
+CREATE TABLE `seller_holidays` (
+`id` int UNSIGNED NOT NULL,
+`sellerId` int NOT NULL,
+`holidayDate` date NOT NULL,
+`name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_return_policies`
+--
+
+CREATE TABLE `seller_return_policies` (
+`id` int UNSIGNED NOT NULL,
+`sellerId` int NOT NULL,
+`acceptsOnlineReturns` tinyint(1) NOT NULL DEFAULT '0',
+`returnWindowDays` int UNSIGNED DEFAULT NULL,
+`returnsAddressLine1` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`returnsAddressLine2` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`returnsCity` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`returnsPostalCode` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`returnsCountryCode` varchar(2) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'PL',
+`returnsInstruction` text COLLATE utf8mb4_general_ci,
+`returnShippingPaidBy` enum('client','seller') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'client',
+`hasSeparateComplaintProcess` tinyint(1) NOT NULL DEFAULT '0',
+`complaintInstruction` text COLLATE utf8mb4_general_ci,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_sales_settings`
+--
+
+CREATE TABLE `seller_sales_settings` (
+`id` int UNSIGNED NOT NULL,
+`sellerId` int NOT NULL,
+`freeShippingThresholdGross` decimal(15,2) DEFAULT NULL,
+`upsellMessageText` text COLLATE utf8mb4_general_ci,
+`minimumOrderValueGross` decimal(15,2) DEFAULT NULL,
+`crossSellProductIds` text COLLATE utf8mb4_general_ci,
+`bundleOffersText` text COLLATE utf8mb4_general_ci,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_settings`
+--
+
+CREATE TABLE `seller_settings` (
+`id` int UNSIGNED NOT NULL,
+`sellerId` int NOT NULL,
+`orderSupportEmail` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`orderSupportPhone` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`returnsEmail` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`returnsPhone` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`defaultOrderPreparationDays` int UNSIGNED DEFAULT NULL,
+`shippingWorkdays` varchar(32) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`sameDayShippingCutoffTime` time DEFAULT NULL,
+`vacationModeEnabled` tinyint(1) NOT NULL DEFAULT '0',
+`vacationModeMessage` text COLLATE utf8mb4_general_ci,
+`defaultMarkupPercent` decimal(8,2) DEFAULT NULL,
+`minimumSalePriceGross` decimal(15,2) DEFAULT NULL,
+`priceRoundingMode` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'none',
+`defaultVatRate` decimal(5,2) DEFAULT NULL,
+`defaultUnit` varchar(10) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pcs',
+`customerResponseTimeText` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`emailSignature` text COLLATE utf8mb4_general_ci,
+`emailFooter` text COLLATE utf8mb4_general_ci,
+`payoutAccountHolder` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`payoutBankAccount` varchar(34) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`payoutBankName` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_shipping_methods`
+--
+
+CREATE TABLE `seller_shipping_methods` (
+`id` int UNSIGNED NOT NULL,
+`sellerId` int NOT NULL,
+`name` varchar(120) COLLATE utf8mb4_general_ci NOT NULL,
+`isActive` tinyint(1) NOT NULL DEFAULT '1',
+`priceNet` decimal(15,2) DEFAULT NULL,
+`priceGross` decimal(15,2) DEFAULT NULL,
+`freeShippingAmountGross` decimal(15,2) DEFAULT NULL,
+`freeShippingQuantity` int UNSIGNED DEFAULT NULL,
+`freeShippingWeight` decimal(15,3) DEFAULT NULL,
+`etaMinDays` int UNSIGNED DEFAULT NULL,
+`etaMaxDays` int UNSIGNED DEFAULT NULL,
+`countries` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`regions` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_shipping_method_exclusions`
+--
+
+CREATE TABLE `seller_shipping_method_exclusions` (
+`id` int UNSIGNED NOT NULL,
+`sellerShippingMethodId` int UNSIGNED NOT NULL,
+`productId` int UNSIGNED NOT NULL,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+`id` int NOT NULL,
+`email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+`passwordHash` text COLLATE utf8mb4_general_ci NOT NULL,
+`role` enum('ADMIN','SELLER','CLIENT') COLLATE utf8mb4_general_ci NOT NULL,
+`isActive` tinyint(1) DEFAULT '1',
+`createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `user_activation_tokens`
+--
+
+CREATE TABLE `user_activation_tokens` (
+`id` int UNSIGNED NOT NULL,
+`userId` int NOT NULL,
+`tokenHash` char(64) COLLATE utf8mb4_general_ci NOT NULL,
+`expiresAt` datetime NOT NULL,
+`usedAt` datetime DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `user_password_reset_tokens`
+--
+
+CREATE TABLE `user_password_reset_tokens` (
+`id` int UNSIGNED NOT NULL,
+`userId` int NOT NULL,
+`tokenHash` char(64) COLLATE utf8mb4_general_ci NOT NULL,
+`expiresAt` datetime NOT NULL,
+`usedAt` datetime DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -738,6 +738,15 @@ ADD PRIMARY KEY (`id`),
 ADD KEY `idxSellerDiscountRulesSellerId` (`sellerId`);
 
 --
+-- Indexes for table `seller_financial_entries`
+--
+ALTER TABLE `seller_financial_entries`
+ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `uniqSellerFinancialEntriesOrderType` (`orderId`,`type`),
+ADD KEY `idxSellerFinancialEntriesSellerDate` (`sellerId`,`eventDate`),
+ADD KEY `idxSellerFinancialEntriesSellerMonth` (`sellerId`,`settlementMonth`);
+
+--
 -- Indexes for table `seller_holidays`
 --
 ALTER TABLE `seller_holidays`
@@ -804,15 +813,6 @@ ADD UNIQUE KEY `uq_uprt_token_hash` (`tokenHash`),
 ADD KEY `idx_uprt_user_id` (`userId`);
 
 --
--- Indexes for table `seller_financial_entries`
---
-ALTER TABLE `seller_financial_entries`
-ADD PRIMARY KEY (`id`),
-ADD UNIQUE KEY `uniqSellerFinancialEntriesOrderType` (`orderId`,`type`),
-ADD KEY `idxSellerFinancialEntriesSellerDate` (`sellerId`,`eventDate`),
-ADD KEY `idxSellerFinancialEntriesSellerMonth` (`sellerId`,`settlementMonth`);
-
---
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -820,169 +820,169 @@ ADD KEY `idxSellerFinancialEntriesSellerMonth` (`sellerId`,`settlementMonth`);
 -- AUTO_INCREMENT for table `carts`
 --
 ALTER TABLE `carts`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `cart_items`
 --
 ALTER TABLE `cart_items`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `cart_shipments`
 --
 ALTER TABLE `cart_shipments`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `categories_image`
 --
 ALTER TABLE `categories_image`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `clients`
 --
 ALTER TABLE `clients`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `clients_delivery_address`
 --
 ALTER TABLE `clients_delivery_address`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `marketing_campaigns`
 --
 ALTER TABLE `marketing_campaigns`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `marketing_campaign_items`
 --
 ALTER TABLE `marketing_campaign_items`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `order_items`
 --
 ALTER TABLE `order_items`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `products_image`
 --
 ALTER TABLE `products_image`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `product_categories`
 --
 ALTER TABLE `product_categories`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `product_variants`
 --
 ALTER TABLE `product_variants`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `sellers`
 --
 ALTER TABLE `sellers`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `seller_business_hours`
 --
 ALTER TABLE `seller_business_hours`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `seller_discount_rules`
 --
 ALTER TABLE `seller_discount_rules`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `seller_holidays`
---
-ALTER TABLE `seller_holidays`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `seller_return_policies`
---
-ALTER TABLE `seller_return_policies`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `seller_sales_settings`
---
-ALTER TABLE `seller_sales_settings`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `seller_settings`
---
-ALTER TABLE `seller_settings`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `seller_shipping_methods`
---
-ALTER TABLE `seller_shipping_methods`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `seller_shipping_method_exclusions`
---
-ALTER TABLE `seller_shipping_method_exclusions`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `users`
---
-ALTER TABLE `users`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `user_activation_tokens`
---
-ALTER TABLE `user_activation_tokens`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `user_password_reset_tokens`
---
-ALTER TABLE `user_password_reset_tokens`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `seller_financial_entries`
 --
 ALTER TABLE `seller_financial_entries`
-MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_holidays`
+--
+ALTER TABLE `seller_holidays`
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_return_policies`
+--
+ALTER TABLE `seller_return_policies`
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_sales_settings`
+--
+ALTER TABLE `seller_sales_settings`
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_settings`
+--
+ALTER TABLE `seller_settings`
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_shipping_methods`
+--
+ALTER TABLE `seller_shipping_methods`
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `seller_shipping_method_exclusions`
+--
+ALTER TABLE `seller_shipping_method_exclusions`
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `user_activation_tokens`
+--
+ALTER TABLE `user_activation_tokens`
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `user_password_reset_tokens`
+--
+ALTER TABLE `user_password_reset_tokens`
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables
@@ -1000,7 +1000,7 @@ ADD CONSTRAINT `fk_cart_items_variant` FOREIGN KEY (`variantId`) REFERENCES `pro
 ALTER TABLE `cart_shipments`
 ADD CONSTRAINT `fk_cart_shipments_cart` FOREIGN KEY (`cartId`) REFERENCES `carts` (`id`) ON DELETE CASCADE,
 ADD CONSTRAINT `fk_cart_shipments_delivery_address` FOREIGN KEY (`deliveryAddressId`) REFERENCES `clients_delivery_address` (`id`) ON DELETE SET NULL,
-ADD CONSTRAINT `fk_cart_shipments_seller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`);
+ADD CONSTRAINT `fk_cart_shipments_seller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE RESTRICT;
 
 --
 -- Constraints for table `categories`
@@ -1064,6 +1064,13 @@ ALTER TABLE `seller_discount_rules`
 ADD CONSTRAINT `fkSellerDiscountRulesSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `seller_financial_entries`
+--
+ALTER TABLE `seller_financial_entries`
+ADD CONSTRAINT `fkSellerFinancialEntriesOrder` FOREIGN KEY (`orderId`) REFERENCES `orders` (`id`) ON DELETE SET NULL,
+ADD CONSTRAINT `fkSellerFinancialEntriesSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `seller_holidays`
 --
 ALTER TABLE `seller_holidays`
@@ -1099,13 +1106,6 @@ ADD CONSTRAINT `fkSellerShippingMethodsSeller` FOREIGN KEY (`sellerId`) REFERENC
 ALTER TABLE `seller_shipping_method_exclusions`
 ADD CONSTRAINT `fkSellerShippingMethodExclusionsMethod` FOREIGN KEY (`sellerShippingMethodId`) REFERENCES `seller_shipping_methods` (`id`) ON DELETE CASCADE,
 ADD CONSTRAINT `fkSellerShippingMethodExclusionsProduct` FOREIGN KEY (`productId`) REFERENCES `products` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `seller_financial_entries`
---
-ALTER TABLE `seller_financial_entries`
-ADD CONSTRAINT `fkSellerFinancialEntriesSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE,
-ADD CONSTRAINT `fkSellerFinancialEntriesOrder` FOREIGN KEY (`orderId`) REFERENCES `orders` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `user_activation_tokens`

@@ -5,12 +5,13 @@ import './index.scss'
 import App from './App.jsx'
 import LoginPage from './pages/login'
 import AuthProvider from './providers/authProvider'
+import { ConfigProvider } from './providers/configProvider'
 import { NotificationProvider } from './components/GlobalNotification/index.js'
 
 createRoot(document.getElementById('root')).render(
   <NotificationProvider>
     <BrowserRouter>
-      <AuthProvider loggedChildren={<App />} noLoggedChildren={<LoginPage />} />
+      <AuthProvider loggedChildren={<ConfigProvider><App /></ConfigProvider>} noLoggedChildren={<LoginPage />} />
     </BrowserRouter>
   </NotificationProvider>,
 )

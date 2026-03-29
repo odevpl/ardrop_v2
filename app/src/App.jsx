@@ -98,7 +98,7 @@ function App() {
 
   const shouldForceAccountPage = useMemo(() => {
     if (isProfileComplete) return false;
-    const allowedPaths = ["/klient", "/konto"];
+    const allowedPaths = ["/klient", "/konto", "/koszyk", "/adresy-dostawy"];
     return !allowedPaths.includes(location.pathname);
   }, [isProfileComplete, location.pathname]);
 

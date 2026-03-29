@@ -1,38 +1,16 @@
-import FormikWrapper from 'components/FormikWrapper'
+import { useNotification } from 'components/GlobalNotification'
 import { useNavigate } from 'react-router-dom'
+import OrdersService from 'services/orders'
+import CustomerDeliverySection from './components/CustomerDeliverySection'
+import DeliveryAddressSection from './components/DeliveryAddressSection'
+import OrderDetailsSection from './components/OrderDetailsSection'
+import OrderItemsSection from './components/OrderItemsSection'
+import { formatPrice } from './components/OrderView.utils'
 import './OrderView.scss'
-
-const formatPrice = (value) => `${Number(value || 0).toFixed(2)} zl`
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
-
-const resolveThumbUrl = (item) => {
-  const images = Array.isArray(item?.productSnapshot?.images) ? item.productSnapshot.images : []
-  const main = images.find((image) => Number(image?.isMain) === 1) || images[0]
-  if (!main?.fileName) return ''
-  return `${apiBaseUrl}/uploads/images/thumbs/${main.fileName.replace(/\.[^.]+$/, '.jpg')}`
-}
-
-const formatDateTime = (rawDate) => {
-  if (!rawDate) return '-'
-  const date = new Date(rawDate)
-  if (Number.isNaN(date.getTime())) return rawDate
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear()
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${day}.${month}.${year} ${hours}:${minutes}`
-}
-
-const formatEta = (from, to) => {
-  if (from && to) return `${formatDateTime(from)} - ${formatDateTime(to)}`
-  if (from) return formatDateTime(from)
-  if (to) return formatDateTime(to)
-  return 'Do ustalenia'
-}
 
 const OrderView = ({ payload }) => {
   const navigate = useNavigate()
+  const notification = useNotification()
   const order = payload?.data || payload?.order || payload || {}
   const items = Array.isArray(order?.items) ? order.items : []
   const address = order?.deliveryAddressSnapshot || null
@@ -40,6 +18,25 @@ const OrderView = ({ payload }) => {
     (sum, item) => sum + Number(item.grossPrice || 0) * Number(item.quantity || 0),
     0,
   )
+
+  const handleStatusSubmit = async (values, { setSubmitting }, onClose) => {
+    const response = await OrdersService.updateOrder({
+      id: order.id,
+      payload: values,
+    })
+
+    if (response?.status && response.status >= 400) {
+      notification.error(response?.data?.error || 'Nie udalo sie zapisac zmian')
+      setSubmitting(false)
+      return
+    }
+
+    notification.success('Zamowienie zostalo zaktualizowane')
+    if (typeof onClose === 'function') {
+      onClose()
+    }
+    window.location.reload()
+  }
 
   return (
     <section className="orderViewModule">
@@ -49,108 +46,10 @@ const OrderView = ({ payload }) => {
 
       <div className="orderViewLayout">
         <div className="orderViewMainColumn">
-          <FormikWrapper initialValues={{}} onSubmit={() => {}}>
-            <div className="orderViewCard">
-              <h2>Dane zamowienia</h2>
-              <div className="orderViewInfoGrid">
-                <span>Numer zamowienia</span>
-                <span>#{order?.id || '-'}</span>
-                <span>ID grupy</span>
-                <span>{order?.orderGroupId || '-'}</span>
-                <span>Status</span>
-                <span>{order?.status || '-'}</span>
-                <span>Status platnosci</span>
-                <span>{order?.paymentStatus || '-'}</span>
-                <span>Data utworzenia</span>
-                <span>{formatDateTime(order?.createdAt)}</span>
-              </div>
-            </div>
-
-            <div className="orderViewCard">
-              <h2>Dostawa klienta</h2>
-              <div className="orderViewInfoGrid">
-                <span>Metoda dostawy</span>
-                <span>{order?.shippingMethodName || 'Do ustalenia'}</span>
-                <span>Przyblizony termin</span>
-                <span>{formatEta(order?.estimatedDeliveryFrom, order?.estimatedDeliveryTo)}</span>
-                <span>Koszt dostawy</span>
-                <span>{formatPrice(order?.totalShipping)}</span>
-              </div>
-              {order?.clientNote ? (
-                <div className="orderViewNoteBox">
-                  <p className="orderViewNoteTitle">Notatka klienta</p>
-                  <p className="orderViewNoteText">{order.clientNote}</p>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="orderViewCard">
-              <h2>Adres dostawy</h2>
-              {address ? (
-                <div className="orderViewAddressBox">
-                  <p>
-                    <strong>{address.recipientName || '-'}</strong>
-                  </p>
-                  {address.phone ? <p>{address.phone}</p> : null}
-                  {address.label ? <p>{address.label}</p> : null}
-                  <p>{address.addressLine1 || '-'}</p>
-                  {address.addressLine2 ? <p>{address.addressLine2}</p> : null}
-                  <p>
-                    {address.postalCode || '-'} {address.city || '-'}, {address.countryCode || 'PL'}
-                  </p>
-                </div>
-              ) : (
-                <p className="orderViewMuted">Brak snapshotu adresu dostawy w tym zamowieniu.</p>
-              )}
-            </div>
-
-            <div className="orderViewCard">
-              <h2>Pozycje</h2>
-              <div className="orderItemsTableWrap">
-                <table className="orderItemsTable">
-                  <thead>
-                    <tr>
-                      <th>Produkt</th>
-                      <th>Ilosc</th>
-                      <th>Netto</th>
-                      <th>Brutto</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item) => {
-                      const thumbUrl = resolveThumbUrl(item)
-                      return (
-                        <tr key={item.id}>
-                          <td>
-                            <div className="orderItemProductCell">
-                              <div className="orderItemThumbWrap">
-                                {thumbUrl ? (
-                                  <img src={thumbUrl} alt={item?.productSnapshot?.name || 'Produkt'} />
-                                ) : (
-                                  <div className="orderItemThumbPlaceholder">Brak</div>
-                                )}
-                              </div>
-                              <div>
-                                <p className="orderItemProductName">
-                                  {item?.productSnapshot?.name || `Produkt #${item.productId}`}
-                                </p>
-                                {item?.variantNameSnapshot ? (
-                                  <p className="orderItemProductVariant">{item.variantNameSnapshot}</p>
-                                ) : null}
-                              </div>
-                            </div>
-                          </td>
-                          <td>{item.quantity}</td>
-                          <td>{formatPrice(item.netPrice * item.quantity)}</td>
-                          <td>{formatPrice(item.grossPrice * item.quantity)}</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </FormikWrapper>
+          <OrderDetailsSection order={order} onStatusSubmit={handleStatusSubmit} />
+          <CustomerDeliverySection order={order} />
+          <DeliveryAddressSection address={address} />
+          <OrderItemsSection items={items} />
         </div>
 
         <aside className="orderViewSummaryColumn">
@@ -175,7 +74,7 @@ const OrderView = ({ payload }) => {
           </section>
 
           <section className="orderViewSummaryCard">
-            <button type="button" className="orderViewBackButton" onClick={() => navigate(-1)}>
+            <button type="button" className="orderViewGhostButton" onClick={() => navigate(-1)}>
               Wstecz
             </button>
           </section>

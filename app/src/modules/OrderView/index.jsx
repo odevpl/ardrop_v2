@@ -1,5 +1,6 @@
 import FetchWrapper from 'components/FetchWrapper'
 import FormikWrapper from 'components/FormikWrapper'
+import { useConfig } from 'providers/configProvider'
 import { useNavigate } from 'react-router-dom'
 import OrdersService from 'services/orders'
 import './OrderView.scss'
@@ -35,9 +36,16 @@ const formatEta = (from, to) => {
 
 const OrderViewContent = ({ payload }) => {
   const navigate = useNavigate()
+  const { config } = useConfig()
   const order = payload?.data || payload?.order || payload || {}
   const items = Array.isArray(order?.items) ? order.items : []
   const address = order?.deliveryAddressSnapshot || null
+  const statusLabel =
+    config?.orders?.statuses?.find((option) => option.value === order?.status)?.label || order?.status || '-'
+  const paymentStatusLabel =
+    config?.orders?.paymentStatuses?.find((option) => option.value === order?.paymentStatus)?.label ||
+    order?.paymentStatus ||
+    '-'
   const orderTotalFromItems = items.reduce(
     (sum, item) => sum + Number(item.grossPrice || 0) * Number(item.quantity || 0),
     0,
@@ -62,9 +70,9 @@ const OrderViewContent = ({ payload }) => {
                 <span>ID grupy zakupu</span>
                 <span>{order?.orderGroupId || '-'}</span>
                 <span>Status</span>
-                <span>{order?.status || '-'}</span>
+                <span>{statusLabel}</span>
                 <span>Status platnosci</span>
-                <span>{order?.paymentStatus || '-'}</span>
+                <span>{paymentStatusLabel}</span>
                 <span>Data utworzenia</span>
                 <span>{formatDateTime(order?.createdAt)}</span>
                 <span>Sprzedawca</span>

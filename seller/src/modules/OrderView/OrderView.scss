@@ -33,17 +33,6 @@
   font-size: 1.05rem;
 }
 
-.orderViewInfoGrid {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 6px 18px;
-}
-
-.orderViewMuted {
-  color: #4b6375;
-  margin: 0 0 10px;
-}
-
 .orderViewAddressBox,
 .orderViewNoteBox {
   border: 1px solid #d7e7f9;
@@ -61,31 +50,22 @@
   font-weight: 700;
 }
 
-.orderViewItemsList {
+.orderViewControls {
   display: grid;
+  gap: 8px;
 }
 
-.orderViewItemRow {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  border-bottom: 1px solid #e7f0fb;
-  padding: 10px 0;
+.orderViewControls label {
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
-.orderViewItemName {
-  margin: 0;
-  font-weight: 700;
-}
-
-.orderViewItemSub {
-  margin: 4px 0 0;
-  color: #4b6375;
-  font-size: 0.92rem;
-}
-
-.orderViewItemPrice {
-  font-weight: 700;
+.orderViewControls select {
+  border: 1px solid #0a64c9;
+  border-radius: 8px;
+  height: 36px;
+  padding: 0 10px;
+  background: #ffffff;
 }
 
 .orderViewSummaryColumn {
@@ -121,6 +101,60 @@
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
+}
+
+.orderViewActions {
+  display: grid;
+  gap: 8px;
+}
+
+.orderDetailsChangeButton {
+  border: 0;
+  background: transparent;
+  color: #0a64c9;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.orderStatusPopupTitle {
+  margin: 0 0 16px;
+  color: #071a33;
+  font-size: 1.1rem;
+}
+
+.orderStatusPopupActions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.orderViewPrimaryButton,
+.orderViewGhostButton {
+  width: 100%;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.orderViewPrimaryButton {
+  border: 0;
+  background: #0a64c9;
+  color: #ffffff;
+}
+
+.orderViewPrimaryButton:disabled,
+.orderViewGhostButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.orderViewGhostButton {
+  border: 1px solid #0a64c9;
+  background: #ffffff;
+  color: #0a64c9;
 }
 
 .orderItemsTableWrap {
@@ -200,10 +234,5 @@
 @media (max-width: 786px) {
   .orderViewModule {
     width: 100%;
-  }
-
-  .orderViewInfoGrid {
-    grid-template-columns: 1fr;
-    gap: 4px;
   }
 }

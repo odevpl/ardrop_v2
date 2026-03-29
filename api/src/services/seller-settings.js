@@ -81,13 +81,6 @@ const SHIPPING_METHODS_SELECT = [
   "updatedAt",
 ];
 
-const SHIPPING_EXCLUSIONS_SELECT = [
-  "id",
-  "sellerShippingMethodId",
-  "productId",
-  "createdAt",
-];
-
 const RETURN_POLICY_SELECT = [
   "id",
   "sellerId",
@@ -252,17 +245,7 @@ const parseCsvStrings = (value) =>
     .map((item) => String(item || "").trim())
     .filter(Boolean);
 
-const buildShippingMethods = (methodsRows, exclusionsRows) => {
-  const exclusionsByMethodId = new Map();
-
-  (exclusionsRows || []).forEach((row) => {
-    const methodId = Number(row.sellerShippingMethodId);
-    if (!exclusionsByMethodId.has(methodId)) {
-      exclusionsByMethodId.set(methodId, []);
-    }
-    exclusionsByMethodId.get(methodId).push(Number(row.productId));
-  });
-
+const buildShippingMethods = (methodsRows) => {
   return (methodsRows || []).map((row) => ({
     id: Number(row.id),
     sellerId: Number(row.sellerId),
@@ -287,10 +270,90 @@ const buildShippingMethods = (methodsRows, exclusionsRows) => {
     etaMaxDays: row.etaMaxDays === null || row.etaMaxDays === undefined ? null : Number(row.etaMaxDays),
     countries: parseCsvStrings(row.countries),
     regions: parseCsvStrings(row.regions),
-    excludedProductIds: exclusionsByMethodId.get(Number(row.id)) || [],
     createdAt: row.createdAt || null,
     updatedAt: row.updatedAt || null,
   }));
+};
+
+const normalizeShippingMethod = (method) => {
+  const name = normalizeNullableString(method?.name);
+  if (!name) {
+    const error = new Error("Each shipping method requires name");
+    error.status = 400;
+    throw error;
+  }
+
+  const normalizeOptionalShippingNumber = (value, fieldName) => {
+    if (value === undefined || value === null || String(value).trim() === "") return null;
+    const normalized = Number(value);
+    if (!Number.isFinite(normalized) || normalized < 0) {
+      const error = new Error(`${fieldName} must be a non-negative number`);
+      error.status = 400;
+      throw error;
+    }
+    return normalized;
+  };
+
+  const normalizeOptionalShippingInteger = (value, fieldName) => {
+    if (value === undefined || value === null || String(value).trim() === "") return null;
+    const normalized = Number(value);
+    if (!Number.isInteger(normalized) || normalized < 0) {
+      const error = new Error(`${fieldName} must be a non-negative integer`);
+      error.status = 400;
+      throw error;
+    }
+    return normalized;
+  };
+
+  const etaMinDays = normalizeOptionalShippingInteger(method?.etaMinDays, "etaMinDays");
+  const etaMaxDays = normalizeOptionalShippingInteger(method?.etaMaxDays, "etaMaxDays");
+  if (etaMinDays !== null && etaMaxDays !== null && etaMinDays > etaMaxDays) {
+    const error = new Error("etaMinDays cannot be greater than etaMaxDays");
+    error.status = 400;
+    throw error;
+  }
+
+  return {
+    name,
+    isActive: Boolean(method?.isActive),
+    priceNet: normalizeOptionalShippingNumber(method?.priceNet, "priceNet"),
+    priceGross: normalizeOptionalShippingNumber(method?.priceGross, "priceGross"),
+    freeShippingAmountGross: normalizeOptionalShippingNumber(
+      method?.freeShippingAmountGross,
+      "freeShippingAmountGross",
+    ),
+    freeShippingQuantity: normalizeOptionalShippingInteger(
+      method?.freeShippingQuantity,
+      "freeShippingQuantity",
+    ),
+    freeShippingWeight: normalizeOptionalShippingNumber(
+      method?.freeShippingWeight,
+      "freeShippingWeight",
+    ),
+    etaMinDays,
+    etaMaxDays,
+    countries: parseCsvStrings(Array.isArray(method?.countries) ? method.countries.join(",") : method?.countries),
+    regions: parseCsvStrings(Array.isArray(method?.regions) ? method.regions.join(",") : method?.regions),
+  };
+};
+
+const insertShippingMethod = async ({ trx, sellerId, method }) => {
+  const [id] = await trx("seller_shipping_methods").insert({
+    sellerId,
+    name: method.name,
+    isActive: method.isActive,
+    priceNet: method.priceNet,
+    priceGross: method.priceGross,
+    freeShippingAmountGross: method.freeShippingAmountGross,
+    freeShippingQuantity: method.freeShippingQuantity,
+    freeShippingWeight: method.freeShippingWeight,
+    etaMinDays: method.etaMinDays,
+    etaMaxDays: method.etaMaxDays,
+    countries: method.countries.join(","),
+    regions: method.regions.join(","),
+  });
+
+  return id;
 };
 
 const mapReturnPolicy = (row, sellerId) => ({
@@ -425,7 +488,6 @@ const getSellerSettings = async ({ userId }) => {
   const [
     holidaysRows,
     shippingMethodsRows,
-    shippingExclusionsRows,
     returnPolicyRow,
     discountRulesRows,
     salesSettingsRow,
@@ -438,16 +500,6 @@ const getSellerSettings = async ({ userId }) => {
       .select(SHIPPING_METHODS_SELECT)
       .where({ sellerId: seller.id })
       .orderBy("id", "asc"),
-    db("seller_shipping_method_exclusions as ex")
-      .innerJoin("seller_shipping_methods as sm", "sm.id", "ex.sellerShippingMethodId")
-      .select(
-        "ex.id",
-        "ex.sellerShippingMethodId",
-        "ex.productId",
-        "ex.createdAt",
-      )
-      .where("sm.sellerId", seller.id)
-      .orderBy("ex.id", "asc"),
     db("seller_return_policies")
       .select(RETURN_POLICY_SELECT)
       .where({ sellerId: seller.id })
@@ -468,11 +520,117 @@ const getSellerSettings = async ({ userId }) => {
     fulfillment: buildFulfillment(settingsRow),
     businessHours: buildWorkweekHours(businessHoursRows, seller.id),
     holidays: holidaysRows.map(mapHolidayRow),
-    shippingMethods: buildShippingMethods(shippingMethodsRows, shippingExclusionsRows),
+    shippingMethods: buildShippingMethods(shippingMethodsRows),
     returnPolicy: mapReturnPolicy(returnPolicyRow, seller.id),
     discountRules: discountRulesRows.map(mapDiscountRule),
     salesSettings: mapSalesSettings(salesSettingsRow, seller.id),
   };
+};
+
+const getShippingMethods = async ({ userId }) => {
+  const seller = await getSellerByUserId(userId);
+  const rows = await db("seller_shipping_methods")
+    .select(SHIPPING_METHODS_SELECT)
+    .where({ sellerId: seller.id })
+    .orderBy("id", "asc");
+
+  return buildShippingMethods(rows);
+};
+
+const getShippingMethodById = async ({ userId, shippingMethodId }) => {
+  const seller = await getSellerByUserId(userId);
+  const row = await db("seller_shipping_methods")
+    .select(SHIPPING_METHODS_SELECT)
+    .where({
+      sellerId: seller.id,
+      id: Number(shippingMethodId),
+    })
+    .first();
+
+  if (!row) {
+    const error = new Error("Shipping method not found");
+    error.status = 404;
+    throw error;
+  }
+
+  return buildShippingMethods([row])[0];
+};
+
+const createShippingMethod = async ({ userId, payload = {} }) => {
+  return db.transaction(async (trx) => {
+    const seller = await getSellerByUserId(userId, trx);
+    const normalizedMethod = normalizeShippingMethod(payload);
+    const insertedId = await insertShippingMethod({
+      trx,
+      sellerId: Number(seller.id),
+      method: normalizedMethod,
+    });
+
+    const row = await trx("seller_shipping_methods")
+      .select(SHIPPING_METHODS_SELECT)
+      .where({ sellerId: Number(seller.id), id: Number(insertedId) })
+      .first();
+
+    return buildShippingMethods([row])[0];
+  });
+};
+
+const updateShippingMethodById = async ({ userId, shippingMethodId, payload = {} }) => {
+  return db.transaction(async (trx) => {
+    const seller = await getSellerByUserId(userId, trx);
+    const normalizedMethod = normalizeShippingMethod(payload);
+    const existing = await trx("seller_shipping_methods")
+      .select("id")
+      .where({ sellerId: Number(seller.id), id: Number(shippingMethodId) })
+      .first();
+
+    if (!existing) {
+      const error = new Error("Shipping method not found");
+      error.status = 404;
+      throw error;
+    }
+
+    await trx("seller_shipping_methods")
+      .where({ sellerId: Number(seller.id), id: Number(shippingMethodId) })
+      .update({
+        name: normalizedMethod.name,
+        isActive: normalizedMethod.isActive,
+        priceNet: normalizedMethod.priceNet,
+        priceGross: normalizedMethod.priceGross,
+        freeShippingAmountGross: normalizedMethod.freeShippingAmountGross,
+        freeShippingQuantity: normalizedMethod.freeShippingQuantity,
+        freeShippingWeight: normalizedMethod.freeShippingWeight,
+        etaMinDays: normalizedMethod.etaMinDays,
+        etaMaxDays: normalizedMethod.etaMaxDays,
+        countries: normalizedMethod.countries.join(","),
+        regions: normalizedMethod.regions.join(","),
+        updatedAt: trx.fn.now(),
+      });
+
+    const row = await trx("seller_shipping_methods")
+      .select(SHIPPING_METHODS_SELECT)
+      .where({ sellerId: Number(seller.id), id: Number(shippingMethodId) })
+      .first();
+
+    return buildShippingMethods([row])[0];
+  });
+};
+
+const deleteShippingMethodById = async ({ userId, shippingMethodId }) => {
+  return db.transaction(async (trx) => {
+    const seller = await getSellerByUserId(userId, trx);
+    const deletedCount = await trx("seller_shipping_methods")
+      .where({ sellerId: Number(seller.id), id: Number(shippingMethodId) })
+      .del();
+
+    if (!deletedCount) {
+      const error = new Error("Shipping method not found");
+      error.status = 404;
+      throw error;
+    }
+
+    return { success: true, id: Number(shippingMethodId) };
+  });
 };
 
 const updateSellerSettings = async ({ userId, payload = {} }) => {
@@ -766,126 +924,11 @@ const updateSellerSettings = async ({ userId, payload = {} }) => {
         throw error;
       }
 
-      const normalizedMethods = payload.shippingMethods.map((method) => {
-        const name = normalizeNullableString(method?.name);
-        if (!name) {
-          const error = new Error("Each shipping method requires name");
-          error.status = 400;
-          throw error;
-        }
-
-        const normalizeOptionalNumber = (value, fieldName) => {
-          if (value === undefined || value === null || String(value).trim() === "") return null;
-          const normalized = Number(value);
-          if (!Number.isFinite(normalized) || normalized < 0) {
-            const error = new Error(`${fieldName} must be a non-negative number`);
-            error.status = 400;
-            throw error;
-          }
-          return normalized;
-        };
-
-        const normalizeOptionalInteger = (value, fieldName) => {
-          if (value === undefined || value === null || String(value).trim() === "") return null;
-          const normalized = Number(value);
-          if (!Number.isInteger(normalized) || normalized < 0) {
-            const error = new Error(`${fieldName} must be a non-negative integer`);
-            error.status = 400;
-            throw error;
-          }
-          return normalized;
-        };
-
-        const etaMinDays = normalizeOptionalInteger(method?.etaMinDays, "etaMinDays");
-        const etaMaxDays = normalizeOptionalInteger(method?.etaMaxDays, "etaMaxDays");
-        if (etaMinDays !== null && etaMaxDays !== null && etaMinDays > etaMaxDays) {
-          const error = new Error("etaMinDays cannot be greater than etaMaxDays");
-          error.status = 400;
-          throw error;
-        }
-
-        return {
-          name,
-          isActive: Boolean(method?.isActive),
-          priceNet: normalizeOptionalNumber(method?.priceNet, "priceNet"),
-          priceGross: normalizeOptionalNumber(method?.priceGross, "priceGross"),
-          freeShippingAmountGross: normalizeOptionalNumber(
-            method?.freeShippingAmountGross,
-            "freeShippingAmountGross",
-          ),
-          freeShippingQuantity: normalizeOptionalInteger(
-            method?.freeShippingQuantity,
-            "freeShippingQuantity",
-          ),
-          freeShippingWeight: normalizeOptionalNumber(
-            method?.freeShippingWeight,
-            "freeShippingWeight",
-          ),
-          etaMinDays,
-          etaMaxDays,
-          countries: parseCsvStrings(Array.isArray(method?.countries) ? method.countries.join(",") : method?.countries),
-          regions: parseCsvStrings(Array.isArray(method?.regions) ? method.regions.join(",") : method?.regions),
-          excludedProductIds: [...new Set(
-            (Array.isArray(method?.excludedProductIds) ? method.excludedProductIds : [])
-              .map((value) => Number(value))
-              .filter((value) => Number.isInteger(value) && value > 0),
-          )],
-        };
-      });
-
-      const allExcludedProductIds = [...new Set(
-        normalizedMethods.flatMap((method) => method.excludedProductIds),
-      )];
-
-      if (allExcludedProductIds.length > 0) {
-        const existingProducts = await trx("products")
-          .select("id")
-          .where({ sellerId })
-          .whereIn("id", allExcludedProductIds);
-
-        if (existingProducts.length !== allExcludedProductIds.length) {
-          const error = new Error("Some excluded products do not belong to current seller");
-          error.status = 400;
-          throw error;
-        }
-      }
-
-      const existingMethodIds = await trx("seller_shipping_methods")
-        .select("id")
-        .where({ sellerId });
-      const safeExistingMethodIds = existingMethodIds.map((row) => Number(row.id)).filter(Boolean);
-      if (safeExistingMethodIds.length > 0) {
-        await trx("seller_shipping_method_exclusions")
-          .whereIn("sellerShippingMethodId", safeExistingMethodIds)
-          .del();
-      }
+      const normalizedMethods = payload.shippingMethods.map(normalizeShippingMethod);
       await trx("seller_shipping_methods").where({ sellerId }).del();
 
       for (const method of normalizedMethods) {
-        const inserted = await trx("seller_shipping_methods").insert({
-          sellerId,
-          name: method.name,
-          isActive: method.isActive,
-          priceNet: method.priceNet,
-          priceGross: method.priceGross,
-          freeShippingAmountGross: method.freeShippingAmountGross,
-          freeShippingQuantity: method.freeShippingQuantity,
-          freeShippingWeight: method.freeShippingWeight,
-          etaMinDays: method.etaMinDays,
-          etaMaxDays: method.etaMaxDays,
-          countries: method.countries.join(","),
-          regions: method.regions.join(","),
-        });
-
-        const methodId = Array.isArray(inserted) ? inserted[0] : inserted;
-        if (method.excludedProductIds.length > 0) {
-          await trx("seller_shipping_method_exclusions").insert(
-            method.excludedProductIds.map((productId) => ({
-              sellerShippingMethodId: methodId,
-              productId,
-            })),
-          );
-        }
+        await insertShippingMethod({ trx, sellerId, method });
       }
     }
 
@@ -1058,7 +1101,6 @@ const updateSellerSettings = async ({ userId, payload = {} }) => {
       businessHoursRows,
       holidaysRows,
       shippingMethodsRows,
-      shippingExclusionsRows,
       returnPolicyRow,
       discountRulesRows,
       salesSettingsRow,
@@ -1076,16 +1118,6 @@ const updateSellerSettings = async ({ userId, payload = {} }) => {
         .select(SHIPPING_METHODS_SELECT)
         .where({ sellerId })
         .orderBy("id", "asc"),
-      trx("seller_shipping_method_exclusions as ex")
-        .innerJoin("seller_shipping_methods as sm", "sm.id", "ex.sellerShippingMethodId")
-        .select(
-          "ex.id",
-          "ex.sellerShippingMethodId",
-          "ex.productId",
-          "ex.createdAt",
-        )
-        .where("sm.sellerId", sellerId)
-        .orderBy("ex.id", "asc"),
       trx("seller_return_policies")
         .select(RETURN_POLICY_SELECT)
         .where({ sellerId })
@@ -1106,7 +1138,7 @@ const updateSellerSettings = async ({ userId, payload = {} }) => {
       fulfillment: buildFulfillment(settingsRow),
       businessHours: buildWorkweekHours(businessHoursRows, sellerId),
       holidays: holidaysRows.map(mapHolidayRow),
-      shippingMethods: buildShippingMethods(shippingMethodsRows, shippingExclusionsRows),
+      shippingMethods: buildShippingMethods(shippingMethodsRows),
       returnPolicy: mapReturnPolicy(returnPolicyRow, sellerId),
       discountRules: discountRulesRows.map(mapDiscountRule),
       salesSettings: mapSalesSettings(salesSettingsRow, sellerId),
@@ -1117,4 +1149,9 @@ const updateSellerSettings = async ({ userId, payload = {} }) => {
 module.exports = {
   getSellerSettings,
   updateSellerSettings,
+  getShippingMethods,
+  getShippingMethodById,
+  createShippingMethod,
+  updateShippingMethodById,
+  deleteShippingMethodById,
 };

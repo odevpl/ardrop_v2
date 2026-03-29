@@ -15,6 +15,7 @@ function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLookingUpCompany, setIsLookingUpCompany] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [isRegistered, setIsRegistered] = useState(false)
   const notification = useNotification()
   const hasResolvedCompany = Boolean(companyData?.data)
 
@@ -32,7 +33,7 @@ function RegisterPage() {
     const response = await UserService.lookupCompanyByNip(normalizedNip)
     if (response?.status && response.status >= 400) {
       setCompanyData(null)
-      setErrorMessage(response?.data?.error || 'Nie udalo sie pobrac danych firmy po NIP.')
+      setErrorMessage('Wskazany NIP nie istnieje.')
       setIsLookingUpCompany(false)
       return false
     }
@@ -83,11 +84,18 @@ function RegisterPage() {
     }
 
     notification.success('Sprawdz email, aby aktywowac konto.')
+    setIsRegistered(true)
     setIsSubmitting(false)
   }
 
   return (
     <AuthLayout title="Dolacz do nas" subtitle="Zaloz konto klienta">
+      {isRegistered ? (
+        <div className="authSuccessMessage">
+          Twoje konto zostalo utworzone. Sprawdz e-mail, by aktywowac konto i moc korzystac z
+          Ardrop
+        </div>
+      ) : (
       <form onSubmit={handleSubmit}>
         <label className="authLabel" htmlFor="register-nip">
           NIP firmy
@@ -212,6 +220,7 @@ function RegisterPage() {
           <Link to="/login">Masz juz konto? Zaloguj sie</Link>
         </div>
       </form>
+      )}
     </AuthLayout>
   )
 }

@@ -10,19 +10,26 @@ const FormikWrapper = ({
   onReset,
   validationSchema,
   validate,
+  validateOnChange = true,
+  validateOnBlur = true,
 }) => {
   return (
     <div className={className}>
       <Formik
+        enableReinitialize
         validationSchema={validationSchema}
         validate={validate}
         initialValues={initialValues}
         onSubmit={onSubmit}
         onChange={onChange}
         onReset={onReset}
+        validateOnChange={validateOnChange}
+        validateOnBlur={validateOnBlur}
       >
         {(formikProps) => (
-          <Form>{typeof children === "function" ? children(formikProps) : children}</Form>
+          <Form>
+            {typeof children === "function" ? children(formikProps) : children}
+          </Form>
         )}
       </Formik>
     </div>

@@ -325,6 +325,13 @@ const createOrderFromCurrentCart = async (
     for (const [sellerIdKey, sellerItems] of Object.entries(groupedBySeller)) {
       const sellerId = Number(sellerIdKey);
       const shipment = cartShipments.find((item) => Number(item.sellerId) === sellerId) || null;
+      if (!shipment?.shippingMethodId || !shipment?.shippingMethodName) {
+        const error = new Error(
+          `Shipment for seller ${sellerId} does not have an available shipping method`,
+        );
+        error.status = 400;
+        throw error;
+      }
       const resolvedAddress = resolveDeliveryAddressForShipment({
         shipment,
         fallbackDeliveryAddressId: deliveryAddressId,

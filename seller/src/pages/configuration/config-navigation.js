@@ -36,6 +36,12 @@ export const CONFIGURATION_ROUTES = [
     icon: 'fa-wallet',
   },
   {
+    title: 'Dane do przelewow',
+    description: 'Numer rachunku, nazwa banku i odbiorca przelewu dla klienta.',
+    path: '/configuration/payout-settings',
+    icon: 'fa-landmark',
+  },
+  {
     title: 'Alerty i automatyzacje',
     description: 'Alerty operacyjne i automatyczne akcje sprzedazowe.',
     path: '/configuration/automations',

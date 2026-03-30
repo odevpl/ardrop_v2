@@ -16,6 +16,11 @@ export const SIDEBAR_MENU_CONFIG = [
       // },
       //     { title: 'Realizacja', icon: 'fa-boxes-packing', path: '/configuration/fulfillment' },
       { title: "Dostawa", icon: "fa-truck", path: "/configuration/shipping" },
+      {
+        title: "Dane do przelewow",
+        icon: "fa-landmark",
+        path: "/configuration/payout-settings",
+      },
       //     { title: 'Zwroty', icon: 'fa-rotate-left', path: '/configuration/returns' },
       // {
       //   title: "Ceny i rabaty",

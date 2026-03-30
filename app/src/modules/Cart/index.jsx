@@ -187,6 +187,23 @@ const Cart = () => {
         nextMap[sellerId] = Array.isArray(methods) ? methods : [];
       });
       setShippingMethodsBySellerId(nextMap);
+
+      const shipmentNeedingDefault = shipments.find((shipment) => {
+        const shippingMethods = nextMap[shipment.sellerId] || [];
+        return shippingMethods.length > 0 && !shipment.shippingMethodId;
+      });
+
+      if (shipmentNeedingDefault) {
+        const firstMethod = nextMap[shipmentNeedingDefault.sellerId][0];
+        const syncResponse = await CartsService.updateCartShipment({
+          sellerId: shipmentNeedingDefault.sellerId,
+          payload: { shippingMethodId: firstMethod.id },
+        });
+
+        if (!(syncResponse?.status && syncResponse.status >= 400) && isMounted) {
+          applyCartResponse(syncResponse);
+        }
+      }
     };
 
     loadShippingMethods();
@@ -201,6 +218,27 @@ const Cart = () => {
       null,
     [deliveryAddresses, selectedDeliveryAddressId],
   );
+
+  const shipmentsWithoutShippingMethods = useMemo(
+    () =>
+      shipments.filter((shipment) => {
+        const shippingMethods = shippingMethodsBySellerId[shipment.sellerId] || [];
+        return shippingMethods.length === 0;
+      }),
+    [shipments, shippingMethodsBySellerId],
+  );
+
+  const shipmentsWithoutSelectedMethod = useMemo(
+    () =>
+      shipments.filter((shipment) => {
+        const shippingMethods = shippingMethodsBySellerId[shipment.sellerId] || [];
+        return shippingMethods.length > 0 && !shipment.shippingMethodId;
+      }),
+    [shipments, shippingMethodsBySellerId],
+  );
+
+  const isCheckoutBlocked =
+    shipmentsWithoutShippingMethods.length > 0 || shipmentsWithoutSelectedMethod.length > 0;
 
   const isDeliveryAddressValid = useMemo(() => {
     if (!selectedDeliveryAddress) return false;
@@ -308,6 +346,22 @@ const Cart = () => {
   };
 
   const handleSubmitOrder = async () => {
+    if (shipmentsWithoutShippingMethods.length > 0) {
+      const message =
+        "Nie mozna zlozyc zamowienia. Co najmniej jeden sprzedawca nie ma skonfigurowanej dostawy.";
+      setDeliveryError(message);
+      notification.error(message);
+      return;
+    }
+
+    if (shipmentsWithoutSelectedMethod.length > 0) {
+      const message =
+        "Nie mozna zlozyc zamowienia. Wybierz metode dostawy dla kazdego sprzedawcy.";
+      setDeliveryError(message);
+      notification.error(message);
+      return;
+    }
+
     if (!isDeliveryAddressValid) {
       const message = "Uzupelnij dane dostawy i wybierz poprawny adres.";
       setDeliveryError(message);
@@ -517,9 +571,14 @@ const Cart = () => {
                         <div className="cartShippingMethods">
                           <p className="cartShippingMethodsTitle">Wybierz metode dostawy</p>
                           {shippingMethods.length === 0 ? (
-                            <p className="cartShippingMethodsEmpty">
-                              Ten sprzedawca nie ma jeszcze aktywnych metod dostawy.
-                            </p>
+                            <div className="cartShippingMethodsAlert" role="alert">
+                              <strong>Brak dostawy dla tego sprzedawcy.</strong>
+                              <span>
+                                Nie mozna sfinalizowac zamowienia z tym shipmentem, dopoki
+                                sprzedawca nie doda metody dostawy albo nie usuniesz tych
+                                produktow z koszyka.
+                              </span>
+                            </div>
                           ) : (
                             <div className="cartShippingMethodsList">
                               {shippingMethods.map((method) => {
@@ -663,6 +722,12 @@ const Cart = () => {
 
         <aside className="cartSummaryColumn">
           <section className="cartSummaryCard">
+            {isCheckoutBlocked ? (
+              <div className="cartSummaryAlert" role="alert">
+                Nie mozna przejsc dalej, bo czesc produktow nie ma dostepnej dostawy.
+              </div>
+            ) : null}
+
             <div className="cartSummaryRow">
               <span>Wartosc produktow</span>
               <strong>{formatPrice(productsTotalGross)} zl</strong>
@@ -693,7 +758,7 @@ const Cart = () => {
               <button
                 type="button"
                 className="cartSubmitButton"
-                disabled
+                disabled={isCheckoutBlocked || isSubmittingOrder}
                 onClick={handleSubmitOrder}
               >
                 {isSubmittingOrder ? "Wysylanie..." : "Wyslij zamowienie"}

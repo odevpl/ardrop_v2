@@ -141,6 +141,24 @@
   margin-top: 12px;
 }
 
+.sellerSectionIntro {
+  margin-bottom: 16px;
+}
+
+.sellerCompactForm {
+  max-width: 920px;
+}
+
+.sellerCompactFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.sellerCompactFormGrid .text-input-wrapper:last-child {
+  grid-column: 1 / -1;
+}
+
 .sellerImageUpload {
   margin-top: 12px;
   margin-bottom: 12px;

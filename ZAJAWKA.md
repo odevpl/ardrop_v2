@@ -103,6 +103,17 @@ Chronione endpointy (globalny auth middleware + role):
   - seller ma tez widok historii finansowej oparty o `seller_financial_entries`; nowe zakupy klienta dopisuja wpis `order_income`
 - `admin`: klienci, sprzedawcy, produkty, zamowienia; ma `ConfigProvider`, ktory probuje pobrac `/configs`, a fallback trzyma w `admin/stories/apiConfigs.json`
 
+## 5a. Frontend - konwencje struktury
+
+- Dla widokow formularzowych w frontendach (`app`, `seller`, `admin`) preferowany wzorzec to:
+  - `page` w `src/pages/...` jest cienka warstwa routingu i layoutu; tylko osadza modul i naglowek
+  - `module` w `src/modules/...` trzyma wlasciwy widok, formularz i logike submitu
+  - `initialValues.js` i `validation.js` sa wydzielone obok modulu, zamiast trzymac te rzeczy inline w jednym pliku
+  - fetch danych wejsciowych idzie przez `FetchWrapper`, jesli formularz wymaga zaladowania danych z API
+- Referencyjne przyklady tego wzorca:
+  - `seller/src/modules/ShippingEditForm`
+  - `seller/src/modules/PayoutSettingsForm`
+
 ## 6. Baza danych
 
 Szczegolowy i aktualny schemat bazy danych znajduje sie w `DB_STRUCTURE.md`.

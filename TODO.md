@@ -2,382 +2,378 @@
 
 ## Cel
 
-Wdrozyc po stronie klienta wybor metody dostawy per sprzedawca tak, aby:
+Wdrozyc model platnosci, w ktorym:
 
-1. W koszyku dla kazdego sprzedawcy byla lista metod dostawy do wyboru.
-2. Koszt dostawy reagowal na prog darmowej dostawy.
-3. Koszty dostaw byly widoczne i poprawnie sumowane w podsumowaniu koszyka i zamowienia.
+1. klient sklada jeden koszyk, ale po checkoutcie ma platnosci rozdzielone per sprzedawca,
+2. pieniadze ida bezposrednio do sprzedawcow,
+3. platforma nie przyjmuje srodkow i nie rozdziela ich dalej,
+4. na start obslugujemy `przedplate / przelew tradycyjny`,
+5. architektura pozostaje gotowa na przyszle rozszerzenia, ale bez budowania teraz pelnej bramki platniczej.
 
 ## Stan obecny
 
-### Frontend klienta
+### Model zamowien
 
-- [`app/src/modules/Cart/index.jsx`](c:/Projects/ardrop_v2/app/src/modules/Cart/index.jsx)
-  pokazuje dla kazdego shipmentu tylko tekstowe pola:
-  - `shipment.shippingMethodName || "Do ustalenia"`
-  - `shipment.shippingGross`
-- Nie ma pobierania listy metod dostawy sprzedawcy.
-- Nie ma UI do wyboru metody dostawy.
-- Podsumowanie koszyka liczy dostawe z:
-  - `shipments.reduce((sum, shipment) => sum + Number(shipment?.shippingGross || 0), 0)`
-- To znaczy: frontend tylko odczytuje koszty dostawy, ale ich nie wylicza.
+- [`DB_STRUCTURE.md`](c:/Projects/ardrop_v2/DB_STRUCTURE.md) pokazuje, ze `orders` sa juz rozdzielone per sprzedawca:
+  - `sellerId`
+  - `clientId`
+  - `orderGroupId`
+  - `totalGross`
+  - `totalShipping`
+  - `paymentStatus`
+- To znaczy:
+  - `orderGroupId` jest warstwa wspolnego checkoutu
+  - `order` jest juz naturalna jednostka handlowa dla konkretnego sprzedawcy
 
-### API koszyka
+### Dane do przelewu sprzedawcy
 
-- [`api/src/controllers/carts.js`](c:/Projects/ardrop_v2/api/src/controllers/carts.js)
-  ma endpoint:
-  - `PATCH /carts/shipments/:sellerId`
-- [`api/src/services/carts.js`](c:/Projects/ardrop_v2/api/src/services/carts.js)
-  pozwala recznie zapisac do shipmentu:
-  - `deliveryAddressId`
-  - `shippingMethodName`
-  - `shippingNet`
-  - `shippingGross`
-  - `estimatedDeliveryFrom`
-  - `estimatedDeliveryTo`
-- Obecnie backend nie dobiera metody dostawy sam.
-- Obecnie backend nie liczy progu darmowej dostawy.
-- Obecnie backend nie zapisuje `shippingMethodId` na poziomie shipmentu.
+- W [`DB_STRUCTURE.md`](c:/Projects/ardrop_v2/DB_STRUCTURE.md) tabela `seller_settings` ma juz pola:
+  - `payoutAccountHolder`
+  - `payoutBankAccount`
+  - `payoutBankName`
+- To daje baze pod bezposredni przelew klienta do sprzedawcy.
 
-### API metod dostawy sprzedawcy
+### Status platnosci
 
-- Metody dostawy sa juz wydzielone do osobnych endpointow:
-  - `GET /seller/me/shipping-methods`
-  - `GET /seller/me/shipping-methods/:id`
-  - `POST /seller/me/shipping-methods`
-  - `PUT /seller/me/shipping-methods/:id`
-  - `DELETE /seller/me/shipping-methods/:id`
-- Brakuje endpointu klienta do pobrania aktywnych metod dostawy dla danego sprzedawcy w checkout/koszyku.
+- Tabela `orders` ma tylko podstawowe pole:
+  - `paymentStatus enum('pending','paid','failed')`
+- Brakuje:
+  - `paymentMethod`
+  - `paymentDueDate`
+  - `paymentReference`
+  - snapshotu danych bankowych sprzedawcy na moment zakupu
+  - rozdzielenia logiki platnosci od samego zamowienia
 
-### Tworzenie zamowienia
+### Dokumenty / faktury
 
-- [`api/src/services/orders.js`](c:/Projects/ardrop_v2/api/src/services/orders.js)
-  bierze wartosci dostawy z `cart_shipments`:
-  - `shippingGross`
-  - `shippingMethodName`
-  - `estimatedDeliveryFrom`
-  - `estimatedDeliveryTo`
-- To jest dobre jako snapshot zamowienia.
-- Ale dane do snapshotu musza byc najpierw policzone poprawnie w koszyku.
+- W obecnym schemacie nie ma tabeli dokumentow platniczych ani sprzedazowych.
+- Nie ma:
+  - `pro forma`
+  - `invoice`
+  - `pdf file / url`
+  - numeracji dokumentow
+- Nie ma tez snapshotu danych wystawcy i nabywcy dla dokumentu.
+
+### Historia finansowa sprzedawcy
+
+- Tabela `seller_financial_entries` istnieje i nadaje sie do historii finansowej / rozliczen.
+- Ale to nie jest model platnosci klienta.
+- Ta tabela nie zastepuje:
+  - instrukcji przelewu
+  - dokumentu platniczego
+  - potwierdzenia, jak klient ma zaplacic
+
+## Kluczowa decyzja architektoniczna
+
+Nie idziemy w model:
+
+- jedna platnosc za caly koszyk do platformy
+- split payment przez platforme
+- platforma jako posrednik srodkow
+
+Idziemy w model:
+
+- jeden koszyk klienta
+- jeden `orderGroupId`
+- wiele `orders` per sprzedawca
+- osobna platnosc per `order`
+- osobny dokument platniczy per `order`
+- osobne dane do przelewu per sprzedawca
+
+To oznacza:
+
+- dostawa per sprzedawca
+- platnosc per sprzedawca
+- dokument per sprzedawca
 
 ## Co jest potrzebne
 
-## 1. Endpoint klienta do metod dostawy sprzedawcy
+## 1. Jasny model platnosci per order
 
-Potrzebny nowy endpoint publiczny dla klienta, np.:
+Trzeba przyjac jako source of truth:
 
-- `GET /sellers/:sellerId/shipping-methods`
+- `orderGroupId` = wspolny checkout UX
+- `order` = jednostka platnosci i realizacji konkretnego sprzedawcy
 
-Powinien zwracac tylko aktywne metody dostawy danego sprzedawcy, potrzebne do checkoutu:
+To musi byc widoczne w logice:
 
-- `id`
-- `name`
-- `priceNet`
-- `priceGross`
-- `freeShippingAmountGross`
-- `etaMinDays`
-- `etaMaxDays`
+- API
+- panelu klienta
+- panelu sprzedawcy
+- panelu admina
 
-Na ten moment mozna pominac:
+Klient po checkoutcie nie powinien widziec jednej abstrakcyjnej platnosci za wszystko, tylko:
 
-- `regions`
-- `countries`
+- liste zamowien do oplacenia
+- kazde z kwota i danymi przelewu konkretnego sprzedawcy
+
+## 2. Rozszerzenie modelu `orders` o dane platnicze
+
+Minimalnie trzeba dodac do `orders` pola typu:
+
+- `paymentMethod`
+- `paymentDueDate`
+- `paymentReference`
+- `sellerBankAccountSnapshot`
+- `sellerBankNameSnapshot`
+- `sellerAccountHolderSnapshot`
 
 Powod:
 
-- regiony i kraje sa obecnie ukryte w `ShippingEditForm`
-- klient nie ma jeszcze logiki wyboru regionu shipmentu
+- dane w `seller_settings` moga sie zmienic po zakupie
+- zamowienie musi trzymac snapshot danych, z ktorych klient korzystal przy platnosci
 
-To musi byc endpoint klienta per sprzedawca, bo koszyk jest rozbity na shipmenty sprzedawcow.
+Nie chcemy przy odczycie historycznego zamowienia polegac na aktualnych ustawieniach sprzedawcy.
 
-## 1a. Endpointy klienta do wyboru dostawy per sprzedawca
+## 3. Snapshot stron transakcji dla platnosci
 
-Potrzebujemy jasno wydzielonego API checkoutowego dla klienta, osobno dla kazdego sprzedawcy w koszyku.
+Na moment utworzenia zamowienia trzeba utrwalic nie tylko dostawe, ale tez dane rozliczeniowe:
 
-Minimalny zestaw:
+- dane sprzedawcy:
+  - `companyName`
+  - `nip`
+  - `address`
+  - `postalCode`
+  - `city`
+- dane klienta:
+  - `companyName`
+  - `nip`
+  - `address`
+  - `postalCode`
+  - `city`
 
-- `GET /checkout/shipments/:sellerId/shipping-methods`
-  - zwraca aktywne metody dostawy dla konkretnego sprzedawcy
-  - zwraca dane potrzebne do pokazania opcji klientowi
-- `PATCH /carts/shipments/:sellerId`
-  - powinien przyjmowac tylko identyfikator wybranej metody, np. `shippingMethodId`
-  - nie powinien przyjmowac recznie wyliczonych cen dostawy z frontu
+Najlepiej jako snapshot JSON przy zamowieniu albo przy przyszlym dokumencie.
 
-Frontend ma tylko:
+Powod:
 
-- pobrac opcje
-- wyslac wybor
-- odswiezyc koszyk
+- dokument platniczy i ewentualna faktura musza odzwierciedlac stan z chwili zakupu
 
-## 2. Przechowywanie wybranej metody w cart shipment
+## 4. Minimalny dokument platniczy na start
 
-Na poziomie `cart_shipments` trzeba zapisywac nie tylko nazwe, ale tez identyfikator metody:
+Na MVP nie robimy od razu pelnej logiki faktur VAT.
 
-- `shippingMethodId`
+Na start potrzebny jest dokument typu:
 
-To pozwoli:
+- `pro forma`
+  albo
+- `wezwanie do zaplaty / instrukcja platnosci`
 
-- odtworzyc zaznaczenie checkbox/radio po odswiezeniu koszyka
-- przeliczyc koszty po zmianie ilosci produktow
-- miec stabilne powiazanie z metoda, zamiast samego tekstu `shippingMethodName`
+Dokument musi zawierac:
 
-Do sprawdzenia:
-
-- w [`api/src/services/carts.js`](c:/Projects/ardrop_v2/api/src/services/carts.js) sa juz slady `shippingMethodId` na poziomie `carts`, ale nie sa wykorzystywane per shipment
-- trzeba przeniesc to jednoznacznie na `cart_shipments`
-
-## 3. Backendowy kalkulator dostawy per shipment
-
-Koszt dostawy nie powinien byc wysylany z frontu jako finalna prawda.
-
-Potrzebna funkcja backendowa, ktora dla jednego shipmentu:
-
-1. pobiera wybrana metode dostawy
-2. liczy wartosc produktow dla danego sprzedawcy
-3. sprawdza prog darmowej dostawy
-4. ustawia:
-   - `shippingMethodId`
-   - `shippingMethodName`
-   - `shippingNet`
-   - `shippingGross`
-   - `estimatedDeliveryFrom`
-   - `estimatedDeliveryTo`
-
-Minimalna logika MVP:
-
-- jesli `itemsGross >= freeShippingAmountGross`, to:
-  - `shippingGross = 0`
-  - `shippingNet = 0`
-- jesli w przyszlosci aktywne beda tez:
-  - `freeShippingQuantity`
-  - `freeShippingWeight`
-  to kalkulator powinien je uwzgledniac, bo pola te istnieja juz w bazie i w modelu metody dostawy
-- w przeciwnym razie:
-  - `shippingGross = method.priceGross`
-  - `shippingNet = method.priceNet`
-
-Wazne:
-
-- to liczenie musi uruchamiac sie nie tylko po wyborze metody dostawy
-- musi tez uruchamiac sie po:
-  - dodaniu produktu do koszyka
-  - zmianie ilosci
-  - usunieciu produktu
-  - wyczyszczeniu koszyka
-
-Inaczej prog darmowej dostawy nie bedzie aktualny.
-
-## 3a. Osobny endpoint backendowy do liczenia wartosci shipmentu i kosztu dostawy
-
-Poza endpointem wyboru metody potrzebujemy tez backendowego miejsca, ktore liczy wartosci shipmentu na podstawie danych juz zapisanych w systemie.
+- numer dokumentu
+- dane sprzedawcy
+- dane klienta
+- numer zamowienia
+- kwote
+- termin platnosci
+- numer rachunku
+- tytul przelewu
 
 To moze byc:
 
-- osobna funkcja serwisowa wywolywana wewnetrznie z koszyka
-- albo osobny endpoint techniczny, jesli chcemy jawnie rozdzielic wybor metody od przeliczenia
+- nowa tabela `order_documents`
+  albo
+- prostszy snapshot / payload generowany bez tabeli, jesli chcemy najpierw zrobic MVP bez numeracji
 
-Najwazniejsze zalozenie:
+Rekomendacja:
 
-- frontend nie liczy kosztu dostawy
-- frontend nie liczy progu darmowej dostawy jako source of truth
-- frontend tylko pokazuje wynik policzony po stronie backendu
+- od razu zrobic osobna tabele dokumentow, bo inaczej kolejny etap i tak bedzie refaktorem
 
-Backend powinien liczyc na podstawie:
+## 5. Tabela dokumentow per order
 
-- produktow w shipment
-- wartosci `itemsGross`
-- wybranej metody dostawy
-- ustawien metody dostawy zapisanych w backendzie
+Najbardziej naturalny kierunek:
 
-## 3b. Przeniesienie pelnego przeliczania koszyka do backendu
+- nowa tabela np. `order_documents`
 
-To powinno isc szerzej niz sama dostawa.
+Minimalne pola:
 
-Potrzebny jest jeden backendowy source of truth dla calego koszyka, ktory liczy:
+- `id`
+- `orderId`
+- `sellerId`
+- `clientId`
+- `type` (`proforma`, `invoice`)
+- `number`
+- `status`
+- `buyerSnapshotJson`
+- `sellerSnapshotJson`
+- `totalsSnapshotJson`
+- `paymentSnapshotJson`
+- `filePath` albo `fileUrl`
+- `createdAt`
+- `updatedAt`
 
-- wartosc pozycji
-- wartosc shipmentow per sprzedawca
-- koszt dostawy per shipment
-- sume dostaw
-- total koszyka
-- w przyszlosci takze rabaty i inne reguly
+Powod:
 
-Frontend nie powinien sam liczyc finalnych wartosci finansowych.
+- dokument nie powinien byc rozproszony po przypadkowych kolumnach `orders`
+- przyszle faktury i pro formy powinny miec wspolny model
 
-Frontend powinien tylko:
+## 6. Checkout klienta: ekran po zlozeniu zamowienia
 
-- wysylac akcje uzytkownika
-- pobierac wynik przeliczenia
-- wyswietlac to, co policzyl backend
+Po zlozeniu koszyka klient musi zobaczyc, ze:
 
-Minimalny kierunek:
+- zamowienie zostalo rozbite na sprzedawcow
+- dla kazdego sprzedawcy jest osobna platnosc
 
-- po kazdej zmianie koszyka backend uruchamia jedno spojne przeliczenie
-- `GET /carts/current` zwraca juz gotowy, finalny stan koszyka
-- shipmenty i summary w UI sa tylko prezentacja danych z backendu
+Widok po checkoutcie powinien pokazywac per `order`:
 
-## 4. Zmiana kontraktu endpointu PATCH /carts/shipments/:sellerId
+- nazwe sprzedawcy
+- numer zamowienia
+- kwote do zaplaty
+- termin platnosci
+- bank account
+- tytul przelewu
+- link do dokumentu platniczego
 
-Obecny kontrakt pozwala wysylac z frontu:
+To jest kluczowe UX-owo, bo inaczej klient nie zrozumie, ze ma wykonac kilka przelewow.
 
-- `shippingMethodName`
-- `shippingNet`
-- `shippingGross`
-- `estimatedDeliveryFrom`
-- `estimatedDeliveryTo`
+## 7. Panel klienta: widok zamowienia i lista zamowien
 
-To nalezy uproscic.
+W aplikacji klienta trzeba rozszerzyc:
 
-Docelowo frontend powinien wysylac tylko:
+- liste zamowien
+- szczegoly zamowienia
 
-- `deliveryAddressId`
-- `shippingMethodId`
-- `clientNote`
+O dane platnicze:
 
-Backend powinien sam uzupelnic reszte na podstawie:
+- `paymentMethod`
+- `paymentStatus`
+- `paymentDueDate`
+- dane przelewu
+- dokument do pobrania
 
-- metody dostawy sprzedawcy
-- zawartosci shipmentu
+Jesli `orderGroupId` zawiera kilka `orders`, UI powinno to jasno pokazywac.
 
-## 5. Rozszerzenie odpowiedzi koszyka
+Nie mozna udawac, ze to jedna platnosc.
 
-Odpowiedz z `GET /carts/current` powinna zwracac dla kazdego shipmentu:
+## 8. Panel sprzedawcy: obsluga platnosci
 
-- `shippingMethodId`
-- `shippingMethodName`
-- `shippingGross`
-- `shippingNet`
-- `estimatedDeliveryFrom`
-- `estimatedDeliveryTo`
+Sprzedawca powinien miec widok swojego zamowienia z informacja:
 
-Opcjonalnie, zeby frontend byl prostszy, mozna tez zwracac:
+- jaka metoda platnosci zostala wybrana
+- czy zamowienie jest oplacone
+- jaki byl termin platnosci
 
-- `availableShippingMethods`
+Minimalnie sprzedawca powinien moc:
 
-ale lepiej tego nie duplikowac w payloadzie koszyka, tylko pobierac osobno per seller albo jednym zbiorczym endpointem.
+- oznaczyc zamowienie jako `paid`
+  albo
+- admin robi to centralnie, a sprzedawca tylko widzi status
 
-Lepszy kierunek:
+Tu trzeba podjac decyzje produktowa:
 
-- jeden endpoint koszyka
-- jeden endpoint listujacy aktywne metody per sprzedawca
+- czy `paid` ustawia tylko admin
+- czy moze tez sprzedawca
 
-## 6. Frontend koszyka: UI wyboru metody dostawy
+Na MVP sensowniejsze wydaje sie:
 
-W [`app/src/modules/Cart/index.jsx`](c:/Projects/ardrop_v2/app/src/modules/Cart/index.jsx) trzeba dodac dla kazdego shipmentu sekcje wyboru dostawy.
+- admin i ewentualnie sprzedawca
 
-Wymagania UI:
+ale musi byc jasna odpowiedzialnosc.
 
-- lista aktywnych metod dostawy danego sprzedawcy
-- wybor jednej metody na shipment
-- prezentacja:
-  - nazwy
-  - ceny
-  - ETA
-  - informacji o darmowej dostawie po progu
+## 9. Panel admina: nadzor nad platnosciami
 
-Technicznie:
+Admin powinien miec mozliwosc:
 
-- nie checkboxy, tylko radio
-- klient ma wybrac jedna metode dostawy dla jednego sprzedawcy
+- filtrowania zamowien po `paymentStatus`
+- podgladu danych przelewu
+- podgladu dokumentu platniczego
+- recznej zmiany statusu platnosci
 
-Obsługa:
+Bez tego operacyjnie MVP bedzie slepe.
 
-- zaznaczenie metody wywoluje `PATCH /carts/shipments/:sellerId` z `shippingMethodId`
-- po odpowiedzi odswiezamy koszyk i podsumowanie
+## 10. Reguly tworzenia zamowienia
 
-## 7. Reakcja na prog darmowej wysylki
+Podczas `POST /orders` backend powinien:
 
-Frontend powinien tylko wyswietlac wynik, ale nie liczyc go jako source of truth.
+1. utworzyc `orders` per sprzedawca jak teraz,
+2. zapisac snapshot danych platniczych sprzedawcy,
+3. wygenerowac `paymentReference`,
+4. ustawic `paymentMethod = bank_transfer`,
+5. ustawic `paymentStatus = pending`,
+6. ustawic `paymentDueDate`,
+7. opcjonalnie wygenerowac od razu dokument `proforma`
 
-Do pokazania w UI:
+Backend powinien byc source of truth dla tych danych.
 
-- jesli dostawa darmowa:
-  - cena metody `0.00 zl`
-  - komunikat typu `Darmowa dostawa od 200.00 zl - osiagnieto`
-- jesli prog jeszcze nieosigniety:
-  - opcjonalny komunikat `Brakuje X zl do darmowej dostawy`
+Frontend nie powinien skladac instrukcji przelewu samodzielnie.
 
-Do tego backend musi zwracac dane pozwalajace to pokazac, np.:
+## 11. Numer referencyjny platnosci
 
-- `freeShippingAmountGross`
-- `shipment.totals.itemsGross`
+Potrzebny jest stabilny `paymentReference`, ktory klient wpisze w tytule przelewu.
 
-albo wyliczone pole pomocnicze:
+Najprostszy MVP:
 
-- `isFreeShippingApplied`
+- oparty o `orderId`
+  albo
+- oparty o `orderGroupId + orderId`
 
-Na MVP wystarczy:
+Wazne:
 
-- frontend sam porowna `shipment.totals.itemsGross` z `freeShippingAmountGross`
+- musi byc jednoznaczny
+- musi byc latwy do wyszukania przez admina i sprzedawce
+- musi byc zapisany w bazie, a nie generowany kazdorazowo na fly
 
-## 8. Podsumowanie kosztow w koszyku
+## 12. Termin platnosci
 
-To juz w zasadzie jest gotowe konstrukcyjnie.
+Potrzebny jest prosty model terminu platnosci, np.:
 
-W [`app/src/modules/Cart/index.jsx`](c:/Projects/ardrop_v2/app/src/modules/Cart/index.jsx):
+- `createdAt + 3 dni`
+  albo
+- `createdAt + 7 dni`
 
-- koszt dostawy w summary bierze sie z `shipment.shippingGross`
-- suma zamowienia bierze sie z `cart.totalGross`
+To powinno byc zapisane w `orders`, a nie wyliczane dynamicznie przy kazdym odczycie.
 
-Czyli po backendowym poprawnym przeliczeniu shipmentow:
+Pozniej mozna myslec o:
 
-- per sprzedawca ceny dostawy beda poprawne
-- suma dostaw bedzie poprawna
-- total koszyka bedzie poprawny
+- konfiguracji per sprzedawca
 
-Tu nie trzeba rewolucji, tylko poprawnego source of truth po stronie API.
+ale nie jest to konieczne na MVP.
 
-## 9. Snapshot zamowienia
+## 13. Wplyw platnosci na realizacje
 
-Po wdrozeniu kalkulatora w koszyku zamowienie bedzie automatycznie dzialac lepiej, bo:
+Trzeba jasno ustalic regule biznesowa:
 
-- [`api/src/services/orders.js`](c:/Projects/ardrop_v2/api/src/services/orders.js)
-  juz kopiuje do orders:
-  - `shippingMethodName`
-  - `totalShipping`
-  - `estimatedDeliveryFrom`
-  - `estimatedDeliveryTo`
+- zamowienie nie przechodzi do realizacji, dopoki `paymentStatus !== paid`
 
-Warto jednak rozszerzyc snapshot zamowienia o:
+To powinno byc widoczne w:
 
-- `shippingMethodId`
+- API
+- panelu sprzedawcy
+- panelu admina
 
-To nie jest konieczne dla samego UI klienta, ale bedzie porzadniejsze historycznie.
+I ewentualnie blokowac zmiany statusu zamowienia z `new` do dalszych etapow.
 
-## 10. Minimalny zakres MVP
+## 14. Minimalny zakres MVP
 
 Zeby uruchomic to sensownie, minimalny zakres jest taki:
 
-1. Dodac endpoint klienta/listy metod dostawy sprzedawcy.
- - zrobione
-2. Dodac `shippingMethodId` do `cart_shipments`.
- - zrobione
-3. Przebudowac `PATCH /carts/shipments/:sellerId`, zeby przyjmowal `shippingMethodId`.
- - zrobione
-4. Dodac backendowe przeliczanie kosztu dostawy per shipment z progiem `freeShippingAmountGross`.
- - zrobione
-5. Uruchamiac przeliczenie po kazdej zmianie koszyka.
- - zrobione
-6. Dodac w `app/src/modules/Cart/index.jsx` radio-listy metod dostawy per sprzedawca.
- - zrobione
-7. Pokazac koszt i ETA dla wybranej metody oraz sume dostaw w summary.
- - zrobione
+1. Uznac `order` za jednostke platnosci per sprzedawca.
+2. Dodac do `orders` podstawowe pola platnicze i snapshot danych przelewu.
+3. Podczas tworzenia zamowienia zapisac `paymentMethod`, `paymentStatus`, `paymentDueDate`, `paymentReference`.
+4. Zbudowac prosty dokument platniczy typu `proforma` albo `instrukcja przelewu`.
+5. Pokazac klientowi po checkoutcie osobne instrukcje platnosci dla kazdego sprzedawcy.
+6. Dodac widocznosc danych platniczych w szczegolach zamowienia klienta.
+7. Dodac obsluge / podglad platnosci w panelu sprzedawcy i admina.
+8. Utrzymac model bez posrednictwa finansowego platformy.
 
-## 11. Rzeczy do swiadomego odlozenia
+## 15. Rzeczy do swiadomego odlozenia
 
 Na pozniej:
 
-- regiony i kraje
-- ograniczenia metod dostawy dla wybranych produktow
+- integracja z Przelewy24
+- jakikolwiek split payment przez platforme
+- jedna platnosc za caly koszyk
+- automatyczne ksiegowanie przelewow
+- automatyczna weryfikacja wyciagow bankowych
+- pelna faktura VAT z kompletna numeracja i obsluga korekt
+- kilka metod platnosci per sprzedawca
+- odroczone terminy / kredyt kupiecki
 
-Te elementy dzisiaj nie sa gotowe po stronie checkoutu klienta.
+## 16. Ryzyka i uwagi
 
-Nie planujemy roznych adresow dostawy per shipment. Adres dostawy ma pozostac wspolny dla calego koszyka.
-
-## 12. Ryzyka i uwagi
-
-- Obecny koszyk jest zbudowany per shipment sprzedawcy, co jest dobre i wystarczajace do tego feature.
-- Najwiekszy brak nie jest w UI, tylko w backendzie:
-  klient nie ma dzis zadnego wiarygodnego endpointu do pobrania i wyboru metod dostawy.
-- Koszt dostawy nie powinien byc liczony na froncie i wysylany jako finalna wartosc.
-- Jesli zostawimy aktualny model recznego wpisywania `shippingGross` do shipmentu, to backend i frontend beda mogly rozjechac sie co do realnego kosztu dostawy po zmianie koszyka lub konfiguracji metody.
+- Najwieksze ryzyko UX: klient sklada jeden koszyk, ale finalnie musi wykonac kilka przelewow.
+- To trzeba bardzo jasno pokazac po checkoutcie i w szczegolach zamowien.
+- Najwieksze ryzyko techniczne: korzystanie z aktualnych danych `seller_settings` zamiast snapshotu z chwili zakupu.
+- Najwieksze ryzyko operacyjne: brak jasnego procesu, kto zmienia `paymentStatus` na `paid`.
+- `seller_financial_entries` nie powinno byc traktowane jako system platnosci klienta; to raczej historia rozliczeniowa / finansowa.
+- Jesli zrobimy teraz model per `order`, to bedzie on spojny z obecnym schematem bazy i nie bedzie udawal, ze platforma jest bankiem lub merchant of record.

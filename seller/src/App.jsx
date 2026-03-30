@@ -15,6 +15,7 @@ import ReturnsPage from "./pages/configuration/ReturnsPage";
 import PricingPage from "./pages/configuration/PricingPage";
 import FinancePage from "./pages/configuration/FinancePage";
 import AutomationsPage from "./pages/configuration/AutomationsPage";
+import PayoutSettingsPage from "./pages/configuration/PayoutSettingsPage";
 import { useAuth } from "./providers/authProvider";
 import "./App.scss";
 
@@ -74,6 +75,10 @@ function App() {
           <Route path="/configuration/returns" element={<ReturnsPage />} />
           <Route path="/configuration/pricing" element={<PricingPage />} />
           <Route path="/configuration/finance" element={<FinancePage />} />
+          <Route
+            path="/configuration/payout-settings"
+            element={<PayoutSettingsPage />}
+          />
           <Route
             path="/configuration/automations"
             element={<AutomationsPage />}

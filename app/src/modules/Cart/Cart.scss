@@ -271,6 +271,23 @@
   color: #5a7282;
 }
 
+.cartShippingMethodsAlert,
+.cartSummaryAlert {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid #f1b7b7;
+  border-radius: 14px;
+  background: #fff3f2;
+  color: #8f1d18;
+}
+
+.cartShippingMethodsAlert span,
+.cartSummaryAlert {
+  font-weight: 600;
+  line-height: 1.45;
+}
+
 .cartShippingMethodsList {
   display: grid;
   gap: 10px;

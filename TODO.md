@@ -349,12 +349,19 @@ To nie jest konieczne dla samego UI klienta, ale bedzie porzadniejsze historyczn
 Zeby uruchomic to sensownie, minimalny zakres jest taki:
 
 1. Dodac endpoint klienta/listy metod dostawy sprzedawcy.
+ - zrobione
 2. Dodac `shippingMethodId` do `cart_shipments`.
+ - zrobione
 3. Przebudowac `PATCH /carts/shipments/:sellerId`, zeby przyjmowal `shippingMethodId`.
+ - zrobione
 4. Dodac backendowe przeliczanie kosztu dostawy per shipment z progiem `freeShippingAmountGross`.
+ - zrobione
 5. Uruchamiac przeliczenie po kazdej zmianie koszyka.
+ - zrobione
 6. Dodac w `app/src/modules/Cart/index.jsx` radio-listy metod dostawy per sprzedawca.
+ - zrobione
 7. Pokazac koszt i ETA dla wybranej metody oraz sume dostaw w summary.
+ - zrobione
 
 ## 11. Rzeczy do swiadomego odlozenia
 

@@ -37,6 +37,11 @@ export const updateCartShipment = ({ sellerId, payload = {} }) =>
     data: payload,
   })
 
+export const getShipmentShippingMethods = ({ sellerId }) =>
+  apiGet({
+    url: `checkout/shipments/${sellerId}/shipping-methods`,
+  })
+
 export default {
   getCurrentCart,
   addItemToCart,
@@ -44,4 +49,5 @@ export default {
   removeCartItem,
   clearCart,
   updateCartShipment,
+  getShipmentShippingMethods,
 }

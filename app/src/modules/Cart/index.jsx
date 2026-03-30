@@ -27,6 +27,15 @@ const formatEta = (from, to) => {
   return "Do ustalenia";
 };
 
+const formatEtaDays = (etaMinDays, etaMaxDays) => {
+  const hasMin = etaMinDays !== null && etaMinDays !== undefined;
+  const hasMax = etaMaxDays !== null && etaMaxDays !== undefined;
+  if (hasMin && hasMax) return `${etaMinDays}-${etaMaxDays} dni`;
+  if (hasMin) return `${etaMinDays} dni`;
+  if (hasMax) return `do ${etaMaxDays} dni`;
+  return "Termin do ustalenia";
+};
+
 const ORDERING_TEMPORARILY_DISABLED_MESSAGE =
   "Sklep daje obecnie mozliwosc przegladania produktow. Skladanie zamowien zostanie wlaczone juz wkrotce.";
 
@@ -43,6 +52,7 @@ const Cart = () => {
   const [deliveryError, setDeliveryError] = useState("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [shipmentNotes, setShipmentNotes] = useState({});
+  const [shippingMethodsBySellerId, setShippingMethodsBySellerId] = useState({});
   const notification = useNotification();
 
   const applyCartResponse = (response) => {
@@ -146,6 +156,44 @@ const Cart = () => {
       isMounted = false;
     };
   }, [items]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadShippingMethods = async () => {
+      const sellerIds = [...new Set(shipments.map((shipment) => Number(shipment.sellerId)).filter(Boolean))];
+
+      if (sellerIds.length === 0) {
+        setShippingMethodsBySellerId({});
+        return;
+      }
+
+      const responses = await Promise.all(
+        sellerIds.map(async (sellerId) => {
+          const response = await CartsService.getShipmentShippingMethods({ sellerId });
+          return { sellerId, response };
+        }),
+      );
+
+      if (!isMounted) return;
+
+      const nextMap = {};
+      responses.forEach(({ sellerId, response }) => {
+        if (response?.status && response.status >= 400) {
+          nextMap[sellerId] = [];
+          return;
+        }
+        const methods = response?.data || response?.shippingMethods || [];
+        nextMap[sellerId] = Array.isArray(methods) ? methods : [];
+      });
+      setShippingMethodsBySellerId(nextMap);
+    };
+
+    loadShippingMethods();
+    return () => {
+      isMounted = false;
+    };
+  }, [shipments]);
 
   const selectedDeliveryAddress = useMemo(
     () =>
@@ -251,6 +299,14 @@ const Cart = () => {
     );
   };
 
+  const handleShippingMethodChange = async (sellerId, shippingMethodId) => {
+    await syncShipment(
+      sellerId,
+      { shippingMethodId },
+      "Nie udalo sie wybrac metody dostawy.",
+    );
+  };
+
   const handleSubmitOrder = async () => {
     if (!isDeliveryAddressValid) {
       const message = "Uzupelnij dane dostawy i wybierz poprawny adres.";
@@ -315,167 +371,230 @@ const Cart = () => {
             <p className="cartEmpty">Koszyk jest pusty.</p>
           ) : (
             <div className="cartShipmentList">
-              {shipments.map((shipment) => (
-                <section className="cartShipmentCard" key={shipment.sellerId}>
-                  <div className="cartShipmentHeader">
-                    <div>
-                      <p className="cartShipmentEyebrow">Sprzedawca</p>
-                      <h2>{shipment?.seller?.companyName || `Seller #${shipment.sellerId}`}</h2>
-                    </div>
-                    <div className="cartShipmentMeta">
-                      <span>Produkty: {formatPrice(shipment?.totals?.itemsGross || 0)} zl</span>
-                      <span>Dostawa: {formatPrice(shipment?.shippingGross || 0)} zl</span>
-                    </div>
-                  </div>
+              {shipments.map((shipment) => {
+                const shippingMethods = shippingMethodsBySellerId[shipment.sellerId] || [];
 
-                  <div className="cartTableWrap">
-                    <table className="cartTable">
-                      <thead>
-                        <tr>
-                          <th>Produkt</th>
-                          <th>Ilosc</th>
-                          <th>Netto</th>
-                          <th>Brutto</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {shipment.items.map((item) => (
-                          <tr key={item.id}>
-                            <td>
-                              <div className="cartProductCell">
-                                <div className="cartThumbWrap">
-                                  {thumbByProductId[Number(item.productId)] ? (
-                                    <img
-                                      src={thumbByProductId[Number(item.productId)]}
-                                      alt={item.productNameSnapshot}
-                                      loading="lazy"
-                                    />
-                                  ) : (
-                                    <div className="cartThumbPlaceholder">Brak</div>
-                                  )}
-                                </div>
-                                <div>
-                                  <p className="cartProductName">{item.productNameSnapshot}</p>
-                                  {item.variantNameSnapshot ? (
-                                    <p className="cartProductVariant">{item.variantNameSnapshot}</p>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </td>
-                            <td>
-                              <div className="cartQtyControl">
-                                <button
-                                  type="button"
-                                  className="cartQtyButton"
-                                  onClick={() =>
-                                    updateQuantity(item.id, Math.max(1, Number(item.quantity) - 1))
-                                  }
-                                  disabled={pendingItemId === item.id}
-                                  aria-label="Zmniejsz ilosc"
-                                >
-                                  <i className="fa-solid fa-minus" aria-hidden="true" />
-                                </button>
-                                <input
-                                  className="cartQtyInput"
-                                  type="number"
-                                  min={1}
-                                  value={item.quantity}
-                                  disabled={pendingItemId === item.id}
-                                  onChange={(event) => {
-                                    const nextValue = Number(event.target.value);
-                                    if (Number.isInteger(nextValue) && nextValue > 0) {
-                                      updateQuantity(item.id, nextValue);
-                                    }
-                                  }}
-                                />
-                                <button
-                                  type="button"
-                                  className="cartQtyButton"
-                                  onClick={() => updateQuantity(item.id, Number(item.quantity) + 1)}
-                                  disabled={pendingItemId === item.id}
-                                  aria-label="Zwikszez ilosc"
-                                >
-                                  <i className="fa-solid fa-plus" aria-hidden="true" />
-                                </button>
-                              </div>
-                            </td>
-                            <td>
-                              <span className="cartPriceValue">{formatPrice(item.lineNet)} zl</span>
-                            </td>
-                            <td>
-                              <div className="cartPriceCell cartPriceCellWithDelete">
-                                <span className="cartPriceValue">
-                                  {formatPrice(item.lineGross)} zl
-                                </span>
-                                <button
-                                  type="button"
-                                  className="cartDeleteButton"
-                                  onClick={() => removeItem(item.id)}
-                                  disabled={pendingItemId === item.id}
-                                  aria-label="Usun pozycje"
-                                >
-                                  <i className="fa-solid fa-trash" aria-hidden="true" />
-                                </button>
-                              </div>
-                            </td>
+                return (
+                  <section className="cartShipmentCard" key={shipment.sellerId}>
+                    <div className="cartShipmentHeader">
+                      <div>
+                        <p className="cartShipmentEyebrow">Sprzedawca</p>
+                        <h2>{shipment?.seller?.companyName || `Seller #${shipment.sellerId}`}</h2>
+                      </div>
+                      <div className="cartShipmentMeta">
+                        <span>Produkty: {formatPrice(shipment?.totals?.itemsGross || 0)} zl</span>
+                        <span>Dostawa: {formatPrice(shipment?.shippingGross || 0)} zl</span>
+                      </div>
+                    </div>
+
+                    <div className="cartTableWrap">
+                      <table className="cartTable">
+                        <thead>
+                          <tr>
+                            <th>Produkt</th>
+                            <th>Ilosc</th>
+                            <th>Netto</th>
+                            <th>Brutto</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="cartShipmentDetails">
-                    <div className="cartShipmentSummaryBox">
-                      <span>Wartosc produktow</span>
-                      <strong>{formatPrice(shipment?.totals?.itemsGross || 0)} zl</strong>
-                      <span>Dostawa</span>
-                      <strong>{formatPrice(shipment?.shippingGross || 0)} zl</strong>
-                      <span>Razem dla sprzedawcy</span>
-                      <strong>{formatPrice(shipment?.totals?.totalGross || 0)} zl</strong>
+                        </thead>
+                        <tbody>
+                          {shipment.items.map((item) => (
+                            <tr key={item.id}>
+                              <td>
+                                <div className="cartProductCell">
+                                  <div className="cartThumbWrap">
+                                    {thumbByProductId[Number(item.productId)] ? (
+                                      <img
+                                        src={thumbByProductId[Number(item.productId)]}
+                                        alt={item.productNameSnapshot}
+                                        loading="lazy"
+                                      />
+                                    ) : (
+                                      <div className="cartThumbPlaceholder">Brak</div>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="cartProductName">{item.productNameSnapshot}</p>
+                                    {item.variantNameSnapshot ? (
+                                      <p className="cartProductVariant">{item.variantNameSnapshot}</p>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="cartQtyControl">
+                                  <button
+                                    type="button"
+                                    className="cartQtyButton"
+                                    onClick={() =>
+                                      updateQuantity(item.id, Math.max(1, Number(item.quantity) - 1))
+                                    }
+                                    disabled={pendingItemId === item.id}
+                                    aria-label="Zmniejsz ilosc"
+                                  >
+                                    <i className="fa-solid fa-minus" aria-hidden="true" />
+                                  </button>
+                                  <input
+                                    className="cartQtyInput"
+                                    type="number"
+                                    min={1}
+                                    value={item.quantity}
+                                    disabled={pendingItemId === item.id}
+                                    onChange={(event) => {
+                                      const nextValue = Number(event.target.value);
+                                      if (Number.isInteger(nextValue) && nextValue > 0) {
+                                        updateQuantity(item.id, nextValue);
+                                      }
+                                    }}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="cartQtyButton"
+                                    onClick={() => updateQuantity(item.id, Number(item.quantity) + 1)}
+                                    disabled={pendingItemId === item.id}
+                                    aria-label="Zwikszez ilosc"
+                                  >
+                                    <i className="fa-solid fa-plus" aria-hidden="true" />
+                                  </button>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="cartPriceValue">{formatPrice(item.lineNet)} zl</span>
+                              </td>
+                              <td>
+                                <div className="cartPriceCell cartPriceCellWithDelete">
+                                  <span className="cartPriceValue">
+                                    {formatPrice(item.lineGross)} zl
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="cartDeleteButton"
+                                    onClick={() => removeItem(item.id)}
+                                    disabled={pendingItemId === item.id}
+                                    aria-label="Usun pozycje"
+                                  >
+                                    <i className="fa-solid fa-trash" aria-hidden="true" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
 
-                    <div className="cartShipmentInfoBox">
-                      <div className="cartInfoGrid">
-                        <span>Adres dostawy</span>
-                        <span>
-                          {selectedDeliveryAddress
-                            ? selectedDeliveryAddress.label ||
-                              selectedDeliveryAddress.recipientName ||
-                              "Wybrany adres"
-                            : "Brak"}
-                        </span>
-                        <span>Metoda dostawy</span>
-                        <span>{shipment.shippingMethodName || "Do ustalenia"}</span>
-                        <span>Przyblizony termin</span>
-                        <span>
-                          {formatEta(
-                            shipment.estimatedDeliveryFrom,
-                            shipment.estimatedDeliveryTo,
-                          )}
-                        </span>
+                    <div className="cartShipmentDetails">
+                      <div className="cartShipmentSummaryBox">
+                        <span>Wartosc produktow</span>
+                        <strong>{formatPrice(shipment?.totals?.itemsGross || 0)} zl</strong>
+                        <span>Dostawa</span>
+                        <strong>{formatPrice(shipment?.shippingGross || 0)} zl</strong>
+                        <span>Razem dla sprzedawcy</span>
+                        <strong>{formatPrice(shipment?.totals?.totalGross || 0)} zl</strong>
                       </div>
 
-                      <label className="cartShipmentNoteLabel" htmlFor={`shipment-note-${shipment.sellerId}`}>
-                        Notatka do dostawy
-                      </label>
-                      <textarea
-                        id={`shipment-note-${shipment.sellerId}`}
-                        className="cartShipmentNote"
-                        value={shipmentNotes[shipment.sellerId] || ""}
-                        disabled={pendingShipmentSellerId === shipment.sellerId}
-                        onChange={(event) =>
-                          setShipmentNotes((prev) => ({
-                            ...prev,
-                            [shipment.sellerId]: event.target.value,
-                          }))
-                        }
-                        onBlur={() => handleShipmentNoteBlur(shipment.sellerId)}
-                        placeholder="Instrukcje dla tego sprzedawcy"
-                      />
+                      <div className="cartShipmentInfoBox">
+                        <div className="cartInfoGrid">
+                          <span>Adres dostawy</span>
+                          <span>
+                            {selectedDeliveryAddress
+                              ? selectedDeliveryAddress.label ||
+                                selectedDeliveryAddress.recipientName ||
+                                "Wybrany adres"
+                              : "Brak"}
+                          </span>
+                          <span>Metoda dostawy</span>
+                          <span>{shipment.shippingMethodName || "Wybierz metode"}</span>
+                          <span>Przyblizony termin</span>
+                          <span>
+                            {formatEta(
+                              shipment.estimatedDeliveryFrom,
+                              shipment.estimatedDeliveryTo,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="cartShippingMethods">
+                          <p className="cartShippingMethodsTitle">Wybierz metode dostawy</p>
+                          {shippingMethods.length === 0 ? (
+                            <p className="cartShippingMethodsEmpty">
+                              Ten sprzedawca nie ma jeszcze aktywnych metod dostawy.
+                            </p>
+                          ) : (
+                            <div className="cartShippingMethodsList">
+                              {shippingMethods.map((method) => {
+                                const isSelected =
+                                  Number(shipment.shippingMethodId) === Number(method.id);
+                                const threshold = Number(method.freeShippingAmountGross || 0);
+                                const itemsGross = Number(shipment?.totals?.itemsGross || 0);
+                                const isFreeShippingReached =
+                                  threshold > 0 && itemsGross >= threshold;
+                                const missingToThreshold =
+                                  threshold > itemsGross ? threshold - itemsGross : 0;
+
+                                return (
+                                  <label className="cartShippingMethodOption" key={method.id}>
+                                    <input
+                                      type="radio"
+                                      name={`shipment-shipping-${shipment.sellerId}`}
+                                      checked={isSelected}
+                                      disabled={pendingShipmentSellerId === shipment.sellerId}
+                                      onChange={() =>
+                                        handleShippingMethodChange(shipment.sellerId, method.id)
+                                      }
+                                    />
+                                    <div className="cartShippingMethodContent">
+                                      <div className="cartShippingMethodTop">
+                                        <strong>{method.name}</strong>
+                                        <strong>
+                                          {isSelected
+                                            ? `${formatPrice(shipment.shippingGross)} zl`
+                                            : `${formatPrice(method.priceGross || 0)} zl`}
+                                        </strong>
+                                      </div>
+                                      <div className="cartShippingMethodMeta">
+                                        <span>{formatEtaDays(method.etaMinDays, method.etaMaxDays)}</span>
+                                        {threshold > 0 ? (
+                                          <span>
+                                            {isFreeShippingReached
+                                              ? `Darmowa dostawa od ${formatPrice(threshold)} zl - osiagnieto`
+                                              : `Do darmowej dostawy brakuje ${formatPrice(missingToThreshold)} zl`}
+                                          </span>
+                                        ) : null}
+                                      </div>
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        <label
+                          className="cartShipmentNoteLabel"
+                          htmlFor={`shipment-note-${shipment.sellerId}`}
+                        >
+                          Notatka do dostawy
+                        </label>
+                        <textarea
+                          id={`shipment-note-${shipment.sellerId}`}
+                          className="cartShipmentNote"
+                          value={shipmentNotes[shipment.sellerId] || ""}
+                          disabled={pendingShipmentSellerId === shipment.sellerId}
+                          onChange={(event) =>
+                            setShipmentNotes((prev) => ({
+                              ...prev,
+                              [shipment.sellerId]: event.target.value,
+                            }))
+                          }
+                          onBlur={() => handleShipmentNoteBlur(shipment.sellerId)}
+                          placeholder="Instrukcje dla tego sprzedawcy"
+                        />
+                      </div>
                     </div>
-                  </div>
-                </section>
-              ))}
+                  </section>
+                );
+              })}
             </div>
           )}
 

@@ -12,6 +12,16 @@ const normalizeQuantity = (quantity) => {
   return parsed;
 };
 
+let cartShipmentCapabilitiesCache = null;
+
+const getCartShipmentCapabilities = async (trx = db) => {
+  if (cartShipmentCapabilitiesCache) return cartShipmentCapabilitiesCache;
+
+  const hasShippingMethodId = await trx.schema.hasColumn("cart_shipments", "shippingMethodId");
+  cartShipmentCapabilitiesCache = { hasShippingMethodId };
+  return cartShipmentCapabilitiesCache;
+};
+
 const resolveScope = async ({ userId, role, clientId }) => {
   if (role === "CLIENT") {
     const client = await db("clients").select("id").where({ userId }).first();
@@ -70,6 +80,10 @@ const mapShipment = (shipment) => ({
     shipment.deliveryAddressId !== null && shipment.deliveryAddressId !== undefined
       ? Number(shipment.deliveryAddressId)
       : null,
+  shippingMethodId:
+    shipment.shippingMethodId !== null && shipment.shippingMethodId !== undefined
+      ? Number(shipment.shippingMethodId)
+      : null,
   shippingMethodName: shipment.shippingMethodName || null,
   shippingNet: roundMoney(shipment.shippingNet),
   shippingGross: roundMoney(shipment.shippingGross),
@@ -81,23 +95,30 @@ const mapShipment = (shipment) => ({
 });
 
 const getCartShipments = async ({ cartId }, trx = db) => {
+  const capabilities = await getCartShipmentCapabilities(trx);
+  const selectColumns = [
+    "cs.id",
+    "cs.cartId",
+    "cs.sellerId",
+    "cs.deliveryAddressId",
+    "cs.shippingMethodName",
+    "cs.shippingNet",
+    "cs.shippingGross",
+    "cs.clientNote",
+    "cs.estimatedDeliveryFrom",
+    "cs.estimatedDeliveryTo",
+    "cs.createdAt",
+    "cs.updatedAt",
+    "s.companyName as sellerCompanyName",
+  ];
+
+  if (capabilities.hasShippingMethodId) {
+    selectColumns.push("cs.shippingMethodId");
+  }
+
   const shipments = await trx("cart_shipments as cs")
     .leftJoin("sellers as s", "s.id", "cs.sellerId")
-    .select(
-      "cs.id",
-      "cs.cartId",
-      "cs.sellerId",
-      "cs.deliveryAddressId",
-      "cs.shippingMethodName",
-      "cs.shippingNet",
-      "cs.shippingGross",
-      "cs.clientNote",
-      "cs.estimatedDeliveryFrom",
-      "cs.estimatedDeliveryTo",
-      "cs.createdAt",
-      "cs.updatedAt",
-      "s.companyName as sellerCompanyName",
-    )
+    .select(selectColumns)
     .where("cs.cartId", Number(cartId))
     .orderBy("cs.id", "asc");
 
@@ -158,57 +179,6 @@ const getCartByIdWithItems = async ({ cartId }, trx = db) => {
   return buildCartResponse({ cart }, trx);
 };
 
-const recalculateTotals = async ({ cartId }, trx = db) => {
-  const totalsRow = await trx("cart_items")
-    .where({ cartId })
-    .sum({ itemsNet: "lineNet", itemsGross: "lineGross" })
-    .first();
-
-  const cart = await trx("carts").where({ id: cartId }).first();
-  if (!cart) return null;
-
-  const shipmentTotalsRow = await trx("cart_shipments")
-    .where({ cartId })
-    .sum({ shippingNet: "shippingNet", shippingGross: "shippingGross" })
-    .first();
-
-  const itemsNet = roundMoney(totalsRow?.itemsNet || 0);
-  const itemsGross = roundMoney(totalsRow?.itemsGross || 0);
-  const shippingNet = roundMoney(shipmentTotalsRow?.shippingNet || 0);
-  const shippingGross = roundMoney(shipmentTotalsRow?.shippingGross || 0);
-  const discountNet = roundMoney(cart.discountNet || 0);
-  const discountGross = roundMoney(cart.discountGross || 0);
-
-  const totalNet = roundMoney(Math.max(0, itemsNet + shippingNet - discountNet));
-  const totalGross = roundMoney(Math.max(0, itemsGross + shippingGross - discountGross));
-
-  await trx("carts")
-    .where({ id: cartId })
-    .update({
-      shippingNet,
-      shippingGross,
-      totalNet,
-      totalGross,
-      updatedAt: trx.fn.now(),
-    });
-
-  return getCartByIdWithItems({ cartId }, trx);
-};
-
-const getOrCreateCurrentCart = async ({
-  userId,
-  role,
-  clientId,
-  currency,
-}) => {
-  const scope = await resolveScope({ userId, role, clientId });
-  let cart = await findActiveCart(scope);
-  if (!cart) {
-    cart = await createCart({ ...scope, currency: currency || "PLN" });
-  }
-  return getCartByIdWithItems({ cartId: cart.id });
-};
-
 const ensureCartShipment = async ({ cartId, sellerId }, trx = db) => {
   const normalizedSellerId = Number(sellerId);
   if (!normalizedSellerId) return null;
@@ -247,6 +217,253 @@ const removeEmptyCartShipment = async ({ cartId, sellerId }, trx = db) => {
       sellerId: Number(sellerId),
     })
     .del();
+};
+
+const loadActiveShippingMethod = async ({ sellerId, shippingMethodId }, trx = db) => {
+  const method = await trx("seller_shipping_methods")
+    .select(
+      "id",
+      "sellerId",
+      "name",
+      "isActive",
+      "priceNet",
+      "priceGross",
+      "freeShippingAmountGross",
+      "freeShippingQuantity",
+      "freeShippingWeight",
+      "etaMinDays",
+      "etaMaxDays",
+    )
+    .where({
+      sellerId: Number(sellerId),
+      id: Number(shippingMethodId),
+      isActive: 1,
+    })
+    .first();
+
+  if (!method) {
+    const error = new Error("Shipping method not found");
+    error.status = 404;
+    throw error;
+  }
+
+  return method;
+};
+
+const addDays = (baseDate, days) => {
+  const next = new Date(baseDate);
+  next.setHours(0, 0, 0, 0);
+  next.setDate(next.getDate() + Number(days || 0));
+  return next.toISOString().slice(0, 10);
+};
+
+const recalculateShipment = async ({ cartId, sellerId }, trx = db) => {
+  const capabilities = await getCartShipmentCapabilities(trx);
+  const shipment = await trx("cart_shipments")
+    .where({
+      cartId: Number(cartId),
+      sellerId: Number(sellerId),
+    })
+    .first();
+
+  if (!shipment) return null;
+
+  const items = await trx("cart_items")
+    .where({
+      cartId: Number(cartId),
+      sellerId: Number(sellerId),
+    })
+    .orderBy("id", "asc");
+
+  const itemsGross = roundMoney(items.reduce((sum, item) => sum + Number(item.lineGross || 0), 0));
+  const totalQuantity = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+
+  if (!items.length) {
+    const emptyShipmentUpdate = {
+      shippingMethodName: null,
+      shippingNet: 0,
+      shippingGross: 0,
+      estimatedDeliveryFrom: null,
+      estimatedDeliveryTo: null,
+      updatedAt: trx.fn.now(),
+    };
+
+    if (capabilities.hasShippingMethodId) {
+      emptyShipmentUpdate.shippingMethodId = null;
+    }
+
+    await trx("cart_shipments").where({ id: shipment.id }).update(emptyShipmentUpdate);
+    return null;
+  }
+
+  const currentShippingMethodId = capabilities.hasShippingMethodId
+    ? Number(shipment.shippingMethodId || 0)
+    : 0;
+
+  if (!currentShippingMethodId) {
+    await trx("cart_shipments")
+      .where({ id: shipment.id })
+      .update({
+        shippingMethodName: null,
+        shippingNet: 0,
+        shippingGross: 0,
+        estimatedDeliveryFrom: null,
+        estimatedDeliveryTo: null,
+        updatedAt: trx.fn.now(),
+      });
+    return null;
+  }
+
+  const method = await loadActiveShippingMethod(
+    {
+      sellerId: shipment.sellerId,
+      shippingMethodId: currentShippingMethodId,
+    },
+    trx,
+  );
+
+  const meetsAmountThreshold =
+    method.freeShippingAmountGross !== null &&
+    method.freeShippingAmountGross !== undefined &&
+    itemsGross >= Number(method.freeShippingAmountGross);
+  const meetsQuantityThreshold =
+    method.freeShippingQuantity !== null &&
+    method.freeShippingQuantity !== undefined &&
+    totalQuantity >= Number(method.freeShippingQuantity);
+  const meetsWeightThreshold =
+    method.freeShippingWeight !== null &&
+    method.freeShippingWeight !== undefined &&
+    false;
+  const isFreeShippingApplied =
+    meetsAmountThreshold || meetsQuantityThreshold || meetsWeightThreshold;
+
+  const today = new Date();
+  const estimatedDeliveryFrom =
+    method.etaMinDays !== null && method.etaMinDays !== undefined
+      ? addDays(today, method.etaMinDays)
+      : null;
+  const estimatedDeliveryTo =
+    method.etaMaxDays !== null && method.etaMaxDays !== undefined
+      ? addDays(today, method.etaMaxDays)
+      : estimatedDeliveryFrom;
+
+  const updates = {
+    shippingMethodName: method.name,
+    shippingNet: isFreeShippingApplied ? 0 : roundMoney(method.priceNet || 0),
+    shippingGross: isFreeShippingApplied ? 0 : roundMoney(method.priceGross || 0),
+    estimatedDeliveryFrom,
+    estimatedDeliveryTo,
+    updatedAt: trx.fn.now(),
+  };
+
+  if (capabilities.hasShippingMethodId) {
+    updates.shippingMethodId = Number(method.id);
+  }
+
+  await trx("cart_shipments").where({ id: shipment.id }).update(updates);
+  return updates;
+};
+
+const recalculateShipmentsForCart = async ({ cartId }, trx = db) => {
+  const shipments = await trx("cart_shipments")
+    .select("sellerId")
+    .where({ cartId: Number(cartId) })
+    .orderBy("id", "asc");
+
+  for (const shipment of shipments) {
+    await recalculateShipment({ cartId, sellerId: shipment.sellerId }, trx);
+  }
+};
+
+const recalculateTotals = async ({ cartId }, trx = db) => {
+  await recalculateShipmentsForCart({ cartId }, trx);
+
+  const totalsRow = await trx("cart_items")
+    .where({ cartId })
+    .sum({ itemsNet: "lineNet", itemsGross: "lineGross" })
+    .first();
+
+  const cart = await trx("carts").where({ id: cartId }).first();
+  if (!cart) return null;
+
+  const shipmentTotalsRow = await trx("cart_shipments")
+    .where({ cartId })
+    .sum({ shippingNet: "shippingNet", shippingGross: "shippingGross" })
+    .first();
+
+  const itemsNet = roundMoney(totalsRow?.itemsNet || 0);
+  const itemsGross = roundMoney(totalsRow?.itemsGross || 0);
+  const shippingNet = roundMoney(shipmentTotalsRow?.shippingNet || 0);
+  const shippingGross = roundMoney(shipmentTotalsRow?.shippingGross || 0);
+  const discountNet = roundMoney(cart.discountNet || 0);
+  const discountGross = roundMoney(cart.discountGross || 0);
+
+  const totalNet = roundMoney(Math.max(0, itemsNet + shippingNet - discountNet));
+  const totalGross = roundMoney(Math.max(0, itemsGross + shippingGross - discountGross));
+
+  await trx("carts")
+    .where({ id: cartId })
+    .update({
+      shippingNet,
+      shippingGross,
+      totalNet,
+      totalGross,
+      updatedAt: trx.fn.now(),
+    });
+
+  return getCartByIdWithItems({ cartId }, trx);
+};
+
+const getOrCreateCurrentCart = async ({ userId, role, clientId, currency }) => {
+  const scope = await resolveScope({ userId, role, clientId });
+  let cart = await findActiveCart(scope);
+  if (!cart) {
+    cart = await createCart({ ...scope, currency: currency || "PLN" });
+  }
+
+  await recalculateTotals({ cartId: cart.id });
+  return getCartByIdWithItems({ cartId: cart.id });
+};
+
+const getAvailableShippingMethodsForSeller = async ({ sellerId }) => {
+  const normalizedSellerId = Number(sellerId);
+  if (!normalizedSellerId) {
+    const error = new Error("sellerId is required");
+    error.status = 400;
+    throw error;
+  }
+
+  const rows = await db("seller_shipping_methods")
+    .select(
+      "id",
+      "sellerId",
+      "name",
+      "priceNet",
+      "priceGross",
+      "freeShippingAmountGross",
+      "etaMinDays",
+      "etaMaxDays",
+    )
+    .where({
+      sellerId: normalizedSellerId,
+      isActive: 1,
+    })
+    .orderBy("id", "asc");
+
+  return rows.map((row) => ({
+    id: Number(row.id),
+    sellerId: Number(row.sellerId),
+    name: row.name || "",
+    priceNet: row.priceNet === null || row.priceNet === undefined ? null : Number(row.priceNet),
+    priceGross:
+      row.priceGross === null || row.priceGross === undefined ? null : Number(row.priceGross),
+    freeShippingAmountGross:
+      row.freeShippingAmountGross === null || row.freeShippingAmountGross === undefined
+        ? null
+        : Number(row.freeShippingAmountGross),
+    etaMinDays: row.etaMinDays === null || row.etaMinDays === undefined ? null : Number(row.etaMinDays),
+    etaMaxDays: row.etaMaxDays === null || row.etaMaxDays === undefined ? null : Number(row.etaMaxDays),
+  }));
 };
 
 const addItemToCurrentCart = async ({
@@ -406,13 +623,7 @@ const addItemToCurrentCart = async ({
   });
 };
 
-const updateCurrentCartItem = async ({
-  userId,
-  role,
-  clientId,
-  itemId,
-  quantity,
-}) => {
+const updateCurrentCartItem = async ({ userId, role, clientId, itemId, quantity }) => {
   const targetItemId = Number(itemId);
   if (!targetItemId) {
     const error = new Error("itemId is required");
@@ -457,12 +668,7 @@ const updateCurrentCartItem = async ({
   });
 };
 
-const removeItemFromCurrentCart = async ({
-  userId,
-  role,
-  clientId,
-  itemId,
-}) => {
+const removeItemFromCurrentCart = async ({ userId, role, clientId, itemId }) => {
   const targetItemId = Number(itemId);
   if (!targetItemId) {
     const error = new Error("itemId is required");
@@ -480,15 +686,19 @@ const removeItemFromCurrentCart = async ({
       throw error;
     }
 
-    const deletedCount = await trx("cart_items")
+    const item = await trx("cart_items")
       .where({ id: targetItemId, cartId: cart.id })
-      .del();
+      .first();
 
-    if (!deletedCount) {
+    if (!item) {
       const error = new Error("Cart item not found");
       error.status = 404;
       throw error;
     }
+
+    await trx("cart_items")
+      .where({ id: targetItemId, cartId: cart.id })
+      .del();
 
     await removeEmptyCartShipment({ cartId: cart.id, sellerId: item.sellerId }, trx);
 
@@ -519,12 +729,8 @@ const updateCurrentCartShipment = async ({
   clientId,
   sellerId,
   deliveryAddressId,
-  shippingMethodName,
-  shippingNet,
-  shippingGross,
+  shippingMethodId,
   clientNote,
-  estimatedDeliveryFrom,
-  estimatedDeliveryTo,
 }) => {
   const normalizedSellerId = Number(sellerId);
   if (!normalizedSellerId) {
@@ -536,6 +742,13 @@ const updateCurrentCartShipment = async ({
   const scope = await resolveScope({ userId, role, clientId });
 
   return db.transaction(async (trx) => {
+    const capabilities = await getCartShipmentCapabilities(trx);
+    if (shippingMethodId !== undefined && !capabilities.hasShippingMethodId) {
+      const error = new Error("Database schema requires cart_shipments.shippingMethodId");
+      error.status = 500;
+      throw error;
+    }
+
     const cart = await findActiveCart(scope, trx);
     if (!cart) {
       const error = new Error("Active cart not found");
@@ -549,23 +762,20 @@ const updateCurrentCartShipment = async ({
     if (deliveryAddressId !== undefined) {
       updates.deliveryAddressId = deliveryAddressId ? Number(deliveryAddressId) : null;
     }
-    if (shippingMethodName !== undefined) {
-      updates.shippingMethodName = shippingMethodName ? String(shippingMethodName).trim() : null;
-    }
-    if (shippingNet !== undefined) {
-      updates.shippingNet = roundMoney(shippingNet);
-    }
-    if (shippingGross !== undefined) {
-      updates.shippingGross = roundMoney(shippingGross);
+    if (shippingMethodId !== undefined) {
+      updates.shippingMethodId = shippingMethodId ? Number(shippingMethodId) : null;
+      if (updates.shippingMethodId) {
+        await loadActiveShippingMethod(
+          {
+            sellerId: normalizedSellerId,
+            shippingMethodId: updates.shippingMethodId,
+          },
+          trx,
+        );
+      }
     }
     if (clientNote !== undefined) {
       updates.clientNote = clientNote ? String(clientNote).trim() : null;
-    }
-    if (estimatedDeliveryFrom !== undefined) {
-      updates.estimatedDeliveryFrom = estimatedDeliveryFrom || null;
-    }
-    if (estimatedDeliveryTo !== undefined) {
-      updates.estimatedDeliveryTo = estimatedDeliveryTo || null;
     }
 
     if (Object.keys(updates).length) {
@@ -582,9 +792,6 @@ const updateCurrentCartMeta = async ({
   role,
   clientId,
   couponCode,
-  shippingMethodId,
-  shippingNet,
-  shippingGross,
   discountNet,
   discountGross,
   expiresAt,
@@ -601,11 +808,6 @@ const updateCurrentCartMeta = async ({
 
     const updates = {};
     if (couponCode !== undefined) updates.couponCode = couponCode || null;
-    if (shippingMethodId !== undefined) {
-      updates.shippingMethodId = shippingMethodId ? Number(shippingMethodId) : null;
-    }
-    if (shippingNet !== undefined) updates.shippingNet = roundMoney(shippingNet);
-    if (shippingGross !== undefined) updates.shippingGross = roundMoney(shippingGross);
     if (discountNet !== undefined) updates.discountNet = roundMoney(discountNet);
     if (discountGross !== undefined) updates.discountGross = roundMoney(discountGross);
     if (expiresAt !== undefined) updates.expiresAt = expiresAt || null;
@@ -621,6 +823,7 @@ const updateCurrentCartMeta = async ({
 
 module.exports = {
   getOrCreateCurrentCart,
+  getAvailableShippingMethodsForSeller,
   addItemToCurrentCart,
   updateCurrentCartItem,
   removeItemFromCurrentCart,

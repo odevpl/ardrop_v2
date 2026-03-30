@@ -91,9 +91,6 @@ router.patch(
       role: req.user.role,
       clientId: req.body.clientId,
       couponCode: req.body.couponCode,
-      shippingMethodId: req.body.shippingMethodId,
-      shippingNet: req.body.shippingNet,
-      shippingGross: req.body.shippingGross,
       discountNet: req.body.discountNet,
       discountGross: req.body.discountGross,
       expiresAt: req.body.expiresAt,
@@ -113,15 +110,23 @@ router.patch(
       clientId: req.body.clientId,
       sellerId: Number(req.params.sellerId),
       deliveryAddressId: req.body.deliveryAddressId,
-      shippingMethodName: req.body.shippingMethodName,
-      shippingNet: req.body.shippingNet,
-      shippingGross: req.body.shippingGross,
+      shippingMethodId: req.body.shippingMethodId,
       clientNote: req.body.clientNote,
-      estimatedDeliveryFrom: req.body.estimatedDeliveryFrom,
-      estimatedDeliveryTo: req.body.estimatedDeliveryTo,
     });
 
     res.status(200).json({ data: cart, cart });
+  },
+);
+
+router.get(
+  "/checkout/shipments/:sellerId/shipping-methods",
+  roleMiddleware("ADMIN", "CLIENT"),
+  async (req, res) => {
+    const shippingMethods = await cartsService.getAvailableShippingMethodsForSeller({
+      sellerId: Number(req.params.sellerId),
+    });
+
+    res.status(200).json({ data: shippingMethods, shippingMethods });
   },
 );
 

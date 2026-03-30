@@ -47,12 +47,14 @@ const getOrderColumnCapabilities = async (trx = db) => {
 
   const [
     hasDeliveryAddressSnapshotJson,
+    hasShippingMethodId,
     hasShippingMethodName,
     hasClientNote,
     hasEstimatedDeliveryFrom,
     hasEstimatedDeliveryTo,
   ] = await Promise.all([
     trx.schema.hasColumn("orders", "deliveryAddressSnapshotJson"),
+    trx.schema.hasColumn("orders", "shippingMethodId"),
     trx.schema.hasColumn("orders", "shippingMethodName"),
     trx.schema.hasColumn("orders", "clientNote"),
     trx.schema.hasColumn("orders", "estimatedDeliveryFrom"),
@@ -61,6 +63,7 @@ const getOrderColumnCapabilities = async (trx = db) => {
 
   orderColumnsCache = {
     hasDeliveryAddressSnapshotJson,
+    hasShippingMethodId,
     hasShippingMethodName,
     hasClientNote,
     hasEstimatedDeliveryFrom,
@@ -88,6 +91,9 @@ const getOrderSelectColumns = async (trx = db) => {
 
   if (capabilities.hasDeliveryAddressSnapshotJson) {
     columns.push("orders.deliveryAddressSnapshotJson");
+  }
+  if (capabilities.hasShippingMethodId) {
+    columns.push("orders.shippingMethodId");
   }
   if (capabilities.hasShippingMethodName) {
     columns.push("orders.shippingMethodName");
@@ -130,6 +136,10 @@ const mapOrder = (order) => ({
   totalNet: Number(order.totalNet),
   totalGross: Number(order.totalGross),
   totalShipping: Number(order.totalShipping),
+  shippingMethodId:
+    order.shippingMethodId === null || order.shippingMethodId === undefined
+      ? null
+      : Number(order.shippingMethodId),
   paymentStatus: order.paymentStatus,
   status: order.status,
   deliveryAddressSnapshot: parseSnapshot(order.deliveryAddressSnapshotJson),
@@ -346,6 +356,11 @@ const createOrderFromCurrentCart = async (
         orderPayload.deliveryAddressSnapshotJson = JSON.stringify(
           mapDeliveryAddressSnapshot(resolvedAddress),
         );
+      }
+      if (orderColumns.hasShippingMethodId) {
+        orderPayload.shippingMethodId = shipment?.shippingMethodId
+          ? Number(shipment.shippingMethodId)
+          : null;
       }
       if (orderColumns.hasShippingMethodName) {
         orderPayload.shippingMethodName = shipment?.shippingMethodName || null;

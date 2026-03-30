@@ -81,6 +81,7 @@ CREATE TABLE `cart_shipments` (
 `cartId` int UNSIGNED NOT NULL,
 `sellerId` int NOT NULL,
 `deliveryAddressId` int DEFAULT NULL,
+`shippingMethodId` int UNSIGNED DEFAULT NULL,
 `shippingMethodName` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
 `shippingNet` decimal(15,2) NOT NULL DEFAULT '0.00',
 `shippingGross` decimal(15,2) NOT NULL DEFAULT '0.00',
@@ -229,6 +230,7 @@ CREATE TABLE `orders` (
 `sellerId` int UNSIGNED NOT NULL,
 `clientId` int UNSIGNED NOT NULL,
 `deliveryAddressSnapshotJson` longtext COLLATE utf8mb4_general_ci,
+`shippingMethodId` int UNSIGNED DEFAULT NULL,
 `shippingMethodName` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
 `clientNote` text COLLATE utf8mb4_general_ci,
 `estimatedDeliveryFrom` datetime DEFAULT NULL,
@@ -617,7 +619,8 @@ ADD PRIMARY KEY (`id`),
 ADD UNIQUE KEY `uniq_cart_shipments_cart_seller` (`cartId`,`sellerId`),
 ADD KEY `idx_cart_shipments_cartId` (`cartId`),
 ADD KEY `idx_cart_shipments_sellerId` (`sellerId`),
-ADD KEY `idx_cart_shipments_deliveryAddressId` (`deliveryAddressId`);
+ADD KEY `idx_cart_shipments_deliveryAddressId` (`deliveryAddressId`),
+ADD KEY `idx_cart_shipments_shippingMethodId` (`shippingMethodId`);
 
 --
 -- Indexes for table `categories`
@@ -672,7 +675,8 @@ ALTER TABLE `orders`
 ADD PRIMARY KEY (`id`),
 ADD KEY `idx_orders_clientId` (`clientId`),
 ADD KEY `idx_orders_sellerId` (`sellerId`),
-ADD KEY `idx_orders_orderGroupId` (`orderGroupId`);
+ADD KEY `idx_orders_orderGroupId` (`orderGroupId`),
+ADD KEY `idx_orders_shippingMethodId` (`shippingMethodId`);
 
 --
 -- Indexes for table `order_items`
@@ -1000,6 +1004,7 @@ ADD CONSTRAINT `fk_cart_items_variant` FOREIGN KEY (`variantId`) REFERENCES `pro
 ALTER TABLE `cart_shipments`
 ADD CONSTRAINT `fk_cart_shipments_cart` FOREIGN KEY (`cartId`) REFERENCES `carts` (`id`) ON DELETE CASCADE,
 ADD CONSTRAINT `fk_cart_shipments_delivery_address` FOREIGN KEY (`deliveryAddressId`) REFERENCES `clients_delivery_address` (`id`) ON DELETE SET NULL,
+ADD CONSTRAINT `fk_cart_shipments_shipping_method` FOREIGN KEY (`shippingMethodId`) REFERENCES `seller_shipping_methods` (`id`) ON DELETE SET NULL,
 ADD CONSTRAINT `fk_cart_shipments_seller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE RESTRICT;
 
 --

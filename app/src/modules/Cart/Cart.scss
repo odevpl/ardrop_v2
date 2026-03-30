@@ -255,6 +255,61 @@
   font-weight: 600;
 }
 
+.cartShippingMethods {
+  display: grid;
+  gap: 10px;
+}
+
+.cartShippingMethodsTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.cartShippingMethodsEmpty {
+  margin: 0;
+  color: #5a7282;
+}
+
+.cartShippingMethodsList {
+  display: grid;
+  gap: 10px;
+}
+
+.cartShippingMethodOption {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid #d7e7f9;
+  border-radius: 14px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.cartShippingMethodOption input {
+  margin-top: 3px;
+}
+
+.cartShippingMethodContent {
+  display: grid;
+  gap: 6px;
+}
+
+.cartShippingMethodTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cartShippingMethodMeta {
+  display: grid;
+  gap: 4px;
+  color: #4b6375;
+  font-size: 0.9rem;
+}
+
 .cartShipmentNote {
   width: 100%;
   min-height: 78px;

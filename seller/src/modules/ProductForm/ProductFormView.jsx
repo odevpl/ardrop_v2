@@ -91,7 +91,7 @@ const ProductFormView = ({
         onSubmit={onSubmit}
         validationSchema={addProductValidationSchema}
       >
-        {({ isSubmitting, status, values }) => (
+        {({ isSubmitting, status, values, setFieldValue }) => (
           <>
             <div className="sellerFormGrid">
               <Input id="name" placeholder="Nazwa" />
@@ -102,11 +102,34 @@ const ProductFormView = ({
                 placeholder="Stan magazynowy"
                 type="decimal"
               />
-              <Select
-                id="status"
-                placeholder="Status"
-                config={STATUS_OPTIONS}
-              />
+              <div className="select-input-wrapper field-size-lg">
+                <label htmlFor="product-status">Status</label>
+                <select
+                  id="product-status"
+                  value={values.status ?? ""}
+                  onChange={(event) => {
+                    const nextStatus = event.target.value
+                    setFieldValue("status", nextStatus)
+                    if (typeof setVariants === "function" && nextStatus === "draft") {
+                      setVariants(
+                        variants.map((variant) => ({
+                          ...variant,
+                          status: "draft",
+                        })),
+                      )
+                    }
+                  }}
+                >
+                  <option value="" disabled>
+                    Status
+                  </option>
+                  {Object.entries(STATUS_OPTIONS).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <Textarea id="description" placeholder="Opis" />
@@ -250,6 +273,35 @@ const ProductFormView = ({
                             )
                           }
                         />
+                      </div>
+                      <div className="sellerVariantField">
+                        <label htmlFor={`variant-status-${index}`}>
+                          Status wariantu
+                        </label>
+                        <select
+                          id={`variant-status-${index}`}
+                          value={variant.status || "draft"}
+                          onChange={(event) => {
+                            const nextStatus = event.target.value
+                            setVariants(
+                              variants.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, status: nextStatus }
+                                  : item,
+                              ),
+                            )
+                            if (nextStatus === "active" && values.status !== "active") {
+                              setFieldValue("status", "active")
+                            }
+                          }}
+                          disabled={values.status === "draft"}
+                        >
+                          {Object.entries(STATUS_OPTIONS).map(([key, label]) => (
+                            <option key={key} value={key}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div className="sellerVariantField">
                         <label htmlFor={`variant-stock-quantity-${index}`}>

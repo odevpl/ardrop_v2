@@ -2,17 +2,27 @@ import { useFormikContext, getIn } from "formik";
 
 const MAX_LENGTH = 5000;
 
-const TextareaInput = ({ id, placeholder }) => {
+const TextareaInput = ({ id, placeholder, size, span, wrapperClassName }) => {
   const formikContext = useFormikContext();
   const value = getIn(formikContext.values, id);
+  const error = getIn(formikContext.errors, id);
   const currentLength = String(value ?? "").length;
+  const normalizedSize = size || "lg";
+  const wrapperClassNames = [
+    "textarea-input-wrapper",
+    `field-size-${normalizedSize}`,
+    span ? `field-span-${span}` : "",
+    wrapperClassName || "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const handleChange = (e) => {
     formikContext.setFieldValue(id, e.target.value);
   };
 
   return (
-    <div className="textarea-input-wrapper">
+    <div className={wrapperClassNames}>
       <label htmlFor={id}>{placeholder}</label>
       <textarea
         id={id}
@@ -22,9 +32,9 @@ const TextareaInput = ({ id, placeholder }) => {
         value={value ?? ""}
       />
       <div className="textarea-counter">{`${currentLength}/${MAX_LENGTH}`}</div>
-      {formikContext.errors[id] && (
+      {error && (
         <span className="validation-error-description">
-          {formikContext.errors[id]}
+          {error}
         </span>
       )}
     </div>

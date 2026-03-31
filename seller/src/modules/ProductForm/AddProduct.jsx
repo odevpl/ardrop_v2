@@ -72,6 +72,7 @@ const AddProduct = () => {
     const normalizedVariants = variants.map((variant, index) => ({
       ...variant,
       unit: currentUnit,
+      status: values.status === 'draft' ? 'draft' : variant.status || values.status || 'draft',
       isDefault: variants.some((item) => Boolean(item.isDefault))
         ? Boolean(variant.isDefault)
         : index === 0,

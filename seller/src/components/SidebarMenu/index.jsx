@@ -23,7 +23,7 @@ const SidebarMenu = ({ config }) => {
               <NavLink
                 key={item.title}
                 to={item.path}
-                end={item.path === '/configuration'}
+                end={item.path === "/products" || item.path === "/orders"}
                 className={({ isActive }) =>
                   `sidebarMenuItem${isActive ? ' sidebarMenuItemActive' : ''}`
                 }

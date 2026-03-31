@@ -50,6 +50,20 @@ router.get(
   },
 );
 
+router.get(
+  "/orders/groups/:orderGroupId",
+  roleMiddleware("ADMIN", "SELLER", "CLIENT"),
+  async (req, res) => {
+    const orderGroup = await ordersService.getOrderGroupById({
+      userId: req.user.userId,
+      role: req.user.role,
+      orderGroupId: req.params.orderGroupId,
+    });
+
+    res.status(200).json({ data: orderGroup, orderGroup });
+  },
+);
+
 router.put(
   "/orders/:id",
   roleMiddleware("ADMIN", "SELLER"),

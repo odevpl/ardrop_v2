@@ -12,6 +12,7 @@ import AccountPage from "pages/account";
 import DeliveryAdressessPage from "pages/deliveryAdressess";
 import DeliveriesListPage from "pages/deliveriesList";
 import OrderDetailsPage from "pages/orderDetails";
+import OrderGroupPage from "pages/orderGroup";
 import ProductPreviewPage from "pages/productPreview";
 import CartsService from "services/carts";
 import AccountService from "services/account";
@@ -173,6 +174,7 @@ function App() {
               <Route path="/konto" element={<AccountPage />} />
               <Route path="/klient" element={<AccountPage />} />
               <Route path="/zamowienia" element={<DeliveriesListPage />} />
+              <Route path="/zamowienia/grupa/:orderGroupId" element={<OrderGroupPage />} />
               <Route path="/zamowienia/:id" element={<OrderDetailsPage />} />
               <Route
                 path="/dostawy"

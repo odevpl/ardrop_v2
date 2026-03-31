@@ -41,7 +41,7 @@ const OrderView = ({ payload }) => {
   return (
     <section className="orderViewModule">
       <header className="orderViewHeader">
-        <h1>Zamowienie #{order?.id || '-'}</h1>
+        <h1>Zamowienie #{order?.orderNumber || order?.id || '-'}</h1>
       </header>
 
       <div className="orderViewLayout">

@@ -38,3 +38,34 @@
   color: #6b7280;
   text-align: right;
 }
+
+.text-input-wrapper,
+.select-input-wrapper,
+.date-input-wrapper,
+.time-input-wrapper,
+.textarea-input-wrapper,
+.fetch-list-input-wrapper {
+  width: 100%;
+  min-width: 0;
+}
+
+.field-size-sm {
+  max-width: 220px;
+}
+
+.field-size-md {
+  max-width: 360px;
+}
+
+.field-size-lg {
+  max-width: 560px;
+}
+
+.field-size-full {
+  max-width: none;
+}
+
+.field-span-2,
+.field-span-full {
+  grid-column: 1 / -1;
+}

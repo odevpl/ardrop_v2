@@ -42,10 +42,25 @@ const parseSnapshot = (raw) => {
   }
 };
 
+const formatDateOnly = (rawDate) => {
+  if (!rawDate) return null;
+  const date = new Date(rawDate);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
+};
+
+const addDays = (rawDate, days) => {
+  const date = new Date(rawDate);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setDate(date.getDate() + Number(days || 0));
+  return date;
+};
+
 const getOrderColumnCapabilities = async (trx = db) => {
   if (orderColumnsCache) return orderColumnsCache;
 
   const [
+    hasOrderGroupNumber,
     hasDeliveryAddressSnapshotJson,
     hasShippingMethodId,
     hasShippingMethodName,
@@ -53,6 +68,7 @@ const getOrderColumnCapabilities = async (trx = db) => {
     hasEstimatedDeliveryFrom,
     hasEstimatedDeliveryTo,
   ] = await Promise.all([
+    trx.schema.hasColumn("orders", "orderGroupNumber"),
     trx.schema.hasColumn("orders", "deliveryAddressSnapshotJson"),
     trx.schema.hasColumn("orders", "shippingMethodId"),
     trx.schema.hasColumn("orders", "shippingMethodName"),
@@ -62,6 +78,7 @@ const getOrderColumnCapabilities = async (trx = db) => {
   ]);
 
   orderColumnsCache = {
+    hasOrderGroupNumber,
     hasDeliveryAddressSnapshotJson,
     hasShippingMethodId,
     hasShippingMethodName,
@@ -78,6 +95,7 @@ const getOrderSelectColumns = async (trx = db) => {
   const columns = [
     "orders.id",
     "orders.orderGroupId",
+    "orders.orderGroupNumber",
     "orders.sellerId",
     "orders.clientId",
     "orders.totalNet",
@@ -89,6 +107,9 @@ const getOrderSelectColumns = async (trx = db) => {
     "orders.updatedAt",
   ];
 
+  if (!capabilities.hasOrderGroupNumber) {
+    columns.splice(2, 1);
+  }
   if (capabilities.hasDeliveryAddressSnapshotJson) {
     columns.push("orders.deliveryAddressSnapshotJson");
   }
@@ -131,6 +152,8 @@ const mapDeliveryAddressSnapshot = (address) => {
 const mapOrder = (order) => ({
   id: Number(order.id),
   orderGroupId: Number(order.orderGroupId),
+  orderGroupNumber: order.orderGroupNumber || null,
+  orderNumber: order.orderNumber || null,
   sellerId: Number(order.sellerId),
   clientId: Number(order.clientId),
   totalNet: Number(order.totalNet),
@@ -171,12 +194,40 @@ const mapOrderItem = (item) => ({
   createdAt: item.createdAt,
 });
 
+const mapSellerSummary = (seller, settings) => ({
+  id: Number(seller.id),
+  companyName: seller.companyName || "",
+  nip: seller.nip || "",
+  phone: seller.phone || "",
+  address: seller.address || "",
+  city: seller.city || "",
+  postalCode: seller.postalCode || "",
+  payoutAccountHolder: settings?.payoutAccountHolder || "",
+  payoutBankAccount: settings?.payoutBankAccount || "",
+  payoutBankName: settings?.payoutBankName || "",
+  paymentDueDays:
+    settings?.paymentDueDays === null || settings?.paymentDueDays === undefined
+      ? null
+      : Number(settings.paymentDueDays),
+});
+
+const mapClientSummary = (client) => ({
+  id: Number(client.id),
+  name: client.name || "",
+  companyName: client.companyName || "",
+  nip: client.nip || "",
+  phone: client.phone || "",
+  address: client.address || "",
+  city: client.city || "",
+  postalCode: client.postalCode || "",
+});
+
 const summarizeSellerItems = (items) => {
   const totals = items.reduce(
     (acc, item) => {
       acc.totalNet += Number(item.netPrice) * Number(item.quantity);
       acc.totalGross += Number(item.grossPrice) * Number(item.quantity);
-      acc.itemsCount += Number(item.quantity);
+      acc.itemsCount += 1;
       return acc;
     },
     { totalNet: 0, totalGross: 0, itemsCount: 0 },
@@ -187,6 +238,85 @@ const summarizeSellerItems = (items) => {
     totalGross: Number(totals.totalGross.toFixed(2)),
     itemsCount: totals.itemsCount,
   };
+};
+
+const summarizeOrderItemsRows = (rows) => {
+  return rows.reduce(
+    (acc, item) => {
+      acc.totalNet += Number(item.netPrice || 0) * Number(item.quantity || 0);
+      acc.totalGross += Number(item.grossPrice || 0) * Number(item.quantity || 0);
+      acc.itemsCount += 1;
+      return acc;
+    },
+    { totalNet: 0, totalGross: 0, itemsCount: 0 },
+  );
+};
+
+const getLockValue = (result) => {
+  const rows = Array.isArray(result) ? result[0] : result?.rows || [];
+  const firstRow = Array.isArray(rows) ? rows[0] : rows;
+  const value = firstRow?.lockStatus ?? firstRow?.releaseStatus ?? Object.values(firstRow || {})[0];
+  return Number(value || 0);
+};
+
+const buildOrderGroupNumber = ({ dateKey, sequence }) => `${dateKey}${String(sequence).padStart(3, "0")}`;
+
+const attachOrderNumbers = async (orders, trx = db) => {
+  const mappedOrders = Array.isArray(orders) ? orders : [];
+  if (mappedOrders.length === 0) return mappedOrders;
+
+  const groupIds = [...new Set(mappedOrders.map((order) => Number(order.orderGroupId)).filter(Boolean))];
+  const rows = await trx("orders")
+    .select("id", "orderGroupId", "orderGroupNumber")
+    .whereIn("orderGroupId", groupIds)
+    .orderBy("orderGroupId", "asc")
+    .orderBy("id", "asc");
+
+  const suffixByOrderId = {};
+  const counters = new Map();
+  rows.forEach((row) => {
+    const groupId = Number(row.orderGroupId);
+    const nextIndex = (counters.get(groupId) || 0) + 1;
+    counters.set(groupId, nextIndex);
+    const baseNumber = row.orderGroupNumber || String(groupId);
+    suffixByOrderId[Number(row.id)] = `${baseNumber}-${nextIndex}`;
+  });
+
+  return mappedOrders.map((order) => ({
+    ...order,
+    orderNumber: suffixByOrderId[Number(order.id)] || order.orderNumber || null,
+  }));
+};
+
+const generateOrderGroupNumber = async (trx) => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const dateKey = `${year}${month}${day}`;
+  const lockName = `orders_group_number_${dateKey}`;
+
+  const lockResult = await trx.raw("SELECT GET_LOCK(?, 10) AS lockStatus", [lockName]);
+  const lockStatus = getLockValue(lockResult);
+  if (lockStatus !== 1) {
+    const error = new Error("Could not acquire order number lock");
+    error.status = 503;
+    throw error;
+  }
+
+  try {
+    const latestRow = await trx("orders")
+      .select("orderGroupNumber")
+      .where("orderGroupNumber", "like", `${dateKey}%`)
+      .orderBy("orderGroupNumber", "desc")
+      .first();
+
+    const latestNumber = String(latestRow?.orderGroupNumber || "");
+    const latestSequence = /^\d{11}$/.test(latestNumber) ? Number(latestNumber.slice(-3)) : 0;
+    return buildOrderGroupNumber({ dateKey, sequence: latestSequence + 1 });
+  } finally {
+    await trx.raw("SELECT RELEASE_LOCK(?) AS releaseStatus", [lockName]);
+  }
 };
 
 const resolveCheckoutClientId = async ({ userId, role, clientId }, trx = db) => {
@@ -319,6 +449,9 @@ const createOrderFromCurrentCart = async (
 
     const maxOrderGroupRow = await trx("orders").max({ maxOrderGroupId: "orderGroupId" }).first();
     const orderGroupId = Number(maxOrderGroupRow?.maxOrderGroupId || 0) + 1;
+    const orderGroupNumber = orderColumns.hasOrderGroupNumber
+      ? await generateOrderGroupNumber(trx)
+      : null;
 
     const createdOrderIds = [];
 
@@ -358,6 +491,10 @@ const createOrderFromCurrentCart = async (
         paymentStatus: "pending",
         status: "new",
       };
+
+      if (orderColumns.hasOrderGroupNumber) {
+        orderPayload.orderGroupNumber = orderGroupNumber;
+      }
 
       if (orderColumns.hasDeliveryAddressSnapshotJson) {
         orderPayload.deliveryAddressSnapshotJson = JSON.stringify(
@@ -462,11 +599,13 @@ const createOrderFromCurrentCart = async (
       .select(...orderSelectColumns)
       .whereIn("id", createdOrderIds)
       .orderBy("id", "asc");
+    const ordersWithNumbers = await attachOrderNumbers(orders.map(mapOrder), trx);
 
     return {
       orderGroupId,
+      orderGroupNumber,
       primaryOrderId: Number(orders[0]?.id),
-      orders: orders.map(mapOrder),
+      orders: ordersWithNumbers,
     };
   });
 };
@@ -495,8 +634,30 @@ const getOrders = async ({ userId, role }) => {
   const orders = await query;
   if (orders.length === 0) return [];
 
+  const orderIds = orders.map((order) => Number(order.id));
+  const sellerIds = [...new Set(orders.map((order) => Number(order.sellerId)).filter(Boolean))];
+  const orderItemsRows = await db("order_items")
+    .select("orderId", "sellerId", "quantity", "netPrice", "grossPrice")
+    .whereIn("orderId", orderIds);
+  const sellersRows = await db("sellers")
+    .select("id", "companyName", "nip", "phone", "address", "city", "postalCode")
+    .whereIn("id", sellerIds);
+
+  const orderItemsSummaryByOrderId = {};
+  orderItemsRows.forEach((item) => {
+    const key = Number(item.orderId);
+    if (!orderItemsSummaryByOrderId[key]) {
+      orderItemsSummaryByOrderId[key] = [];
+    }
+    orderItemsSummaryByOrderId[key].push(item);
+  });
+
+  const sellersById = {};
+  sellersRows.forEach((seller) => {
+    sellersById[Number(seller.id)] = seller;
+  });
+
   if (role === "SELLER") {
-    const orderIds = orders.map((order) => Number(order.id));
     const items = await db("order_items")
       .select(
         "id",
@@ -524,7 +685,7 @@ const getOrders = async ({ userId, role }) => {
       itemsByOrderId[key].push(mapOrderItem(item));
     });
 
-    return orders.map((order) => {
+    const result = orders.map((order) => {
       const visibleItems = itemsByOrderId[Number(order.id)] || [];
       return {
         ...mapOrder(order),
@@ -532,9 +693,25 @@ const getOrders = async ({ userId, role }) => {
         sellerScope: summarizeSellerItems(visibleItems),
       };
     });
+    return attachOrderNumbers(result);
   }
 
-  return orders.map(mapOrder);
+  const result = orders.map((order) => {
+    const mappedOrder = mapOrder(order);
+    const summary = summarizeOrderItemsRows(orderItemsSummaryByOrderId[mappedOrder.id] || []);
+    const seller = sellersById[mappedOrder.sellerId];
+
+    return {
+      ...mappedOrder,
+      seller: seller ? mapSellerSummary(seller, null) : null,
+      sellerScope: {
+        totalNet: Number(summary.totalNet.toFixed(2)),
+        totalGross: Number(summary.totalGross.toFixed(2)),
+        itemsCount: summary.itemsCount,
+      },
+    };
+  });
+  return attachOrderNumbers(result);
 };
 
 const getOrderById = async ({ userId, role, orderId }) => {
@@ -599,7 +776,7 @@ const getOrderById = async ({ userId, role, orderId }) => {
   const items = await itemsQuery;
   const mappedItems = items.map(mapOrderItem);
 
-  const mappedOrder = mapOrder(order);
+  const mappedOrder = (await attachOrderNumbers([mapOrder(order)]))[0];
   if (role === "SELLER") {
     return {
       ...mappedOrder,
@@ -611,6 +788,165 @@ const getOrderById = async ({ userId, role, orderId }) => {
   return {
     ...mappedOrder,
     items: mappedItems,
+  };
+};
+
+const getOrderGroupById = async ({ userId, role, orderGroupId }) => {
+  const normalizedOrderGroupId = Number(orderGroupId);
+  if (!normalizedOrderGroupId) {
+    const error = new Error("orderGroupId is required");
+    error.status = 400;
+    throw error;
+  }
+
+  const orderSelectColumns = await getOrderSelectColumns(db);
+  const query = db("orders")
+    .select(...orderSelectColumns)
+    .where("orders.orderGroupId", normalizedOrderGroupId)
+    .orderBy("orders.id", "asc");
+
+  let sellerId = null;
+  if (role === "CLIENT") {
+    const clientId = await resolveClientIdByUserId(userId);
+    query.andWhere("orders.clientId", clientId);
+  } else if (role === "SELLER") {
+    sellerId = await resolveSellerIdByUserId(userId);
+    query.andWhere("orders.sellerId", sellerId);
+  }
+
+  const orders = await query;
+  if (orders.length === 0) {
+    const error = new Error("Order group not found");
+    error.status = 404;
+    throw error;
+  }
+
+  const orderIds = orders.map((order) => Number(order.id));
+  const sellerIds = [...new Set(orders.map((order) => Number(order.sellerId)).filter(Boolean))];
+  const clientIds = [...new Set(orders.map((order) => Number(order.clientId)).filter(Boolean))];
+
+  const [itemsRows, sellersRows, clientsRows, sellerSettingsRows] = await Promise.all([
+    db("order_items")
+      .select(
+        "id",
+        "orderId",
+        "orderGroupId",
+        "sellerId",
+        "productId",
+        "variantId",
+        "quantity",
+        "netPrice",
+        "grossPrice",
+        "vatRate",
+        "productSnapshotJson",
+        "variantNameSnapshot",
+        "variantAmountSnapshot",
+        "createdAt",
+      )
+      .whereIn("orderId", orderIds)
+      .orderBy("id", "asc"),
+    db("sellers")
+      .select("id", "companyName", "nip", "phone", "address", "city", "postalCode")
+      .whereIn("id", sellerIds),
+    db("clients")
+      .select("id", "name", "companyName", "nip", "phone", "address", "city", "postalCode")
+      .whereIn("id", clientIds),
+    db("seller_settings")
+      .select(
+        "sellerId",
+        "payoutAccountHolder",
+        "payoutBankAccount",
+        "payoutBankName",
+        "paymentDueDays",
+      )
+      .whereIn("sellerId", sellerIds),
+  ]);
+
+  const mappedItems = itemsRows.map(mapOrderItem);
+  const itemsByOrderId = {};
+  mappedItems.forEach((item) => {
+    const key = Number(item.orderId);
+    if (!itemsByOrderId[key]) itemsByOrderId[key] = [];
+    itemsByOrderId[key].push(item);
+  });
+
+  const sellersById = {};
+  sellersRows.forEach((seller) => {
+    sellersById[Number(seller.id)] = seller;
+  });
+
+  const clientsById = {};
+  clientsRows.forEach((client) => {
+    clientsById[Number(client.id)] = client;
+  });
+
+  const sellerSettingsBySellerId = {};
+  sellerSettingsRows.forEach((settings) => {
+    sellerSettingsBySellerId[Number(settings.sellerId)] = settings;
+  });
+
+  const mappedOrders = await attachOrderNumbers(orders.map((order) => {
+    const mappedOrder = mapOrder(order);
+    const orderItems = itemsByOrderId[mappedOrder.id] || [];
+    const seller = sellersById[mappedOrder.sellerId];
+    const sellerSettings = sellerSettingsBySellerId[mappedOrder.sellerId];
+    const client = clientsById[mappedOrder.clientId];
+    const dueDate = addDays(mappedOrder.createdAt, sellerSettings?.paymentDueDays || 7);
+
+    return {
+      ...mappedOrder,
+      items: orderItems,
+      seller: seller ? mapSellerSummary(seller, sellerSettings) : null,
+      client: client ? mapClientSummary(client) : null,
+      sellerScope: summarizeSellerItems(orderItems),
+      proforma: {
+        documentNumber: `PF/${mappedOrder.orderGroupId}/${mappedOrder.id}`,
+        issuedAt: formatDateOnly(mappedOrder.createdAt),
+        dueDate: formatDateOnly(dueDate),
+        paymentMethodLabel: "Przelew tradycyjny",
+        paymentTitle: `Proforma ${mappedOrder.orderGroupId}/${mappedOrder.id}`,
+        paymentStatus: mappedOrder.paymentStatus,
+        amountGross: Number(mappedOrder.totalGross || 0),
+        seller: seller ? mapSellerSummary(seller, sellerSettings) : null,
+        client: client ? mapClientSummary(client) : null,
+      },
+    };
+  }));
+
+  const baseOrder = mappedOrders[0];
+  const totalNet = mappedOrders.reduce((sum, order) => sum + Number(order.totalNet || 0), 0);
+  const totalGross = mappedOrders.reduce((sum, order) => sum + Number(order.totalGross || 0), 0);
+  const totalShipping = mappedOrders.reduce(
+    (sum, order) => sum + Number(order.totalShipping || 0),
+    0,
+  );
+  const totalItemsCount = mappedOrders.reduce(
+    (sum, order) => sum + Number(order.sellerScope?.itemsCount || 0),
+    0,
+  );
+  const allItems = mappedOrders.flatMap((order) => order.items || []);
+  const isPaid = mappedOrders.every((order) => order.paymentStatus === "paid");
+  const hasFailedPayment = mappedOrders.some((order) => order.paymentStatus === "failed");
+
+  return {
+    orderGroupId: normalizedOrderGroupId,
+    orderGroupNumber: baseOrder.orderGroupNumber || null,
+    clientId: Number(baseOrder.clientId),
+    createdAt: baseOrder.createdAt,
+    updatedAt: baseOrder.updatedAt,
+    status: isPaid ? "completed" : hasFailedPayment ? "payment_failed" : "awaiting_payment",
+    paymentStatus: isPaid ? "paid" : hasFailedPayment ? "failed" : "pending",
+    deliveryAddressSnapshot: baseOrder.deliveryAddressSnapshot || null,
+    summary: {
+      sellersCount: mappedOrders.length,
+      itemsCount: totalItemsCount,
+      totalNet: Number(totalNet.toFixed(2)),
+      totalGross: Number(totalGross.toFixed(2)),
+      totalShipping: Number(totalShipping.toFixed(2)),
+    },
+    client: baseOrder.client || null,
+    orders: mappedOrders,
+    items: allItems,
   };
 };
 
@@ -735,6 +1071,7 @@ module.exports = {
   createOrderFromCurrentCart,
   getOrders,
   getOrderById,
+  getOrderGroupById,
   updateOrderById,
   deleteOrderById,
 };

@@ -114,6 +114,14 @@
   margin-bottom: 10px;
 }
 
+.form-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
 .sellerForm input,
 .sellerForm textarea,
 .sellerForm select {
@@ -254,8 +262,6 @@
 
 .sellerFormSection {
   margin: 12px 0;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
   padding: 10px;
 }
 
@@ -444,6 +450,131 @@
   color: #0a64c9;
 }
 
+.sellerVariantPickerBlock {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.sellerVariantPickerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.sellerVariantPickerHeader h4,
+.sellerVariantPickerPopupHeader h3 {
+  margin: 0;
+}
+
+.sellerVariantPickerHeader p,
+.sellerVariantPickerPopupHeader p {
+  margin: 4px 0 0;
+  color: #60707f;
+}
+
+.sellerVariantPickerSummary {
+  color: #143244;
+}
+
+.sellerVariantPickerPopup {
+  display: grid;
+  gap: 16px;
+}
+
+.sellerVariantPickerPopupToolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.sellerVariantPickerPopupToolbar input {
+  flex: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.sellerVariantPickerPopupList {
+  display: grid;
+  gap: 10px;
+  max-height: 60vh;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.sellerVariantPickerProductCard {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) 1fr;
+  gap: 16px;
+  border: 1px solid #d9e3e9;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.sellerVariantPickerProductInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sellerVariantPickerVariantList {
+  display: grid;
+  gap: 8px;
+}
+
+.sellerVariantPickerVariantOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #d9e3e9;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.sellerVariantPickerVariantOptionActive {
+  border-color: #86b7fe;
+  background: #eff6ff;
+}
+
+.sellerVariantPickerThumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.sellerVariantPickerThumbPlaceholder {
+  border: 1px dashed #cbd5e1;
+}
+
+.sellerVariantPickerMeta {
+  display: grid;
+  gap: 4px;
+}
+
+.sellerVariantPickerMeta strong {
+  color: #143244;
+}
+
+.sellerVariantPickerMeta span {
+  color: #60707f;
+}
+
+.sellerVariantPickerPopupActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sellerVariantPickerPopupEmpty {
+  margin: 0;
+  color: #60707f;
+}
+
 .sellerCheckboxRow {
   display: flex;
   flex-wrap: wrap;
@@ -588,6 +719,16 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+
+  .sellerVariantPickerHeader,
+  .sellerVariantPickerPopupToolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sellerVariantPickerProductCard {
+    grid-template-columns: 1fr;
   }
 
   .sellerFormGrid {

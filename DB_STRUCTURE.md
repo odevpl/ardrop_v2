@@ -227,6 +227,7 @@ CREATE TABLE `marketing_campaign_items` (
 CREATE TABLE `orders` (
 `id` int UNSIGNED NOT NULL,
 `orderGroupId` int UNSIGNED NOT NULL,
+`orderGroupNumber` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
 `sellerId` int UNSIGNED NOT NULL,
 `clientId` int UNSIGNED NOT NULL,
 `deliveryAddressSnapshotJson` longtext COLLATE utf8mb4_general_ci,
@@ -504,6 +505,7 @@ CREATE TABLE `seller_settings` (
 `payoutAccountHolder` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
 `payoutBankAccount` varchar(34) COLLATE utf8mb4_general_ci DEFAULT NULL,
 `payoutBankName` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`paymentDueDays` int UNSIGNED DEFAULT NULL,
 `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -676,6 +678,7 @@ ADD PRIMARY KEY (`id`),
 ADD KEY `idx_orders_clientId` (`clientId`),
 ADD KEY `idx_orders_sellerId` (`sellerId`),
 ADD KEY `idx_orders_orderGroupId` (`orderGroupId`),
+ADD KEY `idx_orders_orderGroupNumber` (`orderGroupNumber`),
 ADD KEY `idx_orders_shippingMethodId` (`shippingMethodId`);
 
 --

@@ -87,7 +87,8 @@ Chronione endpointy (globalny auth middleware + role):
 - kategorie: `GET /categories...` dla `ADMIN/SELLER/CLIENT`, CRUD + obrazy kategorii tylko dla `ADMIN`
 - koszyk: `GET /carts/current`, operacje na pozycjach i metadanych koszyka
 - checkout klienta: `GET /checkout/shipments/:sellerId/shipping-methods` oraz `PATCH /carts/shipments/:sellerId` z `shippingMethodId`; koszt dostawy i prog darmowej dostawy sa liczone po stronie backendu
-- zamowienia: `POST /orders`, `GET /orders`, `GET /orders/:id`, admin `PUT/DELETE`
+- zamowienia: `POST /orders`, `GET /orders`, `GET /orders/:id`, `GET /orders/groups/:orderGroupId`, admin `PUT/DELETE`
+  - nowy zakup grupowy moze miec biznesowy numer `orderGroupNumber` w formacie `YYYYMMDDNNN`, wspolny dla wszystkich rekordow `orders` z tej samej grupy
 - konto klienta: `GET/PATCH /account/me`
 - adresy dostawy klienta: `GET/POST/PATCH/DELETE /account/delivery-addresses...`
 - dostawa biezaca klienta: `GET/PUT /deliveries/current`
@@ -99,8 +100,10 @@ Chronione endpointy (globalny auth middleware + role):
 - `app`: flow klienta (logowanie/rejestracja/aktywacja/reset hasla, produkty, koszyk, konto, adresy, zamowienia)
   - rejestracja klienta jest B2B: NIP jest wymagany, a dane firmy sa pobierane z CEIDG/GUS
   - koszyk klienta ma wybor metody dostawy per sprzedawca; frontend tylko wysyla `shippingMethodId`, a finalne kwoty wracaja z API
+  - po checkoutcie klient trafia na wspolny widok zakupu `/zamowienia/grupa/:orderGroupId`, ktory grupuje zamowienia per sprzedawca i pokazuje bloki ala proforma
 - `seller`: produkty i zamowienia sprzedawcy, logowanie tylko dla roli `SELLER`
   - seller ma tez widok historii finansowej oparty o `seller_financial_entries`; nowe zakupy klienta dopisuja wpis `order_income`
+  - ustawienia sprzedawcy trzymaja takze dane do przelewu i termin platnosci wykorzystywany na blokach ala proforma klienta
 - `admin`: klienci, sprzedawcy, produkty, zamowienia; ma `ConfigProvider`, ktory probuje pobrac `/configs`, a fallback trzyma w `admin/stories/apiConfigs.json`
 
 ## 5a. Frontend - konwencje struktury

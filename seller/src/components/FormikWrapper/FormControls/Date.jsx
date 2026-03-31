@@ -1,9 +1,18 @@
 import { useFormikContext, getIn } from "formik";
 import dayjs from "dayjs";
 
-const DateInput = ({ id, placeholder }) => {
+const DateInput = ({ id, placeholder, size, span, wrapperClassName }) => {
   const formikContext = useFormikContext();
   const error = getIn(formikContext.errors, id);
+  const normalizedSize = size || "lg";
+  const wrapperClassNames = [
+    "date-input-wrapper",
+    `field-size-${normalizedSize}`,
+    span ? `field-span-${span}` : "",
+    wrapperClassName || "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const value = getIn(formikContext.values, id) || "";
 
@@ -16,7 +25,7 @@ const DateInput = ({ id, placeholder }) => {
   };
 
   return (
-    <div className="date-input-wrapper">
+    <div className={wrapperClassNames}>
       <label htmlFor={id}>{placeholder}</label>
       <input id={id} type="date" onChange={handleChange} value={value} />
       {error && (

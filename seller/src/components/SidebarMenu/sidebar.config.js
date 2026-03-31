@@ -1,34 +1,35 @@
 export const SIDEBAR_MENU_CONFIG = [
   {
-    label: "Glowne",
+    label: "Sprzedaz",
     items: [
       { title: "Produkty", icon: "fa-box-open", path: "/products" },
       { title: "Zamowienia", icon: "fa-cart-shopping", path: "/orders" },
     ],
   },
   {
-    label: "Konfiguracja",
+    label: "Ustawienia i operacje",
     items: [
       // {
       //   title: "Firma i obsluga",
       //   icon: "fa-building",
-      //   path: "/configuration/company-support",
+      //   path: "/company-support",
       // },
-      //     { title: 'Realizacja', icon: 'fa-boxes-packing', path: '/configuration/fulfillment' },
-      { title: "Dostawa", icon: "fa-truck", path: "/configuration/shipping" },
+      //     { title: 'Realizacja', icon: 'fa-boxes-packing', path: '/fulfillment' },
+      { title: "Dostawa", icon: "fa-truck", path: "/shipping" },
+      { title: "Rabaty", icon: "fa-ticket", path: "/discounts" },
+      {
+        title: "Reguly cenowe",
+        icon: "fa-tags",
+        path: "/pricing-rules",
+      },
       {
         title: "Dane do przelewow",
         icon: "fa-landmark",
-        path: "/configuration/payout-settings",
+        path: "/payout-settings",
       },
-      //     { title: 'Zwroty', icon: 'fa-rotate-left', path: '/configuration/returns' },
-      // {
-      //   title: "Ceny i rabaty",
-      //   icon: "fa-tags",
-      //   path: "/configuration/pricing",
-      // },
-      //     { title: 'Finanse', icon: 'fa-wallet', path: '/configuration/finance' },
-      //     { title: 'Automatyzacje', icon: 'fa-bolt', path: '/configuration/automations' },
+      //     { title: 'Zwroty', icon: 'fa-rotate-left', path: '/returns' },
+      //     { title: 'Finanse', icon: 'fa-wallet', path: '/finance' },
+      //     { title: 'Automatyzacje', icon: 'fa-bolt', path: '/automations' },
     ],
   },
 ];

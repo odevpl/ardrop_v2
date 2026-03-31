@@ -39,7 +39,7 @@ const ShippingEditFormView = ({ payload, id = "new" }) => {
     notification.success("Ustawienia dostawy zapisane");
 
     if (isNew) {
-      navigate(`/configuration/shipping/${savedShippingMethod.id}`, {
+      navigate(`/shipping/${savedShippingMethod.id}`, {
         replace: true,
       });
     }
@@ -47,7 +47,7 @@ const ShippingEditFormView = ({ payload, id = "new" }) => {
 
   const handleDelete = async () => {
     if (isNew) {
-      navigate("/configuration/shipping");
+      navigate("/shipping");
       return;
     }
 
@@ -61,7 +61,7 @@ const ShippingEditFormView = ({ payload, id = "new" }) => {
     }
 
     notification.success("Metoda dostawy usunieta");
-    navigate("/configuration/shipping");
+    navigate("/shipping");
   };
 
   return (
@@ -76,10 +76,10 @@ const ShippingEditFormView = ({ payload, id = "new" }) => {
         <div className="sellerSettingsForm sellerForm">
           <section className="sellerFormSection">
             <div className="sellerCheckboxRow">
-              <Checkbox id="isActive" placeholder="Aktywna" />
+              <Checkbox id="isActive" placeholder="Aktywna" size="md" />
             </div>
 
-            <div className="sellerFormGrid">
+            <div className="form-container">
               <Input id="name" placeholder="Nazwa metody" />
               <Input
                 id="priceNet"
@@ -87,6 +87,7 @@ const ShippingEditFormView = ({ payload, id = "new" }) => {
                 type="number"
                 step="0.01"
                 min="0"
+                size="sm"
               />
               <Input
                 id="priceGross"
@@ -94,13 +95,15 @@ const ShippingEditFormView = ({ payload, id = "new" }) => {
                 type="number"
                 step="0.01"
                 min="0"
+                size="sm"
               />
               <Input
                 id="freeShippingAmountGross"
-                placeholder="Darmowa dostawa od kwoty brutto"
+                placeholder="Próg darmowej dostawy"
                 type="number"
                 step="0.01"
                 min="0"
+                size="sm"
               />
               {/*
               <Input
@@ -119,15 +122,17 @@ const ShippingEditFormView = ({ payload, id = "new" }) => {
               */}
               <Input
                 id="etaMinDays"
-                placeholder="Przewidywany czas dostawy od (dni)"
+                placeholder="Min. czas dostawy - dni"
                 type="number"
                 min="0"
+                size="sm"
               />
               <Input
                 id="etaMaxDays"
-                placeholder="Przewidywany czas dostawy do (dni)"
+                placeholder="Maks. czas dostawy - dni"
                 type="number"
                 min="0"
+                size="sm"
               />
               {/*
               <Input

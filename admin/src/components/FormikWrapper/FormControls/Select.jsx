@@ -1,11 +1,21 @@
 import { useFormikContext, getIn } from "formik";
 
-const SelectInput = ({ id, placeholder, config }) => {
+const SelectInput = ({ id, placeholder, config, size, span, wrapperClassName }) => {
   const formikContext = useFormikContext();
   const value = getIn(formikContext.values, id);
+  const error = getIn(formikContext.errors, id);
+  const normalizedSize = size || "lg";
   const allKeysAreNumeric = Object.keys(config || {}).every((key) =>
     /^-?\d+(\.\d+)?$/.test(String(key)),
   );
+  const wrapperClassNames = [
+    "select-input-wrapper",
+    `field-size-${normalizedSize}`,
+    span ? `field-span-${span}` : "",
+    wrapperClassName || "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const handleChange = (nextValue) => {
     if (nextValue === "") {
@@ -22,7 +32,7 @@ const SelectInput = ({ id, placeholder, config }) => {
   };
 
   return (
-    <div className="select-input-wrapper">
+    <div className={wrapperClassNames}>
       <label htmlFor={id}>{placeholder}</label>
       <select id={id} onChange={(e) => handleChange(e.target.value)} value={value ?? ""}>
         <option value="" disabled>
@@ -34,9 +44,9 @@ const SelectInput = ({ id, placeholder, config }) => {
           </option>
         ))}
       </select>
-      {formikContext.errors[id] && (
+      {error && (
         <span className="validation-error-description">
-          {formikContext.errors[id]}
+          {error}
         </span>
       )}
     </div>

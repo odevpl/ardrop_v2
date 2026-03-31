@@ -100,6 +100,7 @@ const EditProduct = ({ id }) => {
     const normalizedVariants = variants.map((variant, index) => ({
       ...variant,
       unit: currentUnit,
+      status: values.status === 'draft' ? 'draft' : variant.status || values.status || 'draft',
       isDefault: hasDefaultVariant ? Boolean(variant.isDefault) : index === 0,
     }))
     const defaultVariant = normalizedVariants.find((variant) => Boolean(variant.isDefault)) || normalizedVariants[0]
@@ -160,7 +161,7 @@ const EditProduct = ({ id }) => {
         grossPrice: Number(variant.grossPrice || 0),
         vatRate: Number(variant.vatRate || 0),
         stockQuantity: Number(variant.stockQuantity || 0),
-        status: variant.status || values.status || 'draft',
+        status: values.status === 'draft' ? 'draft' : variant.status || values.status || 'draft',
         isDefault: Boolean(variant.isDefault),
         position: index,
       }

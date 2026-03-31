@@ -11,6 +11,11 @@ export const getOrderById = (id) =>
     url: `orders/${id}`,
   });
 
+export const getOrderGroupById = (orderGroupId) =>
+  apiGet({
+    url: `orders/groups/${orderGroupId}`,
+  });
+
 export const createOrder = (payload = {}) =>
   apiPost({
     url: "orders",
@@ -20,5 +25,6 @@ export const createOrder = (payload = {}) =>
 export default {
   getOrders,
   getOrderById,
+  getOrderGroupById,
   createOrder,
 };

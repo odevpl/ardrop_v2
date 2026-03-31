@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 export const formatPrice = (value) => `${Number(value || 0).toFixed(2)} zl`
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
@@ -11,19 +13,19 @@ export const resolveThumbUrl = (item) => {
 
 export const formatDateTime = (rawDate) => {
   if (!rawDate) return '-'
-  const date = new Date(rawDate)
-  if (Number.isNaN(date.getTime())) return rawDate
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear()
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${day}.${month}.${year} ${hours}:${minutes}`
+  const date = dayjs(rawDate)
+  if (!date.isValid()) return rawDate
+  return date.format('DD.MM.YYYY HH:mm')
 }
 
 export const formatEta = (from, to) => {
-  if (from && to) return `${formatDateTime(from)} - ${formatDateTime(to)}`
-  if (from) return formatDateTime(from)
-  if (to) return formatDateTime(to)
+  const fromDate = from ? dayjs(from) : null
+  const toDate = to ? dayjs(to) : null
+  const fromLabel = fromDate?.isValid() ? fromDate.format('DD.MM.YYYY') : from || null
+  const toLabel = toDate?.isValid() ? toDate.format('DD.MM.YYYY') : to || null
+
+  if (fromLabel && toLabel) return `${fromLabel} - ${toLabel}`
+  if (fromLabel) return fromLabel
+  if (toLabel) return toLabel
   return 'Do ustalenia'
 }

@@ -36,9 +36,144 @@
   text-decoration: underline;
 }
 
+.deliveriesListCards {
+  display: grid;
+  gap: 12px;
+}
+
+.deliveriesListCard {
+  border: 1px solid #d7e7f9;
+  background: #ffffff;
+}
+
+.deliveriesListSummaryRow {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+}
+
+.deliveriesListExpandButton {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.deliveriesListExpandIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #0a64c9;
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+}
+
+.deliveriesListSummaryTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.deliveriesListSummaryMeta {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.deliveriesListSummaryMeta div {
+  display: grid;
+  gap: 4px;
+}
+
+.deliveriesListSummaryMeta span,
+.deliveriesListPartRow span {
+  color: #5a7282;
+  font-size: 0.88rem;
+}
+
+.deliveriesListSummaryMeta strong,
+.deliveriesListPartPrimary strong {
+  color: #071a33;
+}
+
+.deliveriesListDetailsButton {
+  border: 0;
+  background: #0a64c9;
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.deliveriesListParts {
+  border-top: 1px solid #d7e7f9;
+  background: #f8fbff;
+}
+
+.deliveriesListPartsHeader,
+.deliveriesListPartRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) 90px 140px 120px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+}
+
+.deliveriesListPartsHeader {
+  color: #35566d;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.deliveriesListPartRow {
+  border-top: 1px solid #d7e7f9;
+  background: #ffffff;
+}
+
+.deliveriesListPartPrimary {
+  display: grid;
+  gap: 4px;
+}
+
+.deliveriesListPartPrimary span {
+  font-size: 0.82rem;
+}
+
+.deliveriesListEmpty {
+  border: 1px solid #d7e7f9;
+  background: #ffffff;
+  padding: 16px;
+}
+
 @media (max-width: 786px) {
   .deliveriesListHeader {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .deliveriesListSummaryRow {
+    grid-template-columns: 1fr;
+  }
+
+  .deliveriesListSummaryMeta,
+  .deliveriesListPartsHeader,
+  .deliveriesListPartRow {
+    grid-template-columns: 1fr;
+  }
+
+  .deliveriesListPartsHeader {
+    display: none;
   }
 }

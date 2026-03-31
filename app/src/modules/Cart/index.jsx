@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
 import { useNotification } from "components/GlobalNotification/index.js";
 import { NavLink, useNavigate } from "react-router-dom";
 import AccountService from "services/account";
@@ -14,16 +15,13 @@ const formatPrice = (value) => {
 };
 
 const formatDate = (date) => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}.${month}.${year}`;
+  return dayjs(date).format("DD.MM.YYYY");
 };
 
 const formatEta = (from, to) => {
-  if (from && to) return `${from} - ${to}`;
-  if (from) return from;
-  if (to) return to;
+  if (from && to) return `${dayjs(from).format("DD.MM.YYYY")} - ${dayjs(to).format("DD.MM.YYYY")}`;
+  if (from) return dayjs(from).format("DD.MM.YYYY");
+  if (to) return dayjs(to).format("DD.MM.YYYY");
   return "Do ustalenia";
 };
 
@@ -35,9 +33,6 @@ const formatEtaDays = (etaMinDays, etaMaxDays) => {
   if (hasMax) return `do ${etaMaxDays} dni`;
   return "Termin do ustalenia";
 };
-
-const ORDERING_TEMPORARILY_DISABLED_MESSAGE =
-  "Sklep daje obecnie mozliwosc przegladania produktow. Skladanie zamowien zostanie wlaczone juz wkrotce.";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -383,10 +378,16 @@ const Cart = () => {
       return;
     }
 
+    const orderGroupId = response?.data?.orderGroupId || response?.orderGroupId;
     const orderId = response?.data?.primaryOrderId || response?.primaryOrderId;
     window.dispatchEvent(new Event("cart:updated"));
     notification.success("Zamowienie zostalo zlozone.");
     setIsSubmittingOrder(false);
+
+    if (orderGroupId) {
+      navigate(`/zamowienia/grupa/${orderGroupId}`);
+      return;
+    }
 
     if (orderId) {
       navigate(`/zamowienia/${orderId}`);
@@ -752,9 +753,6 @@ const Cart = () => {
             </div>
 
             <div className="cartSubmitWrap">
-              <p className="cartCheckoutBlockedMessage">
-                {ORDERING_TEMPORARILY_DISABLED_MESSAGE}
-              </p>
               <button
                 type="button"
                 className="cartSubmitButton"

@@ -86,7 +86,7 @@ const OrderDetailsSection = ({ order, onStatusSubmit }) => {
     order?.paymentStatus ||
     '-'
   const items = [
-    { key: 'id', label: 'Numer zamowienia', value: order?.id ? `#${order.id}` : '-' },
+    { key: 'id', label: 'Numer zamowienia', value: order?.orderNumber ? `#${order.orderNumber}` : order?.id ? `#${order.id}` : '-' },
     { key: 'groupId', label: 'ID grupy', value: order?.orderGroupId || '-' },
     { key: 'status', label: 'Status', value: statusLabel },
     { key: 'paymentStatus', label: 'Status platnosci', value: paymentStatusLabel },

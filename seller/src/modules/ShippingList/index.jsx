@@ -18,7 +18,7 @@ const ShippingListView = ({ payload }) => {
       config={getShippingTableConfig()}
       data={data}
       onRowClick={(row, options) => {
-        const targetPath = `/configuration/shipping/${row.id}`;
+        const targetPath = `/shipping/${row.id}`;
         if (options?.openInNewTab) {
           window.open(targetPath, "_blank", "noopener,noreferrer");
           return;

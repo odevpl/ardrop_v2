@@ -12,7 +12,7 @@ const ShippingPage = () => {
           <button
             type="button"
             className="sellerPrimaryButton"
-            onClick={() => navigate('/configuration/shipping/new')}
+            onClick={() => navigate('/shipping/new')}
           >
             Dodaj metode dostawy
           </button>

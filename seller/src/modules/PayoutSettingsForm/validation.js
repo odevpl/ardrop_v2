@@ -12,4 +12,11 @@ export const payoutSettingsValidationSchema = yup.object({
       "Numer rachunku musi zawierac dokladnie 26 cyfr",
       (value) => /^\d{26}$/.test(normalizeBankAccount(value)),
     ),
+  paymentDueDays: yup
+    .number()
+    .transform((value, originalValue) => (String(originalValue || "").trim() === "" ? NaN : value))
+    .integer("Podaj liczbe calkowita")
+    .min(1, "Termin platnosci musi wynosic co najmniej 1 dzien")
+    .max(365, "Termin platnosci nie moze przekraczac 365 dni")
+    .required("Podaj termin platnosci w dniach"),
 });

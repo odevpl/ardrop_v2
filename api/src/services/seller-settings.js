@@ -25,6 +25,7 @@ const SETTINGS_FIELDS = [
   "payoutAccountHolder",
   "payoutBankAccount",
   "payoutBankName",
+  "paymentDueDays",
 ];
 
 const SETTINGS_SELECT = [
@@ -50,6 +51,7 @@ const SETTINGS_SELECT = [
   "payoutAccountHolder",
   "payoutBankAccount",
   "payoutBankName",
+  "paymentDueDays",
   "createdAt",
   "updatedAt",
 ];
@@ -204,6 +206,10 @@ const mapSettingsRow = (row) => ({
   payoutAccountHolder: row?.payoutAccountHolder || "",
   payoutBankAccount: row?.payoutBankAccount || "",
   payoutBankName: row?.payoutBankName || "",
+  paymentDueDays:
+    row?.paymentDueDays === null || row?.paymentDueDays === undefined
+      ? null
+      : Number(row.paymentDueDays),
   createdAt: row?.createdAt || null,
   updatedAt: row?.updatedAt || null,
 });
@@ -794,6 +800,24 @@ const updateSellerSettings = async ({ userId, payload = {} }) => {
         }
 
         settingsPayload.payoutBankAccount = compactBankAccount;
+      }
+    }
+
+    if (settingsPayload.paymentDueDays !== undefined) {
+      if (
+        settingsPayload.paymentDueDays === null ||
+        String(settingsPayload.paymentDueDays).trim() === ""
+      ) {
+        settingsPayload.paymentDueDays = null;
+      } else {
+        const normalizedDays = Number(settingsPayload.paymentDueDays);
+        if (!Number.isInteger(normalizedDays) || normalizedDays < 1 || normalizedDays > 365) {
+          const error = new Error("paymentDueDays must be an integer between 1 and 365");
+          error.status = 400;
+          throw error;
+        }
+
+        settingsPayload.paymentDueDays = normalizedDays;
       }
     }
 

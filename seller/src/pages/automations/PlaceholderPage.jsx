@@ -6,13 +6,14 @@ const PlaceholderPage = ({ title, description, items = [] }) => (
 
     <div className="sellerConfigPlaceholder">
       <p>{description}</p>
-      <div className="sellerConfigPlaceholderList">
-        {items.map((item) => (
-          <div key={item} className="sellerConfigPlaceholderItem">
-            {item}
-          </div>
-        ))}
-      </div>
+
+      {items.length > 0 && (
+        <ul className="sellerConfigPlaceholderList">
+          {items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      )}
     </div>
   </section>
 )

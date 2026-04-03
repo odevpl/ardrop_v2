@@ -34,6 +34,22 @@ const formatEtaDays = (etaMinDays, etaMaxDays) => {
   return "Termin do ustalenia";
 };
 
+const formatAppliedDiscountLabel = (discount) => {
+  if (!discount) return null;
+
+  if (discount.ruleType === "free_bonus") {
+    return discount.bonusLabel
+      ? `${discount.name || "Gratis"}: ${discount.bonusLabel}`
+      : discount.name || "Gratis";
+  }
+
+  if (discount.discountPercent) {
+    return `${discount.name || "Rabat"} (-${Number(discount.discountPercent).toFixed(2)}%)`;
+  }
+
+  return discount.name || "Rabat";
+};
+
 const Cart = () => {
   const navigate = useNavigate();
   const [cart, setCart] = useState(null);
@@ -102,6 +118,7 @@ const Cart = () => {
     () => shipments.reduce((sum, shipment) => sum + Number(shipment?.shippingGross || 0), 0),
     [shipments],
   );
+  const discountTotalGross = Number(cart?.discountGross || 0);
   const orderTotalGross = Number(cart?.totalGross || 0);
 
   useEffect(() => {
@@ -544,11 +561,31 @@ const Cart = () => {
                         <strong>{formatPrice(shipment?.totals?.itemsGross || 0)} zl</strong>
                         <span>Dostawa</span>
                         <strong>{formatPrice(shipment?.shippingGross || 0)} zl</strong>
+                        {Number(shipment?.totals?.discountGross || 0) > 0 ? (
+                          <>
+                            <span>Rabat</span>
+                            <strong>-{formatPrice(shipment?.totals?.discountGross || 0)} zl</strong>
+                          </>
+                        ) : null}
                         <span>Razem dla sprzedawcy</span>
-                        <strong>{formatPrice(shipment?.totals?.totalGross || 0)} zl</strong>
+                        <strong>
+                          {formatPrice(
+                            shipment?.totals?.totalGrossAfterDiscount ??
+                              shipment?.totals?.totalGross ??
+                              0,
+                          )}{" "}
+                          zl
+                        </strong>
                       </div>
 
                       <div className="cartShipmentInfoBox">
+                        {shipment?.appliedDiscount ? (
+                          <div className="cartShippingMethodsAlert">
+                            <strong>Aktywna promocja</strong>
+                            <span>{formatAppliedDiscountLabel(shipment.appliedDiscount)}</span>
+                          </div>
+                        ) : null}
+
                         <div className="cartInfoGrid">
                           <span>Adres dostawy</span>
                           <span>
@@ -737,6 +774,12 @@ const Cart = () => {
               <span>Dostawa</span>
               <strong>{formatPrice(shippingTotalGross)} zl</strong>
             </div>
+            {discountTotalGross > 0 ? (
+              <div className="cartSummaryRow">
+                <span>Rabaty</span>
+                <strong>-{formatPrice(discountTotalGross)} zl</strong>
+              </div>
+            ) : null}
 
             <div className="cartTotalLine">
               <strong>Razem</strong>
@@ -747,7 +790,14 @@ const Cart = () => {
               {shipments.map((shipment) => (
                 <div className="cartSummaryShipmentRow" key={`summary-${shipment.sellerId}`}>
                   <span>{shipment?.seller?.companyName || `Seller #${shipment.sellerId}`}</span>
-                  <strong>{formatPrice(shipment?.totals?.totalGross || 0)} zl</strong>
+                  <strong>
+                    {formatPrice(
+                      shipment?.totals?.totalGrossAfterDiscount ??
+                        shipment?.totals?.totalGross ??
+                        0,
+                    )}{" "}
+                    zl
+                  </strong>
                 </div>
               ))}
             </div>

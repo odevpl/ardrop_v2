@@ -59,6 +59,23 @@ const mapGroupStatusLabel = (value) => {
   return value || "-";
 };
 
+const formatAppliedDiscountLabel = (snapshot) => {
+  const appliedRule = snapshot?.appliedRule || null;
+  if (!appliedRule) return null;
+
+  if (appliedRule.ruleType === "free_bonus") {
+    return appliedRule.bonusLabel
+      ? `${appliedRule.name || "Gratis"}: ${appliedRule.bonusLabel}`
+      : appliedRule.name || "Gratis";
+  }
+
+  if (appliedRule.discountPercent) {
+    return `${appliedRule.name || "Rabat"} (-${Number(appliedRule.discountPercent).toFixed(2)}%)`;
+  }
+
+  return appliedRule.name || "Rabat";
+};
+
 const OrderGroupContent = ({ payload }) => {
   const navigate = useNavigate();
   const { config } = useConfig();
@@ -66,6 +83,10 @@ const OrderGroupContent = ({ payload }) => {
   const orders = Array.isArray(orderGroup?.orders) ? orderGroup.orders : [];
   const summary = orderGroup?.summary || {};
   const deliveryAddress = orderGroup?.deliveryAddressSnapshot || null;
+  const summaryDiscountGross = orders.reduce(
+    (sum, order) => sum + Number(order?.appliedDiscountSnapshot?.appliedRule?.discountGross || 0),
+    0,
+  );
   const paymentStatusOptions = Array.isArray(config?.orders?.paymentStatuses)
     ? config.orders.paymentStatuses
     : [];
@@ -133,6 +154,8 @@ const OrderGroupContent = ({ payload }) => {
             {orders.map((order) => {
               const seller = order?.seller || {};
               const proforma = order?.proforma || {};
+              const appliedDiscount = order?.appliedDiscountSnapshot || null;
+              const discountGross = Number(appliedDiscount?.appliedRule?.discountGross || 0);
               const hasPayoutDetails = Boolean(
                 seller?.payoutAccountHolder && seller?.payoutBankAccount,
               );
@@ -206,6 +229,12 @@ const OrderGroupContent = ({ payload }) => {
                       <strong>{formatPrice(order?.sellerScope?.totalGross)}</strong>
                       <span>Dostawa</span>
                       <strong>{formatPrice(order?.totalShipping)}</strong>
+                      {discountGross > 0 ? (
+                        <>
+                          <span>Rabat</span>
+                          <strong>-{formatPrice(discountGross)}</strong>
+                        </>
+                      ) : null}
                       <span>Razem</span>
                       <strong>{formatPrice(order?.totalGross)}</strong>
                       <span>Status platnosci</span>
@@ -301,6 +330,13 @@ const OrderGroupContent = ({ payload }) => {
                         </span>
                       </div>
 
+                      {appliedDiscount?.appliedRule ? (
+                        <div className="orderGroupViewNoteBox">
+                          <p className="orderGroupViewPartyTitle">Zastosowana promocja</p>
+                          <p>{formatAppliedDiscountLabel(appliedDiscount)}</p>
+                        </div>
+                      ) : null}
+
                       {order?.clientNote ? (
                         <div className="orderGroupViewNoteBox">
                           <p className="orderGroupViewPartyTitle">Notatka do dostawy</p>
@@ -326,6 +362,12 @@ const OrderGroupContent = ({ payload }) => {
               <span>Dostawa</span>
               <strong>{formatPrice(summary?.totalShipping)}</strong>
             </div>
+            {summaryDiscountGross > 0 ? (
+              <div className="orderGroupViewSummaryRow">
+                <span>Rabaty</span>
+                <strong>-{formatPrice(summaryDiscountGross)}</strong>
+              </div>
+            ) : null}
             <div className="orderGroupViewTotalLine">
               <strong>Razem brutto</strong>
               <strong>{formatPrice(summary?.totalGross)}</strong>

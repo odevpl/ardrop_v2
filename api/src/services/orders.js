@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const sellerFinancialHistoryService = require("./seller-financial-history");
+const discountRulesService = require("./discount-rules");
 const {
   ORDER_STATUSES,
   PAYMENT_STATUSES,
@@ -67,6 +68,7 @@ const getOrderColumnCapabilities = async (trx = db) => {
     hasClientNote,
     hasEstimatedDeliveryFrom,
     hasEstimatedDeliveryTo,
+    hasAppliedDiscountSnapshotJson,
   ] = await Promise.all([
     trx.schema.hasColumn("orders", "orderGroupNumber"),
     trx.schema.hasColumn("orders", "deliveryAddressSnapshotJson"),
@@ -75,6 +77,7 @@ const getOrderColumnCapabilities = async (trx = db) => {
     trx.schema.hasColumn("orders", "clientNote"),
     trx.schema.hasColumn("orders", "estimatedDeliveryFrom"),
     trx.schema.hasColumn("orders", "estimatedDeliveryTo"),
+    trx.schema.hasColumn("orders", "appliedDiscountSnapshotJson"),
   ]);
 
   orderColumnsCache = {
@@ -85,6 +88,7 @@ const getOrderColumnCapabilities = async (trx = db) => {
     hasClientNote,
     hasEstimatedDeliveryFrom,
     hasEstimatedDeliveryTo,
+    hasAppliedDiscountSnapshotJson,
   };
 
   return orderColumnsCache;
@@ -128,6 +132,9 @@ const getOrderSelectColumns = async (trx = db) => {
   if (capabilities.hasEstimatedDeliveryTo) {
     columns.push("orders.estimatedDeliveryTo");
   }
+  if (capabilities.hasAppliedDiscountSnapshotJson) {
+    columns.push("orders.appliedDiscountSnapshotJson");
+  }
 
   return columns;
 };
@@ -170,6 +177,7 @@ const mapOrder = (order) => ({
   clientNote: order.clientNote || null,
   estimatedDeliveryFrom: order.estimatedDeliveryFrom || null,
   estimatedDeliveryTo: order.estimatedDeliveryTo || null,
+  appliedDiscountSnapshot: parseSnapshot(order.appliedDiscountSnapshotJson),
   createdAt: order.createdAt,
   updatedAt: order.updatedAt,
 });
@@ -454,6 +462,16 @@ const createOrderFromCurrentCart = async (
       : null;
 
     const createdOrderIds = [];
+    const discountEvaluation = await discountRulesService.evaluateShipmentDiscounts(
+      {
+        clientId: resolvedClientId,
+        shipments: Object.entries(groupedBySeller).map(([sellerId, sellerItems]) => ({
+          sellerId: Number(sellerId),
+          items: sellerItems,
+        })),
+      },
+      trx,
+    );
 
     for (const [sellerIdKey, sellerItems] of Object.entries(groupedBySeller)) {
       const sellerId = Number(sellerIdKey);
@@ -478,8 +496,11 @@ const createOrderFromCurrentCart = async (
       const itemsGross = roundMoney(
         sellerItems.reduce((sum, item) => sum + Number(item.lineGross || 0), 0),
       );
-      const totalNet = roundMoney(itemsNet + shipmentNet);
-      const totalGross = roundMoney(itemsGross + shipmentGross);
+      const shipmentDiscount = discountEvaluation.bySellerId[sellerId] || null;
+      const discountNet = roundMoney(shipmentDiscount?.discountNet || 0);
+      const discountGross = roundMoney(shipmentDiscount?.discountGross || 0);
+      const totalNet = roundMoney(Math.max(0, itemsNet + shipmentNet - discountNet));
+      const totalGross = roundMoney(Math.max(0, itemsGross + shipmentGross - discountGross));
 
       const orderPayload = {
         orderGroupId,
@@ -517,6 +538,11 @@ const createOrderFromCurrentCart = async (
       }
       if (orderColumns.hasEstimatedDeliveryTo) {
         orderPayload.estimatedDeliveryTo = shipment?.estimatedDeliveryTo || null;
+      }
+      if (orderColumns.hasAppliedDiscountSnapshotJson) {
+        orderPayload.appliedDiscountSnapshotJson = shipmentDiscount?.snapshot
+          ? JSON.stringify(shipmentDiscount.snapshot)
+          : null;
       }
 
       const insertedOrder = await trx("orders").insert(orderPayload);
@@ -587,8 +613,11 @@ const createOrderFromCurrentCart = async (
     await trx("carts")
       .where({ id: Number(cart.id) })
       .update({
+        couponCode: null,
         shippingNet: 0,
         shippingGross: 0,
+        discountNet: 0,
+        discountGross: 0,
         totalNet: 0,
         totalGross: 0,
         updatedAt: trx.fn.now(),

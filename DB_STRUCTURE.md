@@ -236,6 +236,7 @@ CREATE TABLE `orders` (
 `clientNote` text COLLATE utf8mb4_general_ci,
 `estimatedDeliveryFrom` datetime DEFAULT NULL,
 `estimatedDeliveryTo` datetime DEFAULT NULL,
+`appliedDiscountSnapshotJson` longtext COLLATE utf8mb4_general_ci,
 `totalNet` decimal(15,2) NOT NULL,
 `totalGross` decimal(15,2) NOT NULL,
 `totalShipping` decimal(15,2) NOT NULL DEFAULT '0.00',

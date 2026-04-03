@@ -63,6 +63,41 @@ const resolveSellerIdByUserId = async (userId) => {
   return Number(seller.id);
 };
 
+const syncProductStatusWithVariants = async ({ trx, productId }) => {
+  const normalizedProductId = Number(productId);
+  if (!normalizedProductId) return;
+
+  const product = await trx("products")
+    .select("id", "status")
+    .where({ id: normalizedProductId })
+    .first();
+  if (!product) return;
+
+  if (product.status === "draft") {
+    await trx("product_variants")
+      .where({ productId: normalizedProductId })
+      .update({ status: "draft", updatedAt: trx.fn.now() });
+    return;
+  }
+
+  const activeVariant = await trx("product_variants")
+    .select("id")
+    .where({
+      productId: normalizedProductId,
+      status: "active",
+    })
+    .first();
+
+  if (!activeVariant) {
+    await trx("products")
+      .where({ id: normalizedProductId })
+      .update({
+        status: "draft",
+        updatedAt: trx.fn.now(),
+      });
+  }
+};
+
 const ensureUserCanManageProduct = async ({ userId, role, productId }) => {
   const product = await db("products").select("id", "sellerId").where({ id: Number(productId) }).first();
   if (!product) {
@@ -462,6 +497,7 @@ const createProduct = async ({
   const normalizedUnit = normalizeUnit(unit);
   const providedVariants = Array.isArray(variants) ? variants : [];
   const inserted = await db.transaction(async (trx) => {
+    const normalizedProductStatus = status || "draft";
     const result = await trx("products").insert({
       sellerId: targetSellerId,
       name: String(name || "").trim(),
@@ -471,7 +507,7 @@ const createProduct = async ({
       vatRate,
       unit: normalizedUnit,
       stockQuantity: normalizeStockQuantity(stockQuantity),
-      status: status || "draft",
+      status: normalizedProductStatus,
     });
     const productId = Array.isArray(result) ? result[0] : result;
 
@@ -508,7 +544,7 @@ const createProduct = async ({
         grossPrice: Number(grossPrice),
         vatRate: Number(vatRate),
         stockQuantity: normalizeStockQuantity(stockQuantity),
-        status: status || "draft",
+        status: normalizedProductStatus,
         isDefault: 1,
         position: 0,
       });
@@ -520,6 +556,8 @@ const createProduct = async ({
       categoryIds,
       primaryCategoryId,
     });
+
+    await syncProductStatusWithVariants({ trx, productId });
 
     return productId;
   });
@@ -567,6 +605,14 @@ const createProductVariant = async ({ userId, role, productId, payload = {} }) =
       sku,
       isDefault,
     });
+
+    if (normalized.status === "active") {
+      await trx("products")
+        .where({ id: Number(product.id) })
+        .update({ status: "active", updatedAt: trx.fn.now() });
+    } else {
+      await syncProductStatusWithVariants({ trx, productId: product.id });
+    }
   });
 
   return getProductVariants({ userId, role, productId });
@@ -624,6 +670,14 @@ const updateProductVariant = async ({ userId, role, productId, variantId, payloa
         .limit(1)
         .update({ isDefault: 1 });
     }
+
+    if (updates.status === "active") {
+      await trx("products")
+        .where({ id: Number(product.id) })
+        .update({ status: "active", updatedAt: trx.fn.now() });
+    } else {
+      await syncProductStatusWithVariants({ trx, productId: product.id });
+    }
   });
 
   return getProductVariants({ userId, role, productId });
@@ -670,6 +724,8 @@ const deleteProductVariant = async ({ userId, role, productId, variantId }) => {
         .limit(1)
         .update({ isDefault: 1 });
     }
+
+    await syncProductStatusWithVariants({ trx, productId: product.id });
   });
 
   return getProductVariants({ userId, role, productId });
@@ -744,6 +800,14 @@ const updateProduct = async ({ userId, role, productId, payload }) => {
 
   await db.transaction(async (trx) => {
     await trx("products").where({ id: productId }).update(updates);
+
+    if (updates.status === "draft") {
+      await trx("product_variants")
+        .where({ productId: Number(productId) })
+        .update({ status: "draft", updatedAt: trx.fn.now() });
+    } else {
+      await syncProductStatusWithVariants({ trx, productId });
+    }
 
     if (payload.categoryIds !== undefined || payload.primaryCategoryId !== undefined) {
       await assignProductCategories({

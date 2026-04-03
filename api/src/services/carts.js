@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const discountRulesService = require("./discount-rules");
 
 const roundMoney = (value) => Number((Number(value) || 0).toFixed(2));
 
@@ -167,10 +168,39 @@ const buildCartResponse = async ({ cart }, trx = db) => {
     };
   });
 
+  const discountEvaluation = await discountRulesService.evaluateShipmentDiscounts(
+    {
+      clientId: cart.clientId,
+      shipments: groupedShipments,
+    },
+    trx,
+  );
+
+  const groupedShipmentsWithDiscounts = groupedShipments.map((shipment) => {
+    const shipmentDiscount = discountEvaluation.bySellerId[Number(shipment.sellerId)] || null;
+    const discountNet = roundMoney(shipmentDiscount?.discountNet || 0);
+    const discountGross = roundMoney(shipmentDiscount?.discountGross || 0);
+
+    return {
+      ...shipment,
+      appliedDiscount: shipmentDiscount?.appliedRule || null,
+      appliedDiscountSnapshot: shipmentDiscount?.snapshot || null,
+      totals: {
+        ...shipment.totals,
+        discountNet,
+        discountGross,
+        totalNetAfterDiscount: roundMoney(shipment.totals.totalNet - discountNet),
+        totalGrossAfterDiscount: roundMoney(shipment.totals.totalGross - discountGross),
+      },
+    };
+  });
+
   return {
     ...cart,
     items,
-    shipments: groupedShipments,
+    discountNet: roundMoney(discountEvaluation.totals.discountNet),
+    discountGross: roundMoney(discountEvaluation.totals.discountGross),
+    shipments: groupedShipmentsWithDiscounts,
   };
 };
 
@@ -391,12 +421,38 @@ const recalculateTotals = async ({ cartId }, trx = db) => {
     .sum({ shippingNet: "shippingNet", shippingGross: "shippingGross" })
     .first();
 
+  const [shipments, items] = await Promise.all([
+    trx("cart_shipments").select("sellerId").where({ cartId }).orderBy("id", "asc"),
+    trx("cart_items")
+      .select("sellerId", "variantId", "quantity", "lineNet", "lineGross")
+      .where({ cartId })
+      .orderBy("id", "asc"),
+  ]);
+
+  const itemsBySellerId = items.reduce((acc, item) => {
+    const sellerId = Number(item.sellerId);
+    if (!acc[sellerId]) acc[sellerId] = [];
+    acc[sellerId].push(item);
+    return acc;
+  }, {});
+
+  const discountEvaluation = await discountRulesService.evaluateShipmentDiscounts(
+    {
+      clientId: cart.clientId,
+      shipments: shipments.map((shipment) => ({
+        sellerId: Number(shipment.sellerId),
+        items: itemsBySellerId[Number(shipment.sellerId)] || [],
+      })),
+    },
+    trx,
+  );
+
   const itemsNet = roundMoney(totalsRow?.itemsNet || 0);
   const itemsGross = roundMoney(totalsRow?.itemsGross || 0);
   const shippingNet = roundMoney(shipmentTotalsRow?.shippingNet || 0);
   const shippingGross = roundMoney(shipmentTotalsRow?.shippingGross || 0);
-  const discountNet = roundMoney(cart.discountNet || 0);
-  const discountGross = roundMoney(cart.discountGross || 0);
+  const discountNet = roundMoney(discountEvaluation.totals.discountNet || 0);
+  const discountGross = roundMoney(discountEvaluation.totals.discountGross || 0);
 
   const totalNet = roundMoney(Math.max(0, itemsNet + shippingNet - discountNet));
   const totalGross = roundMoney(Math.max(0, itemsGross + shippingGross - discountGross));
@@ -406,6 +462,8 @@ const recalculateTotals = async ({ cartId }, trx = db) => {
     .update({
       shippingNet,
       shippingGross,
+      discountNet,
+      discountGross,
       totalNet,
       totalGross,
       updatedAt: trx.fn.now(),

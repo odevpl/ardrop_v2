@@ -34,6 +34,23 @@ const formatEta = (from, to) => {
   return 'Do ustalenia'
 }
 
+const formatAppliedDiscountLabel = (snapshot) => {
+  const appliedRule = snapshot?.appliedRule || null
+  if (!appliedRule) return null
+
+  if (appliedRule.ruleType === 'free_bonus') {
+    return appliedRule.bonusLabel
+      ? `${appliedRule.name || 'Gratis'}: ${appliedRule.bonusLabel}`
+      : appliedRule.name || 'Gratis'
+  }
+
+  if (appliedRule.discountPercent) {
+    return `${appliedRule.name || 'Rabat'} (-${Number(appliedRule.discountPercent).toFixed(2)}%)`
+  }
+
+  return appliedRule.name || 'Rabat'
+}
+
 const OrderViewContent = ({ payload }) => {
   const navigate = useNavigate()
   const { config } = useConfig()
@@ -52,6 +69,8 @@ const OrderViewContent = ({ payload }) => {
   )
   const shippingTotal = Number(order?.totalShipping || 0)
   const grossTotal = Number(order?.totalGross || 0)
+  const appliedDiscount = order?.appliedDiscountSnapshot || null
+  const discountGross = Number(appliedDiscount?.appliedRule?.discountGross || 0)
 
   return (
     <section className="orderViewModule">
@@ -94,6 +113,12 @@ const OrderViewContent = ({ payload }) => {
                 <div className="orderViewNoteBox">
                   <p className="orderViewNoteTitle">Notatka do dostawy</p>
                   <p className="orderViewNoteText">{order.clientNote}</p>
+                </div>
+              ) : null}
+              {appliedDiscount?.appliedRule ? (
+                <div className="orderViewNoteBox">
+                  <p className="orderViewNoteTitle">Zastosowana promocja</p>
+                  <p className="orderViewNoteText">{formatAppliedDiscountLabel(appliedDiscount)}</p>
                 </div>
               ) : null}
             </div>
@@ -182,6 +207,12 @@ const OrderViewContent = ({ payload }) => {
               <span>Dostawa</span>
               <strong>{formatPrice(shippingTotal)}</strong>
             </div>
+            {discountGross > 0 ? (
+              <div className="orderViewSummaryRow">
+                <span>Rabat</span>
+                <strong>-{formatPrice(discountGross)}</strong>
+              </div>
+            ) : null}
             <div className="orderViewTotalLine">
               <strong>Razem brutto</strong>
               <strong>{formatPrice(grossTotal)}</strong>

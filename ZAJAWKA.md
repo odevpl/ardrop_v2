@@ -86,9 +86,11 @@ Chronione endpointy (globalny auth middleware + role):
 - produkty: `GET/POST/PUT/DELETE /products...`, obrazy produktu
 - kategorie: `GET /categories...` dla `ADMIN/SELLER/CLIENT`, CRUD + obrazy kategorii tylko dla `ADMIN`
 - koszyk: `GET /carts/current`, operacje na pozycjach i metadanych koszyka
+  - backend nalicza tez aktywne `discountRules` sellera per shipment/sprzedawca i zwraca wynik w odpowiedzi koszyka
 - checkout klienta: `GET /checkout/shipments/:sellerId/shipping-methods` oraz `PATCH /carts/shipments/:sellerId` z `shippingMethodId`; koszt dostawy i prog darmowej dostawy sa liczone po stronie backendu
 - zamowienia: `POST /orders`, `GET /orders`, `GET /orders/:id`, `GET /orders/groups/:orderGroupId`, admin `PUT/DELETE`
   - nowy zakup grupowy moze miec biznesowy numer `orderGroupNumber` w formacie `YYYYMMDDNNN`, wspolny dla wszystkich rekordow `orders` z tej samej grupy
+  - jesli schema bazy ma kolumne `orders.appliedDiscountSnapshotJson`, backend zapisuje tam snapshot zastosowanej promocji per `order`
 - konto klienta: `GET/PATCH /account/me`
 - adresy dostawy klienta: `GET/POST/PATCH/DELETE /account/delivery-addresses...`
 - dostawa biezaca klienta: `GET/PUT /deliveries/current`
@@ -100,10 +102,13 @@ Chronione endpointy (globalny auth middleware + role):
 - `app`: flow klienta (logowanie/rejestracja/aktywacja/reset hasla, produkty, koszyk, konto, adresy, zamowienia)
   - rejestracja klienta jest B2B: NIP jest wymagany, a dane firmy sa pobierane z CEIDG/GUS
   - koszyk klienta ma wybor metody dostawy per sprzedawca; frontend tylko wysyla `shippingMethodId`, a finalne kwoty wracaja z API
+  - koszyk klienta pokazuje tez automatycznie naliczone rabaty z `discountRules` per sprzedawca
   - po checkoutcie klient trafia na wspolny widok zakupu `/zamowienia/grupa/:orderGroupId`, ktory grupuje zamowienia per sprzedawca i pokazuje bloki ala proforma
+  - widoki zamowienia i grupy zamowien potrafia pokazac snapshot zastosowanej promocji, jesli backend go zwroci
 - `seller`: produkty i zamowienia sprzedawcy, logowanie tylko dla roli `SELLER`
   - seller ma tez widok historii finansowej oparty o `seller_financial_entries`; nowe zakupy klienta dopisuja wpis `order_income`
   - ustawienia sprzedawcy trzymaja takze dane do przelewu i termin platnosci wykorzystywany na blokach ala proforma klienta
+  - `discounts` nadal korzysta z tymczasowego modelu `discountRules` w `seller/me/settings`, ale `api` i `app` konsumuje juz te reguly w koszyku i checkoutcie
 - `admin`: klienci, sprzedawcy, produkty, zamowienia; ma `ConfigProvider`, ktory probuje pobrac `/configs`, a fallback trzyma w `admin/stories/apiConfigs.json`
 
 ## 5a. Frontend - konwencje struktury
@@ -116,6 +121,30 @@ Chronione endpointy (globalny auth middleware + role):
 - Referencyjne przyklady tego wzorca:
   - `seller/src/modules/ShippingEditForm`
   - `seller/src/modules/PayoutSettingsForm`
+
+## 5b. Statusy produktu i wariantow
+
+- Obecna semantyka wdrozona w `seller` i `api`:
+  - `product.status = draft` wymusza `draft` na wszystkich wariantach
+  - ustawienie dowolnego `variant.status = active` podnosi `product.status` do `active`
+  - jesli produkt nie ma zadnego aktywnego wariantu, backend zrzuca produkt do `draft`
+- Dla storefront oznacza to praktycznie widocznosc oparta o:
+  - produkt aktywny
+  - oraz co najmniej jeden aktywny wariant
+
+## 5c. Rabaty MVP w checkoutcie
+
+- Obecne MVP nie korzysta jeszcze z osobnego feature API `discounts`.
+- `api` konsumuje tymczasowe `seller_discount_rules` i obsluguje w koszyku / checkoutcie typy:
+  - `cart_threshold`
+  - `quantity_threshold`
+  - `first_purchase`
+  - `loyal_customer`
+  - `free_bonus`
+- Dla `quantity_threshold` przyjeta semantyka jest taka:
+  - liczymy ilosc lacznie dla calego zaznaczonego zbioru `selectedVariantIds`
+  - rabat obejmuje tylko pozycje z tego zaznaczonego zbioru
+- Promocje sa przypisywane do konkretnego `order` per sprzedawca, a nie do calego `orderGroupId`.
 
 ## 6. Baza danych
 

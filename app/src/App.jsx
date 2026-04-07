@@ -99,8 +99,18 @@ function App() {
 
   const shouldForceAccountPage = useMemo(() => {
     if (isProfileComplete) return false;
-    const allowedPaths = ["/klient", "/konto", "/koszyk", "/adresy-dostawy"];
-    return !allowedPaths.includes(location.pathname);
+    const allowedPathPrefixes = [
+      "/klient",
+      "/konto",
+      "/koszyk",
+      "/adresy-dostawy",
+      "/zamowienia",
+      "/dostawy",
+    ];
+
+    return !allowedPathPrefixes.some(
+      (path) => location.pathname === path || location.pathname.startsWith(`${path}/`),
+    );
   }, [isProfileComplete, location.pathname]);
 
   const cartBadge = cartItemsCount > 9 ? "9+" : String(cartItemsCount);

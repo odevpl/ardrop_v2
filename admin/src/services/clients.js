@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPatch, apiPost } from './api'
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from './api'
 
 export const getClients = (params = {}) => {
   return apiGet({
@@ -40,6 +40,28 @@ export const setDeliveryAddress = (deliveryAddress) => {
   })
 }
 
+export const getClientSpecialPrices = ({ clientId, sellerId } = {}) => {
+  return apiGet({
+    url: `clients/${clientId}/special-prices`,
+    params: {
+      sellerId,
+    },
+  })
+}
+
+export const upsertClientSpecialPrices = ({ clientId, payload }) => {
+  return apiPut({
+    url: `clients/${clientId}/special-prices`,
+    data: payload,
+  })
+}
+
+export const deleteClientSpecialPricesByProduct = ({ clientId, productId }) => {
+  return apiDelete({
+    url: `clients/${clientId}/special-prices/product/${productId}`,
+  })
+}
+
 export default {
   getClients,
   setClient,
@@ -47,4 +69,7 @@ export default {
   updateClient,
   deleteClient,
   setDeliveryAddress,
+  getClientSpecialPrices,
+  upsertClientSpecialPrices,
+  deleteClientSpecialPricesByProduct,
 }

@@ -63,6 +63,84 @@ const resolveSellerIdByUserId = async (userId) => {
   return Number(seller.id);
 };
 
+const resolveClientIdByUserId = async (userId) => {
+  const client = await db("clients").select("id").where({ userId: Number(userId) }).first();
+  return client ? Number(client.id) : null;
+};
+
+const roundMoney = (value) => Number((Number(value) || 0).toFixed(2));
+
+const loadClientSpecialPricesByVariantIds = async ({ userId, role, variantIds }) => {
+  if (role !== "CLIENT") return {};
+
+  const clientId = await resolveClientIdByUserId(userId);
+  const safeVariantIds = Array.isArray(variantIds)
+    ? [...new Set(variantIds.map((variantId) => Number(variantId)).filter(Boolean))]
+    : [];
+
+  if (!clientId || safeVariantIds.length === 0) return {};
+
+  const rows = await db("client_special_prices")
+    .select(
+      "variantId",
+      "priceType",
+      "specialNetPrice",
+      "specialGrossPrice",
+      "discountPercent",
+    )
+    .where({ clientId })
+    .whereIn("variantId", safeVariantIds);
+
+  return rows.reduce((acc, row) => {
+    acc[Number(row.variantId)] = row;
+    return acc;
+  }, {});
+};
+
+const applyClientSpecialPricesToVariants = async ({ userId, role, variantsByProductId }) => {
+  if (role !== "CLIENT") return variantsByProductId;
+
+  const variantIds = Object.values(variantsByProductId)
+    .flat()
+    .map((variant) => Number(variant.id));
+  const specialPricesByVariantId = await loadClientSpecialPricesByVariantIds({
+    userId,
+    role,
+    variantIds,
+  });
+
+  return Object.entries(variantsByProductId).reduce((acc, [productId, variants]) => {
+    acc[Number(productId)] = variants.map((variant) => {
+      const specialPrice = specialPricesByVariantId[Number(variant.id)];
+      if (!specialPrice) return variant;
+
+      if (specialPrice.priceType === "amount") {
+        return {
+          ...variant,
+          netPrice: roundMoney(specialPrice.specialNetPrice),
+          grossPrice: roundMoney(specialPrice.specialGrossPrice),
+          originalNetPrice: roundMoney(variant.netPrice),
+          originalGrossPrice: roundMoney(variant.grossPrice),
+          specialPriceType: specialPrice.priceType,
+        };
+      }
+
+      const multiplier = 1 - Number(specialPrice.discountPercent || 0) / 100;
+
+      return {
+        ...variant,
+        netPrice: roundMoney(Number(variant.netPrice) * multiplier),
+        grossPrice: roundMoney(Number(variant.grossPrice) * multiplier),
+        originalNetPrice: roundMoney(variant.netPrice),
+        originalGrossPrice: roundMoney(variant.grossPrice),
+        specialPriceType: specialPrice.priceType,
+        discountPercent: roundMoney(specialPrice.discountPercent),
+      };
+    });
+    return acc;
+  }, {});
+};
+
 const syncProductStatusWithVariants = async ({ trx, productId }) => {
   const normalizedProductId = Number(productId);
   if (!normalizedProductId) return;
@@ -340,8 +418,16 @@ const getProducts = async ({
     images: imagesByProductId[Number(product.id)] || [],
   }));
 
-  const variantsByProductId = await getVariantsByProductIds(data.map((product) => Number(product.id)), {
-    onlyActive: role === "CLIENT",
+  const baseVariantsByProductId = await getVariantsByProductIds(
+    data.map((product) => Number(product.id)),
+    {
+      onlyActive: role === "CLIENT",
+    },
+  );
+  const variantsByProductId = await applyClientSpecialPricesToVariants({
+    userId,
+    role,
+    variantsByProductId: baseVariantsByProductId,
   });
   const categoriesByProductId = await getCategoriesForProductIds(
     data.map((product) => Number(product.id)),
@@ -399,8 +485,13 @@ const getProductById = async ({ userId, role, productId }) => {
     .orderBy("position", "asc")
     .orderBy("id", "asc");
 
-  const variantsByProductId = await getVariantsByProductIds([Number(productId)], {
+  const baseVariantsByProductId = await getVariantsByProductIds([Number(productId)], {
     onlyActive: role === "CLIENT",
+  });
+  const variantsByProductId = await applyClientSpecialPricesToVariants({
+    userId,
+    role,
+    variantsByProductId: baseVariantsByProductId,
   });
   const categoriesByProductId = await getCategoriesForProductIds([Number(productId)]);
 
@@ -412,7 +503,7 @@ const getProductById = async ({ userId, role, productId }) => {
   };
 };
 
-const getSuggestedProducts = async ({ limit = 10, role }) => {
+const getSuggestedProducts = async ({ limit = 10, role, userId }) => {
   const normalizedLimit = Number(limit) > 0 ? Math.min(Number(limit), 20) : 10;
 
   const query = db("products")
@@ -445,8 +536,16 @@ const getSuggestedProducts = async ({ limit = 10, role }) => {
     return acc;
   }, {});
 
-  const variantsByProductId = await getVariantsByProductIds(products.map((product) => Number(product.id)), {
-    onlyActive: role === "CLIENT",
+  const baseVariantsByProductId = await getVariantsByProductIds(
+    products.map((product) => Number(product.id)),
+    {
+      onlyActive: role === "CLIENT",
+    },
+  );
+  const variantsByProductId = await applyClientSpecialPricesToVariants({
+    userId,
+    role,
+    variantsByProductId: baseVariantsByProductId,
   });
   const categoriesByProductId = await getCategoriesForProductIds(
     products.map((product) => Number(product.id)),

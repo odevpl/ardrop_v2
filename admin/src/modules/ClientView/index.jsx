@@ -95,6 +95,13 @@ const ClientViewForm = ({ payload, refetch, clientId }) => {
               <button type="button" className="adminDangerButton" onClick={handleDelete} disabled={isSubmitting}>
                 Usun klienta
               </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/clients/${clientId}/special-prices`)}
+                disabled={isSubmitting}
+              >
+                Ceny specjalne
+              </button>
               <button type="button" onClick={() => navigate('/clients')} disabled={isSubmitting}>
                 Wroc do listy
               </button>

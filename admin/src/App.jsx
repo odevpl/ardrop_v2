@@ -10,6 +10,7 @@ import SidebarMenu from "components/SidebarMenu";
 import { SIDEBAR_MENU_CONFIG } from "components/SidebarMenu/sidebar.config";
 import ClientsPage from "pages/clients";
 import ClientDetailsPage from "pages/clients/Details";
+import ClientSpecialPricesPage from "pages/ClientSpecialPricesPage";
 import OrdersPage from "pages/orders";
 import OrderDetailsPage from "pages/orders/Details";
 import ProductsPage from "pages/products";
@@ -47,6 +48,10 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={<Navigate to="/clients" replace />} />
             <Route path="/clients" element={<ClientsPage />} />
+            <Route
+              path="/clients/:clientId/special-prices"
+              element={<ClientSpecialPricesPage />}
+            />
             <Route path="/clients/:id" element={<ClientDetailsPage />} />
             <Route path="/sellers" element={<SellersPage />} />
             <Route path="/sellers/add" element={<AddSellerPage />} />

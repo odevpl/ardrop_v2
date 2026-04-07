@@ -470,15 +470,36 @@ const buildWorkweekHours = (rows, sellerId) => {
 };
 
 const getSellerByUserId = async (userId, trx = db) => {
-  const seller = await trx("sellers").select("id").where({ userId: Number(userId) }).first();
+  const normalizedUserId = Number(userId);
+  const seller = await trx("sellers").select("id").where({ userId: normalizedUserId }).first();
 
-  if (!seller) {
+  if (seller) {
+    return seller;
+  }
+
+  const user = await trx("users")
+    .select("id", "email", "role")
+    .where({ id: normalizedUserId })
+    .first();
+
+  if (!user || user.role !== "SELLER") {
     const error = new Error("Seller profile not found");
     error.status = 404;
     throw error;
   }
 
-  return seller;
+  const fallbackCompanyName =
+    String(user.email || "")
+      .split("@")[0]
+      .trim() || `Seller #${normalizedUserId}`;
+
+  const inserted = await trx("sellers").insert({
+    userId: normalizedUserId,
+    companyName: fallbackCompanyName,
+  });
+  const sellerId = Array.isArray(inserted) ? inserted[0] : inserted;
+
+  return { id: Number(sellerId) };
 };
 
 const getSellerSettings = async ({ userId }) => {

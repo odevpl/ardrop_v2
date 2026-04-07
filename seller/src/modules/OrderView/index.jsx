@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import OrdersService from 'services/orders'
 import CustomerDeliverySection from './components/CustomerDeliverySection'
 import DeliveryAddressSection from './components/DeliveryAddressSection'
+import InvoiceDetailsSection from './components/InvoiceDetailsSection'
 import OrderDetailsSection from './components/OrderDetailsSection'
 import OrderItemsSection from './components/OrderItemsSection'
 import { formatPrice } from './components/OrderView.utils'
@@ -47,6 +48,7 @@ const OrderView = ({ payload }) => {
       <div className="orderViewLayout">
         <div className="orderViewMainColumn">
           <OrderDetailsSection order={order} onStatusSubmit={handleStatusSubmit} />
+          <InvoiceDetailsSection client={order?.client || null} />
           <CustomerDeliverySection order={order} />
           <DeliveryAddressSection address={address} />
           <OrderItemsSection items={items} />

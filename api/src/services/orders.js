@@ -64,11 +64,12 @@ const getOrderColumnCapabilities = async (trx = db) => {
     hasOrderGroupNumber,
     hasDeliveryAddressSnapshotJson,
     hasShippingMethodId,
-    hasShippingMethodName,
-    hasClientNote,
-    hasEstimatedDeliveryFrom,
-    hasEstimatedDeliveryTo,
-    hasAppliedDiscountSnapshotJson,
+  hasShippingMethodName,
+  hasClientNote,
+  hasEstimatedDeliveryFrom,
+  hasEstimatedDeliveryTo,
+  hasAppliedDiscountSnapshotJson,
+    hasClientSnapshotJson,
   ] = await Promise.all([
     trx.schema.hasColumn("orders", "orderGroupNumber"),
     trx.schema.hasColumn("orders", "deliveryAddressSnapshotJson"),
@@ -78,6 +79,7 @@ const getOrderColumnCapabilities = async (trx = db) => {
     trx.schema.hasColumn("orders", "estimatedDeliveryFrom"),
     trx.schema.hasColumn("orders", "estimatedDeliveryTo"),
     trx.schema.hasColumn("orders", "appliedDiscountSnapshotJson"),
+    trx.schema.hasColumn("orders", "clientSnapshotJson"),
   ]);
 
   orderColumnsCache = {
@@ -89,6 +91,7 @@ const getOrderColumnCapabilities = async (trx = db) => {
     hasEstimatedDeliveryFrom,
     hasEstimatedDeliveryTo,
     hasAppliedDiscountSnapshotJson,
+    hasClientSnapshotJson,
   };
 
   return orderColumnsCache;
@@ -135,6 +138,9 @@ const getOrderSelectColumns = async (trx = db) => {
   if (capabilities.hasAppliedDiscountSnapshotJson) {
     columns.push("orders.appliedDiscountSnapshotJson");
   }
+  if (capabilities.hasClientSnapshotJson) {
+    columns.push("orders.clientSnapshotJson");
+  }
 
   return columns;
 };
@@ -178,6 +184,7 @@ const mapOrder = (order) => ({
   estimatedDeliveryFrom: order.estimatedDeliveryFrom || null,
   estimatedDeliveryTo: order.estimatedDeliveryTo || null,
   appliedDiscountSnapshot: parseSnapshot(order.appliedDiscountSnapshotJson),
+  clientSnapshot: parseSnapshot(order.clientSnapshotJson),
   createdAt: order.createdAt,
   updatedAt: order.updatedAt,
 });
@@ -229,6 +236,9 @@ const mapClientSummary = (client) => ({
   city: client.city || "",
   postalCode: client.postalCode || "",
 });
+
+const resolveOrderClient = (mappedOrder, client) =>
+  mappedOrder?.clientSnapshot || (client ? mapClientSummary(client) : null);
 
 const summarizeSellerItems = (items) => {
   const totals = items.reduce(
@@ -397,6 +407,10 @@ const createOrderFromCurrentCart = async (
     }
 
     const availableAddresses = await getClientDeliveryAddresses({ clientId: resolvedClientId }, trx);
+    const checkoutClient = await trx("clients")
+      .select("id", "name", "companyName", "nip", "phone", "address", "city", "postalCode")
+      .where({ id: resolvedClientId })
+      .first();
 
     const productIds = [...new Set(cartItems.map((item) => Number(item.productId)).filter(Boolean))];
     const products = await trx("products")
@@ -544,6 +558,11 @@ const createOrderFromCurrentCart = async (
           ? JSON.stringify(shipmentDiscount.snapshot)
           : null;
       }
+      if (orderColumns.hasClientSnapshotJson) {
+        orderPayload.clientSnapshotJson = JSON.stringify(
+          checkoutClient ? mapClientSummary(checkoutClient) : null,
+        );
+      }
 
       const insertedOrder = await trx("orders").insert(orderPayload);
       const orderId = Array.isArray(insertedOrder) ? insertedOrder[0] : insertedOrder;
@@ -665,12 +684,16 @@ const getOrders = async ({ userId, role }) => {
 
   const orderIds = orders.map((order) => Number(order.id));
   const sellerIds = [...new Set(orders.map((order) => Number(order.sellerId)).filter(Boolean))];
+  const clientIds = [...new Set(orders.map((order) => Number(order.clientId)).filter(Boolean))];
   const orderItemsRows = await db("order_items")
     .select("orderId", "sellerId", "quantity", "netPrice", "grossPrice")
     .whereIn("orderId", orderIds);
   const sellersRows = await db("sellers")
     .select("id", "companyName", "nip", "phone", "address", "city", "postalCode")
     .whereIn("id", sellerIds);
+  const clientsRows = await db("clients")
+    .select("id", "name", "companyName", "nip", "phone", "address", "city", "postalCode")
+    .whereIn("id", clientIds);
 
   const orderItemsSummaryByOrderId = {};
   orderItemsRows.forEach((item) => {
@@ -684,6 +707,11 @@ const getOrders = async ({ userId, role }) => {
   const sellersById = {};
   sellersRows.forEach((seller) => {
     sellersById[Number(seller.id)] = seller;
+  });
+
+  const clientsById = {};
+  clientsRows.forEach((client) => {
+    clientsById[Number(client.id)] = client;
   });
 
   if (role === "SELLER") {
@@ -719,6 +747,10 @@ const getOrders = async ({ userId, role }) => {
       return {
         ...mapOrder(order),
         items: visibleItems,
+        client: resolveOrderClient(
+          mapOrder(order),
+          clientsById[Number(order.clientId)],
+        ),
         sellerScope: summarizeSellerItems(visibleItems),
       };
     });
@@ -733,6 +765,7 @@ const getOrders = async ({ userId, role }) => {
     return {
       ...mappedOrder,
       seller: seller ? mapSellerSummary(seller, null) : null,
+      client: resolveOrderClient(mappedOrder, clientsById[mappedOrder.clientId]),
       sellerScope: {
         totalNet: Number(summary.totalNet.toFixed(2)),
         totalGross: Number(summary.totalGross.toFixed(2)),
@@ -806,10 +839,16 @@ const getOrderById = async ({ userId, role, orderId }) => {
   const mappedItems = items.map(mapOrderItem);
 
   const mappedOrder = (await attachOrderNumbers([mapOrder(order)]))[0];
+  const client = await db("clients")
+    .select("id", "name", "companyName", "nip", "phone", "address", "city", "postalCode")
+    .where({ id: Number(mappedOrder.clientId) })
+    .first();
+
   if (role === "SELLER") {
     return {
       ...mappedOrder,
       items: mappedItems,
+      client: resolveOrderClient(mappedOrder, client),
       sellerScope: summarizeSellerItems(mappedItems),
     };
   }
@@ -817,6 +856,7 @@ const getOrderById = async ({ userId, role, orderId }) => {
   return {
     ...mappedOrder,
     items: mappedItems,
+    client: resolveOrderClient(mappedOrder, client),
   };
 };
 
@@ -919,14 +959,14 @@ const getOrderGroupById = async ({ userId, role, orderGroupId }) => {
     const orderItems = itemsByOrderId[mappedOrder.id] || [];
     const seller = sellersById[mappedOrder.sellerId];
     const sellerSettings = sellerSettingsBySellerId[mappedOrder.sellerId];
-    const client = clientsById[mappedOrder.clientId];
+    const client = resolveOrderClient(mappedOrder, clientsById[mappedOrder.clientId]);
     const dueDate = addDays(mappedOrder.createdAt, sellerSettings?.paymentDueDays || 7);
 
     return {
       ...mappedOrder,
       items: orderItems,
       seller: seller ? mapSellerSummary(seller, sellerSettings) : null,
-      client: client ? mapClientSummary(client) : null,
+      client,
       sellerScope: summarizeSellerItems(orderItems),
       proforma: {
         documentNumber: `PF/${mappedOrder.orderGroupId}/${mappedOrder.id}`,
@@ -937,7 +977,7 @@ const getOrderGroupById = async ({ userId, role, orderGroupId }) => {
         paymentStatus: mappedOrder.paymentStatus,
         amountGross: Number(mappedOrder.totalGross || 0),
         seller: seller ? mapSellerSummary(seller, sellerSettings) : null,
-        client: client ? mapClientSummary(client) : null,
+        client,
       },
     };
   }));

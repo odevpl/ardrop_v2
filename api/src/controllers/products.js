@@ -77,6 +77,7 @@ router.get(
     const result = await productsService.getSuggestedProducts({
       limit: 10,
       role: req.user.role,
+      userId: req.user.userId,
     });
     const data = result.map((product) => withImageUrls(req, product));
     res.status(200).json({ data });

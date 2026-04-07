@@ -174,6 +174,25 @@ CREATE TABLE `clients_delivery_address` (
 ---
 
 --
+-- Table structure for table `client_special_prices`
+--
+
+CREATE TABLE `client_special_prices` (
+`id` int UNSIGNED NOT NULL,
+`clientId` int NOT NULL,
+`variantId` int UNSIGNED NOT NULL,
+`productId` int UNSIGNED NOT NULL,
+`priceType` enum('amount','percent') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'amount',
+`specialNetPrice` decimal(15,2) DEFAULT NULL,
+`specialGrossPrice` decimal(15,2) DEFAULT NULL,
+`discountPercent` decimal(8,2) DEFAULT NULL,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
 -- Table structure for table `marketing_campaigns`
 --
 
@@ -231,6 +250,7 @@ CREATE TABLE `orders` (
 `sellerId` int UNSIGNED NOT NULL,
 `clientId` int UNSIGNED NOT NULL,
 `deliveryAddressSnapshotJson` longtext COLLATE utf8mb4_general_ci,
+`clientSnapshotJson` longtext COLLATE utf8mb4_general_ci,
 `shippingMethodId` int UNSIGNED DEFAULT NULL,
 `shippingMethodName` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
 `clientNote` text COLLATE utf8mb4_general_ci,
@@ -658,6 +678,16 @@ ADD PRIMARY KEY (`id`),
 ADD KEY `idx_cda_clientId` (`clientId`);
 
 --
+-- Indexes for table `client_special_prices`
+--
+ALTER TABLE `client_special_prices`
+ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `uq_client_variant` (`clientId`,`variantId`),
+ADD KEY `idx_clientId` (`clientId`),
+ADD KEY `idx_variantId` (`variantId`),
+ADD KEY `idx_productId` (`productId`);
+
+--
 -- Indexes for table `marketing_campaigns`
 --
 ALTER TABLE `marketing_campaigns`
@@ -867,6 +897,12 @@ ALTER TABLE `clients_delivery_address`
 MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `client_special_prices`
+--
+ALTER TABLE `client_special_prices`
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `marketing_campaigns`
 --
 ALTER TABLE `marketing_campaigns`
@@ -1034,6 +1070,14 @@ ADD CONSTRAINT `fk_clients_userId_users_id` FOREIGN KEY (`userId`) REFERENCES `u
 --
 ALTER TABLE `clients_delivery_address`
 ADD CONSTRAINT `fk_cda_clientId_clients_id` FOREIGN KEY (`clientId`) REFERENCES `clients` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `client_special_prices`
+--
+ALTER TABLE `client_special_prices`
+ADD CONSTRAINT `fk_csp_client` FOREIGN KEY (`clientId`) REFERENCES `clients` (`id`) ON DELETE CASCADE,
+ADD CONSTRAINT `fk_csp_product` FOREIGN KEY (`productId`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+ADD CONSTRAINT `fk_csp_variant` FOREIGN KEY (`variantId`) REFERENCES `product_variants` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `marketing_campaign_items`

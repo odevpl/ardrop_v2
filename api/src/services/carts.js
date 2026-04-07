@@ -95,6 +95,67 @@ const mapShipment = (shipment) => ({
   updatedAt: shipment.updatedAt,
 });
 
+const loadClientSpecialPrices = async ({ clientId, variantIds }, trx = db) => {
+  const normalizedClientId = Number(clientId);
+  const safeVariantIds = Array.isArray(variantIds)
+    ? [...new Set(variantIds.map((variantId) => Number(variantId)).filter(Boolean))]
+    : [];
+
+  if (!normalizedClientId || safeVariantIds.length === 0) {
+    return {};
+  }
+
+  const rows = await trx("client_special_prices as csp")
+    .innerJoin("product_variants as pv", "pv.id", "csp.variantId")
+    .select(
+      "csp.variantId",
+      "csp.priceType",
+      "csp.specialNetPrice",
+      "csp.specialGrossPrice",
+      "csp.discountPercent",
+      "pv.netPrice as originalNetPrice",
+      "pv.grossPrice as originalGrossPrice",
+      "pv.vatRate as originalVatRate",
+    )
+    .where("csp.clientId", normalizedClientId)
+    .whereIn("csp.variantId", safeVariantIds);
+
+  return rows.reduce((acc, row) => {
+    acc[Number(row.variantId)] = row;
+    return acc;
+  }, {});
+};
+
+const resolveSpecialPricing = (pricingSource, specialPrice) => {
+  if (!specialPrice) {
+    return {
+      unitNet: roundMoney(pricingSource.netPrice),
+      unitGross: roundMoney(pricingSource.grossPrice),
+      vatRate: roundMoney(pricingSource.vatRate),
+    };
+  }
+
+  if (specialPrice.priceType === "amount") {
+    return {
+      unitNet: roundMoney(specialPrice.specialNetPrice),
+      unitGross: roundMoney(specialPrice.specialGrossPrice),
+      vatRate: roundMoney(pricingSource.vatRate),
+    };
+  }
+
+  const multiplier = 1 - Number(specialPrice.discountPercent || 0) / 100;
+
+  return {
+    unitNet: roundMoney(
+      Number(specialPrice.originalNetPrice ?? pricingSource.netPrice) * multiplier,
+    ),
+    unitGross: roundMoney(
+      Number(specialPrice.originalGrossPrice ?? pricingSource.grossPrice) * multiplier,
+    ),
+    vatRate: roundMoney(specialPrice.originalVatRate ?? pricingSource.vatRate),
+  };
+};
+
 const getCartShipments = async ({ cartId }, trx = db) => {
   const capabilities = await getCartShipmentCapabilities(trx);
   const selectColumns = [
@@ -140,8 +201,44 @@ const buildCartResponse = async ({ cart }, trx = db) => {
     getCartShipments({ cartId: cart.id }, trx),
   ]);
 
+  const specialPricesByVariantId = await loadClientSpecialPrices(
+    {
+      clientId: cart.clientId,
+      variantIds: items.map((item) => item.variantId),
+    },
+    trx,
+  );
+
+  const normalizedItems = items.map((item) => {
+    const specialPrice = item.variantId
+      ? specialPricesByVariantId[Number(item.variantId)]
+      : null;
+
+    if (!specialPrice) {
+      return item;
+    }
+
+    const pricing = resolveSpecialPricing(
+      {
+        netPrice: item.unitNet,
+        grossPrice: item.unitGross,
+        vatRate: item.vatRate,
+      },
+      specialPrice,
+    );
+
+    return {
+      ...item,
+      unitNet: pricing.unitNet,
+      unitGross: pricing.unitGross,
+      vatRate: pricing.vatRate,
+      lineNet: roundMoney(pricing.unitNet * Number(item.quantity || 0)),
+      lineGross: roundMoney(pricing.unitGross * Number(item.quantity || 0)),
+    };
+  });
+
   const itemsBySellerId = {};
-  items.forEach((item) => {
+  normalizedItems.forEach((item) => {
     const sellerId = Number(item.sellerId);
     if (!itemsBySellerId[sellerId]) itemsBySellerId[sellerId] = [];
     itemsBySellerId[sellerId].push(item);
@@ -197,7 +294,7 @@ const buildCartResponse = async ({ cart }, trx = db) => {
 
   return {
     ...cart,
-    items,
+    items: normalizedItems,
     discountNet: roundMoney(discountEvaluation.totals.discountNet),
     discountGross: roundMoney(discountEvaluation.totals.discountGross),
     shipments: groupedShipmentsWithDiscounts,
@@ -616,6 +713,17 @@ const addItemToCurrentCart = async ({
 
     const pricingSource = selectedVariant || product;
     const targetVariantId = selectedVariant ? Number(selectedVariant.id) : null;
+    const specialPricesByVariantId = await loadClientSpecialPrices(
+      {
+        clientId: scope.clientId,
+        variantIds: targetVariantId ? [targetVariantId] : [],
+      },
+      trx,
+    );
+    const pricing = resolveSpecialPricing(
+      pricingSource,
+      targetVariantId ? specialPricesByVariantId[targetVariantId] : null,
+    );
 
     await ensureCartShipment({ cartId: cart.id, sellerId: product.sellerId }, trx);
 
@@ -635,8 +743,8 @@ const addItemToCurrentCart = async ({
 
     if (existingItem) {
       const newQuantity = Number(existingItem.quantity) + normalizedQuantity;
-      const unitNet = roundMoney(pricingSource.netPrice);
-      const unitGross = roundMoney(pricingSource.grossPrice);
+      const unitNet = pricing.unitNet;
+      const unitGross = pricing.unitGross;
       const lineNet = roundMoney(unitNet * newQuantity);
       const lineGross = roundMoney(unitGross * newQuantity);
 
@@ -647,7 +755,7 @@ const addItemToCurrentCart = async ({
           sellerId: Number(product.sellerId),
           unitNet,
           unitGross,
-          vatRate: roundMoney(pricingSource.vatRate),
+          vatRate: pricing.vatRate,
           lineNet,
           lineGross,
           productNameSnapshot: product.name,
@@ -657,8 +765,8 @@ const addItemToCurrentCart = async ({
           updatedAt: trx.fn.now(),
         });
     } else {
-      const unitNet = roundMoney(pricingSource.netPrice);
-      const unitGross = roundMoney(pricingSource.grossPrice);
+      const unitNet = pricing.unitNet;
+      const unitGross = pricing.unitGross;
 
       await trx("cart_items").insert({
         cartId: Number(cart.id),
@@ -668,7 +776,7 @@ const addItemToCurrentCart = async ({
         quantity: normalizedQuantity,
         unitNet,
         unitGross,
-        vatRate: roundMoney(pricingSource.vatRate),
+        vatRate: pricing.vatRate,
         lineNet: roundMoney(unitNet * normalizedQuantity),
         lineGross: roundMoney(unitGross * normalizedQuantity),
         productNameSnapshot: product.name,

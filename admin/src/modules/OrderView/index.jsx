@@ -7,6 +7,11 @@ import './OrderView.scss'
 const formatPrice = (value) => `${Number(value || 0).toFixed(2)} zl`
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
 
+const formatClientName = (client) => {
+  if (!client) return '-'
+  return client.companyName || client.name || '-'
+}
+
 const resolveThumbUrl = (item) => {
   const images = Array.isArray(item?.productSnapshot?.images) ? item.productSnapshot.images : []
   const main = images.find((image) => Number(image?.isMain) === 1) || images[0]
@@ -19,6 +24,7 @@ const OrderView = ({ payload }) => {
   const notification = useNotification()
   const order = payload?.data || payload?.order || payload || {}
   const items = Array.isArray(order?.items) ? order.items : []
+  const client = order?.client || null
   const orderTotalFromItems = items.reduce(
     (sum, item) => sum + Number(item.grossPrice || 0) * Number(item.quantity || 0),
     0,
@@ -107,6 +113,24 @@ const OrderView = ({ payload }) => {
                     <option value="paid">paid</option>
                     <option value="failed">failed</option>
                   </select>
+                </div>
+              </div>
+
+              <div className="orderViewCard">
+                <h2>Dane do faktury</h2>
+                <div className="orderViewInfoGrid">
+                  <span>Nabywca</span>
+                  <span>{formatClientName(client)}</span>
+                  <span>NIP</span>
+                  <span>{client?.nip || '-'}</span>
+                  <span>Telefon</span>
+                  <span>{client?.phone || '-'}</span>
+                  <span>Adres</span>
+                  <span>{client?.address || '-'}</span>
+                  <span>Miasto i kod</span>
+                  <span>
+                    {client?.postalCode || '-'} {client?.city || '-'}
+                  </span>
                 </div>
               </div>
 

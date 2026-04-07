@@ -6,6 +6,11 @@ import OrdersService from 'services/orders'
 
 const formatPrice = (value) => `${Number(value || 0).toFixed(2)} zl`
 
+const formatClientName = (client) => {
+  if (!client) return '-'
+  return client.companyName || client.name || `Klient #${client.id || '-'}`
+}
+
 const OrdersTable = ({ payload }) => {
   const navigate = useNavigate()
   const orders = Array.isArray(payload?.data || payload?.orders) ? payload?.data || payload?.orders : []
@@ -15,6 +20,11 @@ const OrdersTable = ({ payload }) => {
       key: 'createdAt',
       title: 'Data',
       onRender: (row) => dayjs(row?.createdAt).isValid() ? dayjs(row?.createdAt).format('DD.MM.YYYY') : '-',
+    },
+    {
+      key: 'client',
+      title: 'Klient',
+      onRender: (row) => formatClientName(row?.client),
     },
     { key: 'status', title: 'Status' },
     { key: 'paymentStatus', title: 'Platnosc' },

@@ -1,57 +1,12 @@
 # ArDrop v2 - Zajawka Kontekstu
 
-## 1. Co to jest
+> Opis projektu, stack, uruchomienie → `README.md`
+> Architektura, przepływ danych, moduły → `ARCHITECTURE.md`
+> Schemat bazy danych → `DB_STRUCTURE.md`
 
-Monorepo e-commerce z 4 aplikacjami:
+---
 
-- `api` - backend Node.js + Express + MySQL (Knex)
-- `app` - frontend klienta (React + Vite)
-- `seller` - panel sprzedawcy (React + Vite)
-- `admin` - panel super-admina (React + Vite)
-
-Dodatkowo istnieje katalog `landing`, ale obecnie jest pusty.
-
-## 2. Stack techniczny
-
-- Backend: `express@5`, `knex`, `mysql2`, `jsonwebtoken`, `bcryptjs`, `multer`, `jimp`, `nodemailer`
-- Frontendy: `react@19`, `react-router-dom@7`, `axios`, `formik`, `sass`, Vite 7
-- Auth: JWT w `Authorization: Bearer <token>`
-
-## 3. Jak uruchomic lokalnie
-
-W osobnych terminalach:
-
-1. API
-
-- `cd api`
-- `npm install`
-- `npm run dev`
-- API nasluchuje na `PORT` z `.env` (domyslnie zwykle `8000` w frontendach)
-
-2. Front klienta
-
-- `cd app`
-- `npm install`
-- `npm start`
-- Vite: `http://localhost:3001`
-
-3. Panel sprzedawcy
-
-- `cd seller`
-- `npm install`
-- `npm start`
-- Vite: `http://localhost:3002`
-
-4. Panel admin
-
-- `cd admin`
-- `npm install`
-- `npm start`
-- Vite: `http://localhost:3003`
-
-Frontendy uzywaja `VITE_API_BASE_URL` albo fallback `http://localhost:8000`.
-
-## 4. Backend - kluczowe fakty
+## 1. Backend - kluczowe fakty
 
 Pliki startowe:
 
@@ -69,6 +24,7 @@ Dodatkowe env opcjonalne:
 - `GUS_BIR_USER_KEY` - klucz uzytkownika do API REGON BIR
 - `GUS_BIR_API_URL` - override URL lookupu GUS BIR
 - `BUSINESS_REGISTRY_TIMEOUT_MS` - timeout lookupu rejestrow
+- `CONTACT_FORM_EMAIL` - opcjonalny adres odbiorcy powiadomien z formularzy kontaktowych
 
 Publiczne endpointy:
 
@@ -79,6 +35,7 @@ Publiczne endpointy:
 - `POST /auth/reset-password`
 - `POST /auth/login`
 - `GET /auth/me` (technicznie w kontrolerze z auth middleware)
+- `POST /contact/:formName`
 - `GET /health`
 
 Chronione endpointy (globalny auth middleware + role):
@@ -87,7 +44,9 @@ Chronione endpointy (globalny auth middleware + role):
 - kategorie: `GET /categories...` dla `ADMIN/SELLER/CLIENT`, CRUD + obrazy kategorii tylko dla `ADMIN`
 - koszyk: `GET /carts/current`, operacje na pozycjach i metadanych koszyka
   - backend nalicza tez aktywne `discountRules` sellera per shipment/sprzedawca i zwraca wynik w odpowiedzi koszyka
+  - `PATCH /carts/current` obsluguje tez `couponCode`
 - checkout klienta: `GET /checkout/shipments/:sellerId/shipping-methods` oraz `PATCH /carts/shipments/:sellerId` z `shippingMethodId`; koszt dostawy i prog darmowej dostawy sa liczone po stronie backendu
+  - backend zwraca tez minimalny prog zakupu per sprzedawca i waliduje go przy tworzeniu zamowienia
 - zamowienia: `POST /orders`, `GET /orders`, `GET /orders/:id`, `GET /orders/groups/:orderGroupId`, admin `PUT/DELETE`
   - nowy zakup grupowy moze miec biznesowy numer `orderGroupNumber` w formacie `YYYYMMDDNNN`, wspolny dla wszystkich rekordow `orders` z tej samej grupy
   - jesli schema bazy ma kolumne `orders.appliedDiscountSnapshotJson`, backend zapisuje tam snapshot zastosowanej promocji per `order`
@@ -96,8 +55,9 @@ Chronione endpointy (globalny auth middleware + role):
 - dostawa biezaca klienta: `GET/PUT /deliveries/current`
 - seller settings i historia finansowa: `GET/PATCH /seller/me/settings`, `GET /seller/me/financial-history`
 - admin only: `users`, `clients`, `sellers`
+- admin formularze: `GET /admin/forms`, `GET /admin/forms/:formName`
 
-## 5. Frontendy - podzial odpowiedzialnosci
+## 2. Frontendy - podzial odpowiedzialnosci
 
 - `app`: flow klienta (logowanie/rejestracja/aktywacja/reset hasla, produkty, koszyk, konto, adresy, zamowienia)
   - rejestracja klienta jest B2B: NIP jest wymagany, a dane firmy sa pobierane z CEIDG/GUS
@@ -109,9 +69,11 @@ Chronione endpointy (globalny auth middleware + role):
   - seller ma tez widok historii finansowej oparty o `seller_financial_entries`; nowe zakupy klienta dopisuja wpis `order_income`
   - ustawienia sprzedawcy trzymaja takze dane do przelewu i termin platnosci wykorzystywany na blokach ala proforma klienta
   - `discounts` nadal korzysta z tymczasowego modelu `discountRules` w `seller/me/settings`, ale `api` i `app` konsumuje juz te reguly w koszyku i checkoutcie
+  - widok `/pricing-rules` zostal odlaczony z UI; minimalna wartosc zamowienia jest teraz edytowana w `/payout-settings`
+  - formularz metody dostawy ma `vatRate` oraz przeliczanie netto/brutto
 - `admin`: klienci, sprzedawcy, produkty, zamowienia; ma `ConfigProvider`, ktory probuje pobrac `/configs`, a fallback trzyma w `admin/stories/apiConfigs.json`
 
-## 5a. Frontend - konwencje struktury
+## 2a. Frontend - konwencje struktury
 
 - Dla widokow formularzowych w frontendach (`app`, `seller`, `admin`) preferowany wzorzec to:
   - `page` w `src/pages/...` jest cienka warstwa routingu i layoutu; tylko osadza modul i naglowek
@@ -122,7 +84,7 @@ Chronione endpointy (globalny auth middleware + role):
   - `seller/src/modules/ShippingEditForm`
   - `seller/src/modules/PayoutSettingsForm`
 
-## 5b. Statusy produktu i wariantow
+## 2b. Statusy produktu i wariantow
 
 - Obecna semantyka wdrozona w `seller` i `api`:
   - `product.status = draft` wymusza `draft` na wszystkich wariantach
@@ -132,36 +94,37 @@ Chronione endpointy (globalny auth middleware + role):
   - produkt aktywny
   - oraz co najmniej jeden aktywny wariant
 
-## 5c. Rabaty MVP w checkoutcie
+## 2c. Rabaty MVP w checkoutcie
 
 - Obecne MVP nie korzysta jeszcze z osobnego feature API `discounts`.
 - `api` konsumuje tymczasowe `seller_discount_rules` i obsluguje w koszyku / checkoutcie typy:
   - `cart_threshold`
   - `quantity_threshold`
-  - `first_purchase`
-  - `loyal_customer`
-  - `free_bonus`
+  - `coupon_code`
 - Dla `quantity_threshold` przyjeta semantyka jest taka:
   - liczymy ilosc lacznie dla calego zaznaczonego zbioru `selectedVariantIds`
   - rabat obejmuje tylko pozycje z tego zaznaczonego zbioru
+- Dla `coupon_code`:
+  - kod jest wpisywany w koszyku klienta
+  - backend dopasowuje go per sprzedawca
+  - liczba wykorzystan per klient jest trzymana w `seller_discount_rule_usages`
 - Promocje sa przypisywane do konkretnego `order` per sprzedawca, a nie do calego `orderGroupId`.
 
-## 6. Baza danych
+## 3. Baza danych
 
 Szczegolowy i aktualny schemat bazy danych znajduje sie w `DB_STRUCTURE.md`.
 Ten plik nalezy traktowac jako source of truth dla tabel, relacji i kolumn.
+Aktualne zmiany wymagajace SQL:
+- `seller_shipping_methods.vatRate`
+- nowa tabela `seller_discount_rule_usages`
 Jeśli trzeba coś poprawić w bazie, podaj mi sql query we wiadomości pod phpmyadmin.
 Jeśli poprawka się uda, zamieść ją również w `DB_STRUCTURE.md`. Pamiętaj, że baza działa na 10.4.32-MariaDB
 
-## 7. Aktualny stan dokumentacji
-
-- README w `app/admin/seller` sa domyslne z Vite (bez opisu biznesowego)
-
-## 8. Rekomendowany prompt startowy do nowego chatu
+## 4. Rekomendowany prompt startowy do nowego chatu
 
 "Pracujemy w `ardrop_v2`. Traktuj `ZAJAWKA.md` jako source of truth na start. Najpierw sprawdz aktualny kod endpointow i serwisow, bo czesc dokumentacji moze byc nieaktualna. `TODO.md` powinien zawierać listę aktualnych zadań do wykonania. Jeśli wykonasz jakiś podpunkt, dopisz do niego wartość `- zrobione`"
 
-## 9. Utrzymanie pliku
+## 5. Utrzymanie pliku
 
 `ZAJAWKA.md` aktualizujemy po kazdej wiekszej zmianie, szczegolnie gdy zmienia sie:
 

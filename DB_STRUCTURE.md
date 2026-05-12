@@ -20,6 +20,12 @@ SET time_zone = "+00:00";
 -- Database: `m1414_ardrop2`
 --
 
+--
+-- Proposed changes for MariaDB 10.4.32 (2026-04-07)
+--
+-- 1. Add `vatRate` to `seller_shipping_methods` with default `23.00`
+-- 2. Add table `seller_discount_rule_usages` for coupon usage tracking per client
+
 ---
 
 --
@@ -127,6 +133,22 @@ CREATE TABLE `categories_image` (
 `isMain` tinyint(1) NOT NULL DEFAULT '0',
 `position` int NOT NULL DEFAULT '0',
 `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `contact_forms`
+--
+
+CREATE TABLE `contact_forms` (
+`id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+`formName` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+`dataJson` longtext COLLATE utf8mb4_general_ci NOT NULL,
+`createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+PRIMARY KEY (`id`),
+KEY `idx_contact_forms_formName` (`formName`),
+KEY `idx_contact_forms_created` (`formName`,`createdAt`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -542,6 +564,7 @@ CREATE TABLE `seller_shipping_methods` (
 `sellerId` int NOT NULL,
 `name` varchar(120) COLLATE utf8mb4_general_ci NOT NULL,
 `isActive` tinyint(1) NOT NULL DEFAULT '1',
+`vatRate` decimal(5,2) NOT NULL DEFAULT '23.00',
 `priceNet` decimal(15,2) DEFAULT NULL,
 `priceGross` decimal(15,2) DEFAULT NULL,
 `freeShippingAmountGross` decimal(15,2) DEFAULT NULL,
@@ -553,6 +576,22 @@ CREATE TABLE `seller_shipping_methods` (
 `regions` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
 `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+---
+
+--
+-- Table structure for table `seller_discount_rule_usages`
+--
+
+CREATE TABLE `seller_discount_rule_usages` (
+`id` int UNSIGNED NOT NULL,
+`discountRuleId` int UNSIGNED NOT NULL,
+`sellerId` int NOT NULL,
+`clientId` int NOT NULL,
+`orderId` int UNSIGNED DEFAULT NULL,
+`orderGroupId` int UNSIGNED DEFAULT NULL,
+`usedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ---
@@ -820,6 +859,15 @@ ADD PRIMARY KEY (`id`),
 ADD KEY `idxSellerShippingMethodsSellerId` (`sellerId`);
 
 --
+-- Indexes for table `seller_discount_rule_usages`
+--
+ALTER TABLE `seller_discount_rule_usages`
+ADD PRIMARY KEY (`id`),
+ADD KEY `idx_sdr_usage_rule_client` (`discountRuleId`,`clientId`),
+ADD KEY `idx_sdr_usage_seller_client` (`sellerId`,`clientId`),
+ADD KEY `idx_sdr_usage_orderId` (`orderId`);
+
+--
 -- Indexes for table `seller_shipping_method_exclusions`
 --
 ALTER TABLE `seller_shipping_method_exclusions`
@@ -1005,6 +1053,12 @@ ALTER TABLE `seller_shipping_methods`
 MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `seller_discount_rule_usages`
+--
+ALTER TABLE `seller_discount_rule_usages`
+MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `seller_shipping_method_exclusions`
 --
 ALTER TABLE `seller_shipping_method_exclusions`
@@ -1152,6 +1206,15 @@ ADD CONSTRAINT `fkSellerSettingsSeller` FOREIGN KEY (`sellerId`) REFERENCES `sel
 --
 ALTER TABLE `seller_shipping_methods`
 ADD CONSTRAINT `fkSellerShippingMethodsSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `seller_discount_rule_usages`
+--
+ALTER TABLE `seller_discount_rule_usages`
+ADD CONSTRAINT `fkSellerDiscountRuleUsagesRule` FOREIGN KEY (`discountRuleId`) REFERENCES `seller_discount_rules` (`id`) ON DELETE CASCADE,
+ADD CONSTRAINT `fkSellerDiscountRuleUsagesSeller` FOREIGN KEY (`sellerId`) REFERENCES `sellers` (`id`) ON DELETE CASCADE,
+ADD CONSTRAINT `fkSellerDiscountRuleUsagesClient` FOREIGN KEY (`clientId`) REFERENCES `clients` (`id`) ON DELETE CASCADE,
+ADD CONSTRAINT `fkSellerDiscountRuleUsagesOrder` FOREIGN KEY (`orderId`) REFERENCES `orders` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `seller_shipping_method_exclusions`

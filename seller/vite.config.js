@@ -13,6 +13,7 @@ export default defineConfig({
       services: path.resolve(__dirname, "src/services"),
       providers: path.resolve(__dirname, "src/providers"),
       assets: path.resolve(__dirname, "src/assets"),
+      utils: path.resolve(__dirname, "src/utils"),
     },
   },
   server: {

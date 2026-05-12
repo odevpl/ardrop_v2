@@ -64,6 +64,8 @@ const Cart = () => {
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [shipmentNotes, setShipmentNotes] = useState({});
   const [shippingMethodsBySellerId, setShippingMethodsBySellerId] = useState({});
+  const [couponCodeInput, setCouponCodeInput] = useState("");
+  const [isCouponUpdating, setIsCouponUpdating] = useState(false);
   const notification = useNotification();
 
   const applyCartResponse = (response) => {
@@ -91,6 +93,10 @@ const Cart = () => {
   }, []);
 
   useEffect(() => {
+    setCouponCodeInput(cart?.couponCode || "");
+  }, [cart?.couponCode]);
+
+  useEffect(() => {
     const loadDeliveryAddresses = async () => {
       const response = await AccountService.getMyDeliveryAddresses();
       if (response?.status && response.status >= 400) {
@@ -110,6 +116,11 @@ const Cart = () => {
 
   const items = useMemo(() => cart?.items || [], [cart]);
   const shipments = useMemo(() => cart?.shipments || [], [cart]);
+  const activeCouponDiscounts = useMemo(
+    () =>
+      shipments.filter((shipment) => shipment?.appliedDiscount?.ruleType === "coupon_code"),
+    [shipments],
+  );
   const productsTotalGross = useMemo(
     () => shipments.reduce((sum, shipment) => sum + Number(shipment?.totals?.itemsGross || 0), 0),
     [shipments],
@@ -249,8 +260,21 @@ const Cart = () => {
     [shipments, shippingMethodsBySellerId],
   );
 
+  const shipmentsBelowMinimumOrderValue = useMemo(
+    () =>
+      shipments.filter((shipment) => {
+        const minimumOrderValueGross = Number(shipment?.minimumOrderValueGross || 0);
+        if (minimumOrderValueGross <= 0) return false;
+        const itemsGrossAfterDiscount = Number(shipment?.totals?.itemsGrossAfterDiscount || 0);
+        return itemsGrossAfterDiscount < minimumOrderValueGross;
+      }),
+    [shipments],
+  );
+
   const isCheckoutBlocked =
-    shipmentsWithoutShippingMethods.length > 0 || shipmentsWithoutSelectedMethod.length > 0;
+    shipmentsWithoutShippingMethods.length > 0 ||
+    shipmentsWithoutSelectedMethod.length > 0 ||
+    shipmentsBelowMinimumOrderValue.length > 0;
 
   const isDeliveryAddressValid = useMemo(() => {
     if (!selectedDeliveryAddress) return false;
@@ -374,6 +398,14 @@ const Cart = () => {
       return;
     }
 
+    if (shipmentsBelowMinimumOrderValue.length > 0) {
+      const message =
+        "Nie mozna zlozyc zamowienia. Nie osiagnieto minimalnej wartosci zakupu dla co najmniej jednego sprzedawcy.";
+      setDeliveryError(message);
+      notification.error(message);
+      return;
+    }
+
     if (!isDeliveryAddressValid) {
       const message = "Uzupelnij dane dostawy i wybierz poprawny adres.";
       setDeliveryError(message);
@@ -412,6 +444,22 @@ const Cart = () => {
     }
 
     navigate("/zamowienia");
+  };
+
+  const handleCouponSubmit = async () => {
+    setIsCouponUpdating(true);
+    const response = await CartsService.updateCurrentCart({
+      couponCode: String(couponCodeInput || "").trim().toUpperCase() || null,
+    });
+
+    if (response?.status && response.status >= 400) {
+      notification.error(response?.data?.error || "Nie udalo sie zapisac kodu rabatowego.");
+      setIsCouponUpdating(false);
+      return;
+    }
+
+    applyCartResponse(response);
+    setIsCouponUpdating(false);
   };
 
   if (isLoading) {
@@ -583,6 +631,22 @@ const Cart = () => {
                           <div className="cartShippingMethodsAlert">
                             <strong>Aktywna promocja</strong>
                             <span>{formatAppliedDiscountLabel(shipment.appliedDiscount)}</span>
+                          </div>
+                        ) : null}
+                        {Number(shipment?.minimumOrderValueGross || 0) > 0 &&
+                        Number(shipment?.totals?.itemsGrossAfterDiscount || 0) <
+                          Number(shipment?.minimumOrderValueGross || 0) ? (
+                          <div className="cartShippingMethodsAlert" role="alert">
+                            <strong>Nie osiagnieto minimalnego progu zakupu.</strong>
+                            <span>
+                              Minimalne zamowienie u tego sprzedawcy wynosi{" "}
+                              {formatPrice(shipment.minimumOrderValueGross)} zl. Brakuje{" "}
+                              {formatPrice(
+                                Number(shipment.minimumOrderValueGross) -
+                                  Number(shipment?.totals?.itemsGrossAfterDiscount || 0),
+                              )}{" "}
+                              zl.
+                            </span>
                           </div>
                         ) : null}
 
@@ -762,7 +826,43 @@ const Cart = () => {
           <section className="cartSummaryCard">
             {isCheckoutBlocked ? (
               <div className="cartSummaryAlert" role="alert">
-                Nie mozna przejsc dalej, bo czesc produktow nie ma dostepnej dostawy.
+                Nie mozna przejsc dalej, bo czesc produktow nie ma dostepnej dostawy albo nie spelnia minimalnego progu zakupu.
+              </div>
+            ) : null}
+
+            <div className="cartDeliveryPicker">
+              <label htmlFor="cartCouponCode">Kod rabatowy</label>
+              <div className="cartQtyControl">
+                <input
+                  id="cartCouponCode"
+                  className="cartQtyInput"
+                  type="text"
+                  value={couponCodeInput}
+                  maxLength={64}
+                  disabled={isCouponUpdating}
+                  onChange={(event) => setCouponCodeInput(event.target.value.toUpperCase())}
+                  placeholder="Wpisz kod"
+                />
+                <button
+                  type="button"
+                  className="cartGhostButton"
+                  disabled={isCouponUpdating}
+                  onClick={handleCouponSubmit}
+                >
+                  Zastosuj
+                </button>
+              </div>
+            </div>
+
+            {activeCouponDiscounts.length > 0 ? (
+              <div className="cartCouponSuccess" role="status">
+                <strong>Kod rabatowy aktywny</strong>
+                <span>
+                  {activeCouponDiscounts
+                    .map((shipment) => formatAppliedDiscountLabel(shipment.appliedDiscount))
+                    .filter(Boolean)
+                    .join(", ")}
+                </span>
               </div>
             ) : null}
 

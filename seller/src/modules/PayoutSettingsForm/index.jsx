@@ -20,6 +20,12 @@ const PayoutSettingsFormView = ({ payload }) => {
       payoutBankAccount: normalizeBankAccount(values.payoutBankAccount) || null,
       payoutBankName: String(values.payoutBankName || "").trim() || null,
       paymentDueDays: Number(values.paymentDueDays) || null,
+      salesSettings: {
+        minimumOrderValueGross:
+          String(values.minimumOrderValueGross || "").trim() === ""
+            ? null
+            : Number(values.minimumOrderValueGross),
+      },
     });
 
     if (response?.status && response.status >= 400) {
@@ -62,6 +68,14 @@ const PayoutSettingsFormView = ({ payload }) => {
               id="paymentDueDays"
               type="number"
               placeholder="Termin platnosci w dniach"
+              size="sm"
+            />
+            <Input
+              id="minimumOrderValueGross"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="Minimalna wartosc zamowienia brutto"
               size="sm"
             />
           </div>

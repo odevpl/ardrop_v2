@@ -4,5 +4,6 @@ export const SIDEBAR_MENU_CONFIG = [
   { title: 'Produkty', icon: 'fa-box-open', path: '/products' },
   { title: 'Kategorie', icon: 'fa-tags', path: '/categories' },
   { title: 'Reklama', icon: 'fa-images', path: '/marketing' },
+  { title: 'Formularze', icon: 'fa-envelope-open-text', path: '/forms' },
   { title: 'Zamowienia', icon: 'fa-cart-shopping', path: '/orders' },
 ]

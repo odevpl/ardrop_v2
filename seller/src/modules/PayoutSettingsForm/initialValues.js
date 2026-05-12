@@ -3,6 +3,7 @@ export const EMPTY_PAYOUT_SETTINGS = {
   payoutBankAccount: "",
   payoutBankName: "",
   paymentDueDays: "",
+  minimumOrderValueGross: "",
 };
 
 export const normalizeBankAccount = (value) => String(value || "").replace(/\s+/g, "");
@@ -16,4 +17,9 @@ export const initialValues = (payload) => ({
     payload?.settings?.paymentDueDays === null || payload?.settings?.paymentDueDays === undefined
       ? ""
       : String(payload.settings.paymentDueDays),
+  minimumOrderValueGross:
+    payload?.salesSettings?.minimumOrderValueGross === null ||
+    payload?.salesSettings?.minimumOrderValueGross === undefined
+      ? ""
+      : String(payload.salesSettings.minimumOrderValueGross),
 });

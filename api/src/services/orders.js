@@ -1,6 +1,7 @@
 const db = require("../config/db");
 const sellerFinancialHistoryService = require("./seller-financial-history");
 const discountRulesService = require("./discount-rules");
+const cartsService = require("./carts");
 const {
   ORDER_STATUSES,
   PAYMENT_STATUSES,
@@ -12,6 +13,15 @@ const {
 const roundMoney = (value) => Number((Number(value) || 0).toFixed(2));
 
 let orderColumnsCache = null;
+let orderServiceCapabilitiesCache = null;
+
+const getOrderServiceCapabilities = async (trx = db) => {
+  if (orderServiceCapabilitiesCache) return orderServiceCapabilitiesCache;
+
+  const hasDiscountUsageTable = await trx.schema.hasTable("seller_discount_rule_usages");
+  orderServiceCapabilitiesCache = { hasDiscountUsageTable };
+  return orderServiceCapabilitiesCache;
+};
 
 const resolveClientIdByUserId = async (userId, trx = db) => {
   const client = await trx("clients").select("id").where({ userId: Number(userId) }).first();
@@ -363,6 +373,25 @@ const getClientDeliveryAddresses = async ({ clientId }, trx = db) => {
     .orderBy([{ column: "isDefault", order: "desc" }, { column: "id", order: "desc" }]);
 };
 
+const getSellerSalesSettingsBySellerIds = async ({ sellerIds }, trx = db) => {
+  const normalizedSellerIds = [...new Set((sellerIds || []).map((value) => Number(value)).filter(Boolean))];
+  if (normalizedSellerIds.length === 0) return {};
+
+  const rows = await trx("seller_sales_settings")
+    .select("sellerId", "minimumOrderValueGross")
+    .whereIn("sellerId", normalizedSellerIds);
+
+  return rows.reduce((acc, row) => {
+    acc[Number(row.sellerId)] = {
+      minimumOrderValueGross:
+        row.minimumOrderValueGross === null || row.minimumOrderValueGross === undefined
+          ? null
+          : Number(row.minimumOrderValueGross),
+    };
+    return acc;
+  }, {});
+};
+
 const resolveDeliveryAddressForShipment = ({
   shipment,
   fallbackDeliveryAddressId,
@@ -391,6 +420,8 @@ const createOrderFromCurrentCart = async (
       error.status = 404;
       throw error;
     }
+
+    await cartsService.sanitizeCartItems({ cartId: cart.id }, trx);
 
     const cartItems = await trx("cart_items")
       .where({ cartId: Number(cart.id) })
@@ -476,6 +507,7 @@ const createOrderFromCurrentCart = async (
       : null;
 
     const createdOrderIds = [];
+    const usedCouponRules = [];
     const discountEvaluation = await discountRulesService.evaluateShipmentDiscounts(
       {
         clientId: resolvedClientId,
@@ -483,7 +515,12 @@ const createOrderFromCurrentCart = async (
           sellerId: Number(sellerId),
           items: sellerItems,
         })),
+        couponCode: cart.couponCode || null,
       },
+      trx,
+    );
+    const sellerSalesSettingsBySellerId = await getSellerSalesSettingsBySellerIds(
+      { sellerIds: Object.keys(groupedBySeller).map((value) => Number(value)) },
       trx,
     );
 
@@ -513,6 +550,21 @@ const createOrderFromCurrentCart = async (
       const shipmentDiscount = discountEvaluation.bySellerId[sellerId] || null;
       const discountNet = roundMoney(shipmentDiscount?.discountNet || 0);
       const discountGross = roundMoney(shipmentDiscount?.discountGross || 0);
+      const minimumOrderValueGross =
+        sellerSalesSettingsBySellerId[sellerId]?.minimumOrderValueGross ?? null;
+      const itemsGrossAfterDiscount = roundMoney(itemsGross - discountGross);
+
+      if (
+        minimumOrderValueGross !== null &&
+        minimumOrderValueGross !== undefined &&
+        itemsGrossAfterDiscount < Number(minimumOrderValueGross)
+      ) {
+        const error = new Error(
+          `Minimalna wartosc zamowienia dla sprzedawcy ${shipment?.seller?.companyName || sellerId} wynosi ${Number(minimumOrderValueGross).toFixed(2)} zl`,
+        );
+        error.status = 400;
+        throw error;
+      }
       const totalNet = roundMoney(Math.max(0, itemsNet + shipmentNet - discountNet));
       const totalGross = roundMoney(Math.max(0, itemsGross + shipmentGross - discountGross));
 
@@ -567,6 +619,16 @@ const createOrderFromCurrentCart = async (
       const insertedOrder = await trx("orders").insert(orderPayload);
       const orderId = Array.isArray(insertedOrder) ? insertedOrder[0] : insertedOrder;
       createdOrderIds.push(Number(orderId));
+
+      if (shipmentDiscount?.appliedRule?.ruleType === "coupon_code") {
+        usedCouponRules.push({
+          discountRuleId: Number(shipmentDiscount.appliedRule.ruleId),
+          sellerId,
+          clientId: resolvedClientId,
+          orderId: Number(orderId),
+          orderGroupId,
+        });
+      }
 
       await sellerFinancialHistoryService.createOrderIncomeEntry(
         {
@@ -641,6 +703,11 @@ const createOrderFromCurrentCart = async (
         totalGross: 0,
         updatedAt: trx.fn.now(),
       });
+
+    const capabilities = await getOrderServiceCapabilities(trx);
+    if (capabilities.hasDiscountUsageTable && usedCouponRules.length > 0) {
+      await trx("seller_discount_rule_usages").insert(usedCouponRules);
+    }
 
     const orderSelectColumns = await getOrderSelectColumns(trx);
     const orders = await trx("orders")

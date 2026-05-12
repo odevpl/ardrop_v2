@@ -9,6 +9,8 @@ const FormikWrapper = ({
   onChange,
   onReset,
   validationSchema,
+  validateOnChange,
+  validateOnBlur,
 }) => {
   return (
     <div className={className}>
@@ -18,6 +20,8 @@ const FormikWrapper = ({
         onSubmit={onSubmit}
         onChange={onChange}
         onReset={onReset}
+        validateOnChange={validateOnChange}
+        validateOnBlur={validateOnBlur}
       >
         <Form>{children}</Form>
       </Formik>

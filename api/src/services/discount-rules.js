@@ -1,6 +1,15 @@
 const db = require("../config/db");
 
 const roundMoney = (value) => Number((Number(value) || 0).toFixed(2));
+let discountCapabilitiesCache = null;
+
+const getDiscountCapabilities = async (trx = db) => {
+  if (discountCapabilitiesCache) return discountCapabilitiesCache;
+
+  const hasUsageTable = await trx.schema.hasTable("seller_discount_rule_usages");
+  discountCapabilitiesCache = { hasUsageTable };
+  return discountCapabilitiesCache;
+};
 
 const parseConfig = (rawConfig) => {
   if (!rawConfig) return {};
@@ -65,7 +74,35 @@ const getClientOrderCountsBySellerId = async ({ clientId, sellerIds }, trx = db)
   }, {});
 };
 
-const buildRuleCandidate = ({ rule, shipmentItems, clientOrdersCount }) => {
+const getCouponUsageCountsByRuleId = async ({ clientId, sellerIds }, trx = db) => {
+  const capabilities = await getDiscountCapabilities(trx);
+  const normalizedClientId = Number(clientId);
+  const normalizedSellerIds = [...new Set((sellerIds || []).map((value) => Number(value)).filter(Boolean))];
+
+  if (!capabilities.hasUsageTable || !normalizedClientId || normalizedSellerIds.length === 0) {
+    return {};
+  }
+
+  const rows = await trx("seller_discount_rule_usages")
+    .select("discountRuleId")
+    .count({ usageCount: "*" })
+    .where({ clientId: normalizedClientId })
+    .whereIn("sellerId", normalizedSellerIds)
+    .groupBy("discountRuleId");
+
+  return rows.reduce((acc, row) => {
+    acc[Number(row.discountRuleId)] = Number(row.usageCount || 0);
+    return acc;
+  }, {});
+};
+
+const buildRuleCandidate = ({
+  rule,
+  shipmentItems,
+  clientOrdersCount,
+  couponCode,
+  couponUsageCount,
+}) => {
   const config = rule?.config || {};
   const thresholdValue =
     config.thresholdValue === null || config.thresholdValue === undefined
@@ -79,6 +116,12 @@ const buildRuleCandidate = ({ rule, shipmentItems, clientOrdersCount }) => {
   const selectedVariantIds = Array.isArray(config.selectedVariantIds)
     ? [...new Set(config.selectedVariantIds.map((value) => Number(value)).filter(Boolean))]
     : [];
+  const normalizedCouponCode = String(config.couponCode || "").trim().toUpperCase();
+  const normalizedAppliedCouponCode = String(couponCode || "").trim().toUpperCase();
+  const usageLimitPerClient =
+    config.usageLimitPerClient === null || config.usageLimitPerClient === undefined
+      ? 0
+      : Number(config.usageLimitPerClient);
   const safeShipmentItems = Array.isArray(shipmentItems) ? shipmentItems : [];
   const shipmentItemsGross = roundMoney(
     safeShipmentItems.reduce((sum, item) => sum + Number(item.lineGross || 0), 0),
@@ -102,17 +145,13 @@ const buildRuleCandidate = ({ rule, shipmentItems, clientOrdersCount }) => {
       matchedQuantity = eligibleItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
       isApplicable = discountPercent > 0 && matchedQuantity >= Number(thresholdValue || 0);
       break;
-    case "first_purchase":
+    case "coupon_code":
       eligibleItems = safeShipmentItems;
-      isApplicable = discountPercent > 0 && Number(clientOrdersCount || 0) === 0;
-      break;
-    case "loyal_customer":
-      eligibleItems = safeShipmentItems;
-      isApplicable = discountPercent > 0 && Number(clientOrdersCount || 0) > 0;
-      break;
-    case "free_bonus":
-      eligibleItems = safeShipmentItems;
-      isApplicable = Boolean(bonusLabel) && shipmentItemsGross >= Number(thresholdValue || 0);
+      isApplicable =
+        discountPercent > 0 &&
+        Boolean(normalizedCouponCode) &&
+        normalizedCouponCode === normalizedAppliedCouponCode &&
+        (usageLimitPerClient === 0 || Number(couponUsageCount || 0) < usageLimitPerClient);
       break;
     default:
       eligibleItems = [];
@@ -140,6 +179,9 @@ const buildRuleCandidate = ({ rule, shipmentItems, clientOrdersCount }) => {
     thresholdValue,
     discountPercent,
     bonusLabel,
+    couponCode: normalizedCouponCode || null,
+    usageLimitPerClient,
+    couponUsageCount: Number(couponUsageCount || 0),
     selectedVariantIds,
     matchedQuantity,
     eligibleItemsCount: eligibleItems.length,
@@ -171,7 +213,14 @@ const chooseBestCandidate = (candidates) => {
   return safeCandidates.sort((left, right) => Number(left.ruleId || 0) - Number(right.ruleId || 0))[0];
 };
 
-const summarizeShipmentDiscount = ({ sellerId, shipmentItems, rules, clientOrdersCount }) => {
+const summarizeShipmentDiscount = ({
+  sellerId,
+  shipmentItems,
+  rules,
+  clientOrdersCount,
+  couponCode,
+  couponUsageCountsByRuleId,
+}) => {
   const candidates = (Array.isArray(rules) ? rules : [])
     .filter((rule) => rule?.isActive)
     .map((rule) =>
@@ -179,6 +228,8 @@ const summarizeShipmentDiscount = ({ sellerId, shipmentItems, rules, clientOrder
         rule,
         shipmentItems,
         clientOrdersCount,
+        couponCode,
+        couponUsageCount: couponUsageCountsByRuleId?.[Number(rule.id)] || 0,
       }),
     )
     .filter(Boolean);
@@ -196,7 +247,7 @@ const summarizeShipmentDiscount = ({ sellerId, shipmentItems, rules, clientOrder
   };
 };
 
-const evaluateShipmentDiscounts = async ({ clientId, shipments }, trx = db) => {
+const evaluateShipmentDiscounts = async ({ clientId, shipments, couponCode }, trx = db) => {
   const safeShipments = Array.isArray(shipments) ? shipments : [];
   const sellerIds = [...new Set(safeShipments.map((shipment) => Number(shipment.sellerId)).filter(Boolean))];
 
@@ -210,9 +261,10 @@ const evaluateShipmentDiscounts = async ({ clientId, shipments }, trx = db) => {
     };
   }
 
-  const [rulesBySellerId, clientOrderCountsBySellerId] = await Promise.all([
+  const [rulesBySellerId, clientOrderCountsBySellerId, couponUsageCountsByRuleId] = await Promise.all([
     getDiscountRulesBySellerId({ sellerIds }, trx),
     getClientOrderCountsBySellerId({ clientId, sellerIds }, trx),
+    getCouponUsageCountsByRuleId({ clientId, sellerIds }, trx),
   ]);
 
   const bySellerId = {};
@@ -223,6 +275,8 @@ const evaluateShipmentDiscounts = async ({ clientId, shipments }, trx = db) => {
       shipmentItems: shipment.items || [],
       rules: rulesBySellerId[sellerId] || [],
       clientOrdersCount: clientOrderCountsBySellerId[sellerId] || 0,
+      couponCode,
+      couponUsageCountsByRuleId,
     });
 
     bySellerId[sellerId] = {
@@ -259,4 +313,5 @@ const evaluateShipmentDiscounts = async ({ clientId, shipments }, trx = db) => {
 
 module.exports = {
   evaluateShipmentDiscounts,
+  getDiscountRulesBySellerId,
 };

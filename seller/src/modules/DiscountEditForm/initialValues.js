@@ -5,6 +5,8 @@ export const EMPTY_RULE = {
   isActive: true,
   thresholdValue: "",
   discountPercent: "",
+  couponCode: "",
+  usageLimitPerClient: "0",
   bonusLabel: "",
   selectedVariantIds: [],
   variantSearch: "",
@@ -23,6 +25,11 @@ export const mapRuleToValues = (rule) => ({
     rule?.config?.discountPercent === null || rule?.config?.discountPercent === undefined
       ? ""
       : String(rule.config.discountPercent),
+  couponCode: rule?.config?.couponCode || "",
+  usageLimitPerClient:
+    rule?.config?.usageLimitPerClient === null || rule?.config?.usageLimitPerClient === undefined
+      ? "0"
+      : String(rule.config.usageLimitPerClient),
   bonusLabel: rule?.config?.bonusLabel || "",
   selectedVariantIds: Array.isArray(rule?.config?.selectedVariantIds)
     ? rule.config.selectedVariantIds.map((item) => Number(item)).filter(Boolean)

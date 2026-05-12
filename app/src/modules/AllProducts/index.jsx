@@ -17,6 +17,9 @@ const formatPrice = (value) => {
   return `${numericValue.toFixed(2)} zl`;
 };
 
+const formatNetGross = (netPrice, grossPrice) =>
+  `${formatPrice(netPrice)} netto / ${formatPrice(grossPrice)} brutto`;
+
 const getMainImage = (product) => {
   if (!Array.isArray(product.images) || product.images.length === 0) return null;
   return product.images.find((image) => Number(image.isMain) === 1) || product.images[0];
@@ -114,7 +117,8 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
           const isInlineOpen = Number(inlineCartConfig?.productId) === Number(product.id);
           const selectedVariantId =
             inlineCartConfig?.variantId ?? (defaultVariant ? Number(defaultVariant.id) : null);
-          const displayPrice = defaultVariant?.grossPrice ?? product.grossPrice;
+          const displayGrossPrice = defaultVariant?.grossPrice ?? product.grossPrice;
+          const displayNetPrice = defaultVariant?.netPrice ?? product.netPrice;
 
           return (
             <article
@@ -147,7 +151,7 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
                         >
                           {activeVariants.map((variant) => (
                             <option key={variant.id} value={variant.id}>
-                              {variant.name}
+                              {`${variant.name} (${formatNetGross(variant.netPrice, variant.grossPrice)})`}
                             </option>
                           ))}
                         </select>
@@ -230,7 +234,8 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
                 ) : null}
               </div>
 
-              <p className="allProductsPrice">{formatPrice(displayPrice)}</p>
+              <p className="allProductsPrice">{formatPrice(displayGrossPrice)}</p>
+              <p className="allProductsMessage">{formatPrice(displayNetPrice)} netto</p>
               <h3 className="allProductsName">{product.name}</h3>
               <div className="allProductsActions" onClick={(event) => event.stopPropagation()}>
                 <button
@@ -296,6 +301,7 @@ const AllProducts = () => (
     component={AllProductsView}
     connector={ProductsService.getProducts}
     filters={{ page: 1, limit: 20, search: "", category: "" }}
+    syncSearchParamKeys={["page", "limit", "search", "category"]}
   />
 );
 

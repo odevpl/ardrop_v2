@@ -14,6 +14,7 @@ import DeliveriesListPage from "pages/deliveriesList";
 import OrderDetailsPage from "pages/orderDetails";
 import OrderGroupPage from "pages/orderGroup";
 import ProductPreviewPage from "pages/productPreview";
+import DDDPage from "pages/ddd";
 import CartsService from "services/carts";
 import AccountService from "services/account";
 import "./App.scss";
@@ -106,6 +107,7 @@ function App() {
       "/adresy-dostawy",
       "/zamowienia",
       "/dostawy",
+      "/forms/ddd",
     ];
 
     return !allowedPathPrefixes.some(
@@ -199,6 +201,7 @@ function App() {
               <Route path="/nowosci" element={<HomePage />} />
               <Route path="/bestsellery" element={<HomePage />} />
               <Route path="/products/:id" element={<ProductPreviewPage />} />
+              <Route path="/forms/ddd" element={<DDDPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>

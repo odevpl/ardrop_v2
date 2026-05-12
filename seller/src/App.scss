@@ -397,6 +397,98 @@
   font-weight: 600;
 }
 
+.sellerDashboard {
+  display: grid;
+  gap: 18px;
+}
+
+.sellerDashboardHero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  border: 1px solid #d9e3e9;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.sellerDashboardHeroWarning {
+  background: linear-gradient(180deg, #fff8eb 0%, #fff3da 100%);
+  border-color: #f3c97a;
+}
+
+.sellerDashboardHeroReady {
+  background: linear-gradient(180deg, #f1fbf4 0%, #e5f7ea 100%);
+  border-color: #9dd3ab;
+}
+
+.sellerDashboardSection {
+  display: grid;
+  gap: 12px;
+}
+
+.sellerDashboardSection h3 {
+  margin: 0;
+}
+
+.sellerDashboardChecklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.sellerDashboardChecklistItem {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  text-align: left;
+  border: 1px solid #d9e3e9;
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+  cursor: pointer;
+}
+
+.sellerDashboardChecklistItemComplete {
+  border-color: #9dd3ab;
+  background: #f5fcf6;
+}
+
+.sellerDashboardChecklistItemMissing {
+  border-color: #f3c97a;
+  background: #fffaf0;
+}
+
+.sellerDashboardChecklistIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+}
+
+.sellerDashboardChecklistBody {
+  display: grid;
+  gap: 4px;
+}
+
+.sellerDashboardChecklistBody span {
+  color: #60707f;
+}
+
+.sellerDashboardInlineAlert {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  border: 1px solid #f3c97a;
+  background: #fff8eb;
+  color: #7a4b00;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
 .sellerShippingPicker {
   display: grid;
   gap: 12px;

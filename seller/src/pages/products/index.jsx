@@ -1,5 +1,27 @@
 import ProductList from 'modules/ProductList'
+import FetchWrapper from 'components/FetchWrapper'
+import SellerSettingsService from 'services/sellerSettings'
 import { useNavigate } from 'react-router-dom'
+
+const SalesReadinessAlert = ({ payload }) => {
+  const salesReadiness = payload?.data?.salesReadiness || payload?.salesReadiness || {};
+  const missingItems = Array.isArray(salesReadiness?.checklist)
+    ? salesReadiness.checklist.filter((item) => !item?.isComplete)
+    : [];
+
+  if (salesReadiness?.isReadyForSales) {
+    return null;
+  }
+
+  return (
+    <div className="sellerDashboardInlineAlert">
+      <strong>Produkty sa obecnie ukryte dla klientow.</strong>
+      <span>
+        Brakuje: {missingItems.map((item) => item.label).join(", ")}.
+      </span>
+    </div>
+  );
+};
 
 const ProductsPage = () => {
   const navigate = useNavigate()
@@ -18,6 +40,12 @@ const ProductsPage = () => {
           </button>
         </div>
       </div>
+
+      <FetchWrapper
+        name="SalesReadinessAlert"
+        component={SalesReadinessAlert}
+        connector={SellerSettingsService.getSellerSettings}
+      />
 
       <ProductList />
     </section>

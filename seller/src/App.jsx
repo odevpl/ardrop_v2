@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import SidebarMenu from "./components/SidebarMenu";
 import { SIDEBAR_MENU_CONFIG } from "./components/SidebarMenu/sidebar.config";
 import ProductsPage from "./pages/products";
+import DashboardPage from "./pages/dashboard";
 import AddProductPage from "./pages/products/AddProduct";
 import ProductDetailsPage from "./pages/products/Details";
 import OrdersPage from "./pages/orders";
@@ -13,7 +14,6 @@ import ShippingPage from "./pages/shipping";
 import ShippingDetailsPage from "./pages/shipping/Details";
 import ReturnsPage from "./pages/returns";
 import DiscountsPage from "./pages/discounts";
-import PricingRulesPage from "./pages/pricing-rules";
 import DiscountDetailsPage from "./pages/discounts/Details";
 import FinancePage from "./pages/finance";
 import AutomationsPage from "./pages/automations";
@@ -54,7 +54,8 @@ function App() {
         </header>
 
         <Routes>
-          <Route path="/" element={<Navigate to="/products" replace />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/add" element={<AddProductPage />} />
           <Route path="/products/:id" element={<ProductDetailsPage />} />
@@ -68,7 +69,6 @@ function App() {
           <Route path="/discounts" element={<DiscountsPage />} />
           <Route path="/discounts/new" element={<DiscountDetailsPage />} />
           <Route path="/discounts/:id" element={<DiscountDetailsPage />} />
-          <Route path="/pricing-rules" element={<PricingRulesPage />} />
           <Route path="/returns" element={<ReturnsPage />} />
           <Route path="/finance" element={<FinancePage />} />
           <Route path="/payout-settings" element={<PayoutSettingsPage />} />
@@ -99,11 +99,11 @@ function App() {
           />
           <Route
             path="/configuration/pricing"
-            element={<Navigate to="/pricing-rules" replace />}
+            element={<Navigate to="/payout-settings" replace />}
           />
           <Route
             path="/pricing"
-            element={<Navigate to="/pricing-rules" replace />}
+            element={<Navigate to="/payout-settings" replace />}
           />
           <Route
             path="/configuration/finance"
@@ -117,7 +117,7 @@ function App() {
             path="/configuration/automations"
             element={<Navigate to="/automations" replace />}
           />
-          <Route path="*" element={<Navigate to="/products" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
     </div>

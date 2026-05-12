@@ -12,10 +12,30 @@ function errorHandler(err, req, res, next) {
   }
 
   const status = err.status || 500;
-  const message = err.message || "Internal Server Error";
+  const isProduction = process.env.NODE_ENV === "production";
+  const isDatabaseError =
+    err?.sql ||
+    err?.sqlMessage ||
+    err?.errno ||
+    ["ER_", "SQLITE_", "SQL"].some((prefix) => String(err?.code || "").startsWith(prefix));
+
+  if (status >= 500) {
+    console.error("[error]", {
+      message: err?.message,
+      code: err?.code,
+      status,
+      path: req.originalUrl,
+      method: req.method,
+    });
+  }
+
+  const message =
+    status >= 500 || isDatabaseError
+      ? "Internal Server Error"
+      : err.message || "Internal Server Error";
 
   res.status(status).json({
-    error: message,
+    error: isProduction && status >= 500 ? "Internal Server Error" : message,
   });
 }
 

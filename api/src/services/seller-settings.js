@@ -70,6 +70,7 @@ const SHIPPING_METHODS_SELECT = [
   "sellerId",
   "name",
   "isActive",
+  "vatRate",
   "priceNet",
   "priceGross",
   "freeShippingAmountGross",
@@ -257,6 +258,7 @@ const buildShippingMethods = (methodsRows) => {
     sellerId: Number(row.sellerId),
     name: row.name || "",
     isActive: Boolean(row.isActive),
+    vatRate: row.vatRate === null || row.vatRate === undefined ? 23 : Number(row.vatRate),
     priceNet: row.priceNet === null || row.priceNet === undefined ? null : Number(row.priceNet),
     priceGross:
       row.priceGross === null || row.priceGross === undefined ? null : Number(row.priceGross),
@@ -313,6 +315,7 @@ const normalizeShippingMethod = (method) => {
 
   const etaMinDays = normalizeOptionalShippingInteger(method?.etaMinDays, "etaMinDays");
   const etaMaxDays = normalizeOptionalShippingInteger(method?.etaMaxDays, "etaMaxDays");
+  const vatRate = normalizeOptionalShippingNumber(method?.vatRate ?? 23, "vatRate");
   if (etaMinDays !== null && etaMaxDays !== null && etaMinDays > etaMaxDays) {
     const error = new Error("etaMinDays cannot be greater than etaMaxDays");
     error.status = 400;
@@ -322,6 +325,7 @@ const normalizeShippingMethod = (method) => {
   return {
     name,
     isActive: Boolean(method?.isActive),
+    vatRate: vatRate === null ? 23 : vatRate,
     priceNet: normalizeOptionalShippingNumber(method?.priceNet, "priceNet"),
     priceGross: normalizeOptionalShippingNumber(method?.priceGross, "priceGross"),
     freeShippingAmountGross: normalizeOptionalShippingNumber(
@@ -348,6 +352,7 @@ const insertShippingMethod = async ({ trx, sellerId, method }) => {
     sellerId,
     name: method.name,
     isActive: method.isActive,
+    vatRate: method.vatRate,
     priceNet: method.priceNet,
     priceGross: method.priceGross,
     freeShippingAmountGross: method.freeShippingAmountGross,
@@ -453,6 +458,49 @@ const buildBusinessHours = (rows, sellerId) => {
   ));
 };
 
+const buildSalesReadiness = ({ settingsRow, shippingMethodsRows }) => {
+  const hasPayoutAccountHolder = String(settingsRow?.payoutAccountHolder || "").trim() !== "";
+  const hasPayoutBankAccount = String(settingsRow?.payoutBankAccount || "").trim() !== "";
+  const hasPayoutBankName = String(settingsRow?.payoutBankName || "").trim() !== "";
+  const activeShippingMethodsCount = (shippingMethodsRows || []).filter(
+    (row) => Boolean(row?.isActive),
+  ).length;
+
+  const checklist = [
+    {
+      key: "payoutAccountHolder",
+      label: "Nazwa odbiorcy przelewu",
+      isComplete: hasPayoutAccountHolder,
+      path: "/payout-settings",
+    },
+    {
+      key: "payoutBankAccount",
+      label: "Numer rachunku bankowego",
+      isComplete: hasPayoutBankAccount,
+      path: "/payout-settings",
+    },
+    {
+      key: "payoutBankName",
+      label: "Nazwa banku",
+      isComplete: hasPayoutBankName,
+      path: "/payout-settings",
+    },
+    {
+      key: "shippingMethods",
+      label: "Aktywna metoda dostawy",
+      isComplete: activeShippingMethodsCount > 0,
+      path: "/shipping",
+    },
+  ];
+
+  return {
+    isReadyForSales: checklist.every((item) => item.isComplete),
+    activeShippingMethodsCount,
+    missingKeys: checklist.filter((item) => !item.isComplete).map((item) => item.key),
+    checklist,
+  };
+};
+
 const buildWorkweekHours = (rows, sellerId) => {
   const mappedRows = buildBusinessHours(rows, sellerId);
   const workdays = mappedRows.filter((row) => WORKDAYS.includes(Number(row.dayOfWeek)));
@@ -551,6 +599,7 @@ const getSellerSettings = async ({ userId }) => {
     returnPolicy: mapReturnPolicy(returnPolicyRow, seller.id),
     discountRules: discountRulesRows.map(mapDiscountRule),
     salesSettings: mapSalesSettings(salesSettingsRow, seller.id),
+    salesReadiness: buildSalesReadiness({ settingsRow, shippingMethodsRows }),
   };
 };
 
@@ -622,6 +671,7 @@ const updateShippingMethodById = async ({ userId, shippingMethodId, payload = {}
       .update({
         name: normalizedMethod.name,
         isActive: normalizedMethod.isActive,
+        vatRate: normalizedMethod.vatRate,
         priceNet: normalizedMethod.priceNet,
         priceGross: normalizedMethod.priceGross,
         freeShippingAmountGross: normalizedMethod.freeShippingAmountGross,
@@ -1044,11 +1094,7 @@ const updateSellerSettings = async ({ userId, payload = {} }) => {
       const allowedRuleTypes = [
         "cart_threshold",
         "quantity_threshold",
-        "first_purchase",
-        "loyal_customer",
-        "b2b_customer",
-        "happy_hours",
-        "free_bonus",
+        "coupon_code",
       ];
 
       const normalizedRules = payload.discountRules.map((rule) => {
@@ -1187,6 +1233,7 @@ const updateSellerSettings = async ({ userId, payload = {} }) => {
       returnPolicy: mapReturnPolicy(returnPolicyRow, sellerId),
       discountRules: discountRulesRows.map(mapDiscountRule),
       salesSettings: mapSalesSettings(salesSettingsRow, sellerId),
+      salesReadiness: buildSalesReadiness({ settingsRow, shippingMethodsRows }),
     };
   });
 };

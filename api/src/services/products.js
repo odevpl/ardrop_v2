@@ -70,6 +70,27 @@ const resolveClientIdByUserId = async (userId) => {
 
 const roundMoney = (value) => Number((Number(value) || 0).toFixed(2));
 
+const applyClientSellerReadinessFilter = (query) => {
+  query.whereExists(function hasCompletePayoutAndShipping() {
+    this.select(db.raw("1"))
+      .from("seller_settings as ss")
+      .whereRaw("ss.sellerId = products.sellerId")
+      .whereNotNull("ss.payoutAccountHolder")
+      .where("ss.payoutAccountHolder", "<>", "")
+      .whereNotNull("ss.payoutBankAccount")
+      .where("ss.payoutBankAccount", "<>", "")
+      .whereNotNull("ss.payoutBankName")
+      .where("ss.payoutBankName", "<>", "");
+  });
+
+  query.whereExists(function hasActiveShippingMethod() {
+    this.select(db.raw("1"))
+      .from("seller_shipping_methods as ssm")
+      .whereRaw("ssm.sellerId = products.sellerId")
+      .where("ssm.isActive", 1);
+  });
+};
+
 const loadClientSpecialPricesByVariantIds = async ({ userId, role, variantIds }) => {
   if (role !== "CLIENT") return {};
 
@@ -352,6 +373,7 @@ const getProducts = async ({
 
   if (role === "CLIENT") {
     baseQuery.where("products.status", "active");
+    applyClientSellerReadinessFilter(baseQuery);
   } else if (role === "SELLER") {
     const currentSellerId = await resolveSellerIdByUserId(userId);
     baseQuery.where("products.sellerId", currentSellerId);
@@ -470,6 +492,19 @@ const getProductById = async ({ userId, role, productId }) => {
     throw error;
   }
 
+  if (role === "CLIENT") {
+    const sellerReady = await db("products")
+      .where({ "products.id": Number(productId) })
+      .modify(applyClientSellerReadinessFilter)
+      .first("products.id");
+
+    if (!sellerReady) {
+      const error = new Error("Product not found");
+      error.status = 404;
+      throw error;
+    }
+  }
+
   if (role === "SELLER") {
     const currentSellerId = await resolveSellerIdByUserId(userId);
     if (Number(product.sellerId) !== currentSellerId) {
@@ -512,6 +547,7 @@ const getSuggestedProducts = async ({ limit = 10, role, userId }) => {
 
   if (role === "CLIENT") {
     query.where("products.status", "active");
+    applyClientSellerReadinessFilter(query);
   }
 
   const products = await query.orderBy("products.id", "asc").limit(normalizedLimit);

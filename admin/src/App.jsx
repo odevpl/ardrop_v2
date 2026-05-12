@@ -20,6 +20,9 @@ import SellersPage from "pages/sellers";
 import AddSellerPage from "pages/sellers/AddSeller";
 import SellerDetailsPage from "pages/sellers/Details";
 import MarketingPage from "pages/marketing";
+import FormsPage from "pages/forms";
+import FormMessagesPage from "pages/forms/Messages";
+import FormMessageDetailsPage from "pages/forms/Messages/Details";
 import CategoriesPage from "pages/categories";
 import AddCategoryPage from "pages/categories/AddCategory";
 import CategoryDetailsPage from "pages/categories/Details";
@@ -63,6 +66,9 @@ const AppContent = () => {
             <Route path="/categories/add" element={<AddCategoryPage />} />
             <Route path="/categories/:id" element={<CategoryDetailsPage />} />
             <Route path="/marketing" element={<MarketingPage />} />
+            <Route path="/forms" element={<FormsPage />} />
+            <Route path="/forms/:formName" element={<FormMessagesPage />} />
+            <Route path="/forms/:formName/:id" element={<FormMessageDetailsPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:id" element={<OrderDetailsPage />} />
           </Routes>

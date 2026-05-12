@@ -1,0 +1,149 @@
+.dddModule {
+  display: grid;
+  gap: 18px;
+  width: 100%;
+}
+
+.dddHeader {
+  display: grid;
+  gap: 8px;
+}
+
+.dddHeader h1 {
+  margin: 0;
+  color: #173456;
+  font-size: 28px;
+}
+
+.dddHeader p {
+  margin: 0;
+  color: #516579;
+}
+
+.dddFormWrap {
+  padding: 20px;
+  border: 1px solid #d9e3e9;
+  border-radius: 8px;
+  background: #fff;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.dddFormWrap form {
+  display: grid;
+  gap: 16px;
+}
+
+.dddFormGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.dddFormGrid > * {
+  min-width: 0;
+  width: 100%;
+}
+
+.dddFormWrap label {
+  color: #173456;
+  font-weight: 600;
+}
+
+.dddFormWrap input,
+.dddFormWrap select,
+.dddFormWrap textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #c7d4df;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.dddFormWrap textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.dddFormGrid .textarea-input-wrapper {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 100%;
+}
+
+.dddActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dddActions button {
+  border: 0;
+  border-radius: 6px;
+  padding: 11px 18px;
+  background: #1f6fb2;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dddActions button:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.dddSuccess,
+.dddError {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 6px;
+}
+
+.dddSuccess {
+  border: 1px solid #b8dec5;
+  background: #edf8f0;
+  color: #23613a;
+}
+
+.dddError {
+  border: 1px solid #efb8b8;
+  background: #fff0f0;
+  color: #9f2323;
+}
+
+@media (min-width: 720px) {
+  .dddFormGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .dddFormGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .dddHeader h1 {
+    font-size: 22px;
+  }
+
+  .dddFormWrap {
+    padding: 14px;
+    width: 100%;
+  }
+
+  .dddFormGrid > *,
+  .dddFormGrid .textarea-input-wrapper {
+    width: 100%;
+  }
+
+  .dddActions {
+    justify-content: stretch;
+  }
+
+  .dddActions button {
+    width: 100%;
+  }
+}

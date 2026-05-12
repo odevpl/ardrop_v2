@@ -3,376 +3,289 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <title>Ardrop – zamówienia przypraw dla HoReCa</title>
+    <title>Ardrop - zakupy i narzędzia dla HoReCa</title>
     <link rel="stylesheet" href="css/style.css" />
   </head>
-
   <body>
-    <header>
-      <img class="logo" src="images/logo.png" />
-      <nav>
+    <div class="topbar">Platforma zakupów i narzędzi dla restauracji, hoteli oraz producentów HoReCa</div>
+
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Ardrop">
+        <img class="logo" src="images/logo.png" alt="Ardrop" />
+      </a>
+      <nav aria-label="Nawigacja">
         <ul>
-          <li><a href="https://app.ardrop.pl/">Zaloguj się</a></li>
+          <li><a class="js-scroll" href="#dlaczego">Dlaczego Ardrop</a></li>
+          <li><a class="js-scroll" href="#partnerzy">Partnerzy</a></li>
           <li><a class="js-scroll js-contact-type" data-contact-type="partner" href="#kontakt">Zostań partnerem</a></li>
-          <li><a class="js-scroll" href="#kontakt">Kontakt</a></li>
+          <li><a href="https://app.ardrop.pl/">Zaloguj się</a></li>
         </ul>
       </nav>
     </header>
-    <section class="hero">
-      <div class="container">
-        <img class="block" src="./images/block.png" />
-        <h1>Platforma zakupów i narzędzi dla branży <span>HoReCa</span></h1>
-        <p>
-          Kupuj produkty od sprawdzonych producentów, zarządzaj zamówieniami i korzystaj z narzędzi wspierających
-          prowadzenie gastronomii - <span>wszystko w jednym miejscu.</span>
-        </p>
-      </div>
-    </section>
-    <section class="about">
-      <div class="container">
-        <h2>Ardrop to platforma stworzona dla branży gastronomicznej.</h2>
-        <p>
-          Łączymy restauracje, hotele, producentów i dystrybutorów na jednej platformie, która umożliwia wygodne zakupy
-          produktów oraz rozwój biznesu gastronomicznego dzięki dodatkowym narzędziom i wiedzy branżowej.<br /><br />
-          Ardrop rozwija się jako miejsce, w którym gastronomia może:
-        </p>
-        <ul class="custom-list">
-          <li>kupować produkty od wielu producentów w jednym miejscu</li>
-          <li>odkrywać nowe produkty i rozwiązania</li>
-          <li>korzystać z narzędzi wspierających prowadzenie lokalu</li>
-          <li>zdobywać wiedzę i inspiracje</li>
-        </ul>
-      </div>
-    </section>
 
-    <section class="products">
-      <div class="container">
-        <h2>Produkty dla gastronomii w jednym miejscu</h2>
-        <p>
-          Ardrop umożliwia restauracjom i hotelom wygodne zamawianie produktów od wielu producentów i dystrybutorów z
-          poziomu jednej platformy. Zamiast kontaktować się z wieloma firmami osobno, użytkownik może przeglądać ofertę
-          różnych partnerów w jednym miejscu i składać zamówienia w jednym panelu. Dzięki temu zakupy stają się znacznie
-          prostsze i bardziej uporządkowane. Każde zamówienie jest zapisywane w systemie, co pozwala łatwo wrócić do
-          historii zakupów lub ponowić zamówienie w przyszłości. Platforma automatycznie porządkuje faktury i dokumenty
-          związane z zamówieniami, dzięki czemu restaurator nie musi szukać ich w wielu miejscach. Ardrop umożliwia
-          także odkrywanie nowych produktów i producentów, którzy specjalizują się w dostarczaniu rozwiązań dla branży
-          gastronomicznej. Restauratorzy mogą przeglądać ofertę według kategorii i szybko znaleźć produkty dopasowane do
-          swoich potrzeb. Platforma jest rozwijana w taki sposób, aby proces zakupowy był jak najbardziej intuicyjny i
-          szybki. W przyszłości marketplace będzie stale rozszerzany o nowe kategorie produktów i kolejnych partnerów.
-          Naszym celem jest stworzenie miejsca, w którym gastronomia może zaopatrzyć się w szeroki zakres produktów bez
-          konieczności korzystania z wielu różnych kanałów sprzedaży.
-        </p>
-      </div>
-    </section>
+    <main id="top">
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Marketplace HoReCa</p>
+            <h1>Platforma zakupów i narzędzi dla branży <span>HoReCa</span></h1>
+            <p>
+              Kupuj produkty od sprawdzonych producentów, zarządzaj zamówieniami i korzystaj z narzędzi wspierających
+              prowadzenie gastronomii - wszystko w jednym miejscu.
+            </p>
+            <div class="hero-actions">
+              <a class="button primary js-scroll" href="#kontakt">Skorzystaj z konsultacji</a>
+              <a class="button secondary" href="https://app.ardrop.pl/">Przejdź do platformy</a>
+            </div>
+          </div>
+          <div class="hero-visual" aria-hidden="true">
+            <img src="images/laptop.png" alt="" />
+          </div>
+        </div>
+        <div class="container partner-strip" id="partnerzy" aria-label="Partnerzy Ardrop">
+          <span>Poznawaj sprawdzonych partnerów</span>
+          <img src="images/aromatycznie.jpg" alt="Aromatycznie" />
+          <img src="images/nowe_smaki.webp" alt="Nowe Smaki" />
+          <img src="images/krgic-logo.svg" alt="KRGIC" />
+          <img src="images/logo_forward.jpg" alt="Forward" />
+          <img src="images/wieder-logo.png" alt="Wieder" />
+        </div>
+      </section>
 
-    <section class="partners">
-      <div class="container">
-        <h2>Sprawdzeni producenci i dystrybutorzy</h2>
-
-        <div class="partners-content">
+      <section class="intro" id="dlaczego">
+        <div class="container narrow">
+          <h2>Dlaczego Ardrop?</h2>
           <p>
-            Ardrop współpracuje z producentami i dystrybutorami, którzy oferują produkty dopasowane do potrzeb branży
-            gastronomicznej. Partnerzy platformy są dobierani w sposób przemyślany, tak aby zapewnić wysoką jakość
-            oferty oraz stabilne warunki współpracy. Dzięki temu restauratorzy korzystający z platformy mogą mieć
-            pewność, że kupują produkty od firm, które rozumieją specyfikę rynku HoReCa. Jednocześnie dbamy o to, aby
-            oferta partnerów była różnorodna i obejmowała wiele kategorii produktów potrzebnych w gastronomii. W wielu
-            przypadkach unikamy sytuacji, w której na platformie pojawiają się bezpośrednio konkurujące ze sobą firmy w
-            tej samej kategorii. Pozwala to partnerom budować swoją obecność na platformie bez obaw o niekontrolowaną
-            konkurencję.
+            Łączymy restauracje, hotele, producentów i dystrybutorów na jednej platformie, która upraszcza zakupy
+            produktów oraz rozwijanie biznesu gastronomicznego dzięki narzędziom i wiedzy branżowej.
           </p>
           <p>
-            Producent otrzymuje dzięki temu przestrzeń do prezentacji swojej oferty i budowania relacji z branżą
-            gastronomiczną. Platforma daje również możliwość promocji produktów poprzez różne działania marketingowe.
-            Wraz z rozwojem Ardrop liczba partnerów będzie stopniowo rosła, tworząc coraz szerszy ekosystem producentów
-            dla gastronomii. Dzięki temu restauratorzy będą mogli znaleźć na platformie coraz więcej interesujących
-            produktów i rozwiązań dla swojego biznesu.
+            Ardrop powstał z praktycznej potrzeby uporządkowania codziennej współpracy w HoReCa. Restauratorzy zyskują
+            jedno miejsce do zamawiania produktów, kontroli dokumentów i odkrywania nowych dostawców, a producenci
+            otrzymują kanał sprzedaży dopasowany do specyfiki gastronomii.
+          </p>
+          <p>
+            Platforma rozwija się jako ekosystem, który łączy zakupy, promocję produktów, edukację branżową oraz
+            narzędzia operacyjne. Dzięki temu Ardrop nie jest tylko katalogiem ofert, ale wsparciem dla lokali i marek,
+            które chcą działać sprawniej, skalować sprzedaż i budować trwałe relacje w branży.
           </p>
         </div>
+      </section>
 
-        <div class="partners-logos" aria-label="Miejsca na logotypy partnerów">
-          <div class="partner-logo"><img src="./images/aromatycznie.jpg" /></div>
-          <div class="partner-logo"><img src="./images/nowe_smaki.webp" /></div>
-          <div class="partner-logo"><img src="./images/krgic-logo.svg" /></div>
-          <div class="partner-logo"><img src="./images/kubrysan.png" /></div>
-          <div class="partner-logo"><img src="./images/wieder-logo.png" /></div>
-          <!-- <div class="partner-logo">Logotyp 6</div> -->
-        </div>
-      </div>
-    </section>
-
-    <section class="reasons">
-      <div class="container">
-        <div class="reasons-head">
-          <h2>Dlaczego restauracje korzystają z Ardrop</h2>
-        </div>
-
-        <div class="reasons-grid">
-          <article class="reason-card">
+      <section class="split">
+        <div class="container split-grid">
+          <div>
+            <p class="eyebrow">Produkty</p>
+            <h2>Produkty dla gastronomii w jednym miejscu</h2>
             <p>
-              Prowadzenie restauracji wymaga codziennego podejmowania wielu decyzji związanych z zakupami produktów,
-              kosztami oraz organizacją pracy lokalu. Ardrop powstał po to, aby uprościć część tych procesów i dać
-              restauratorom narzędzie, które wspiera ich w codziennym funkcjonowaniu.
-            </p>
-          </article>
-          <article class="reason-card">
-            <p>
-              Platforma pozwala w jednym miejscu przeglądać ofertę różnych producentów i zamawiać produkty bez
-              konieczności kontaktowania się z wieloma dostawcami osobno. Dzięki temu restaurator może zaoszczędzić
-              czas, który normalnie przeznaczyłby na poszukiwanie produktów i negocjowanie zamówień.
-            </p>
-          </article>
-          <article class="reason-card">
-            <p>
-              Wszystkie zamówienia są dostępne w jednym panelu, razem z dokumentami i historią zakupów. Ułatwia to
-              kontrolowanie wydatków i planowanie kolejnych zamówień. Restauratorzy mogą również odkrywać nowe produkty,
-              które mogą wzbogacić ich ofertę gastronomiczną.
-            </p>
-          </article>
-          <article class="reason-card">
-            <p>
-              Platforma jest rozwijana z myślą o praktycznych potrzebach branży HoReCa. W kolejnych etapach Ardrop
-              będzie oferował także narzędzia pomagające analizować koszty i planować menu. Dzięki temu platforma ma
-              stać się codziennym wsparciem dla osób prowadzących lokale gastronomiczne.
-            </p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="producers">
-      <div class="container">
-        <div class="producers-layout">
-          <div class="producers-content">
-            <h2>Korzyści dla producentów</h2>
-            <h3>Nowy kanał sprzedaży dla producentów</h3>
-            <p>
-              Dla producentów i dystrybutorów branża gastronomiczna jest jednym z najważniejszych kanałów sprzedaży.
-              Jednocześnie dotarcie do restauracji i hoteli często wymaga dużego nakładu pracy oraz kosztów
-              marketingowych. Ardrop powstał między innymi po to, aby ułatwić producentom dotarcie do klientów z sektora
-              HoReCa.
-            </p>
-            <p>
-              Platforma umożliwia prezentowanie produktów w miejscu, które jest odwiedzane przez restauratorów
-              poszukujących konkretnych rozwiązań dla swojej działalności. Dzięki temu producent może pokazać swoją
-              ofertę w kontekście branży gastronomicznej.
-            </p>
-            <p>
-              Partnerzy Ardrop mogą sprzedawać swoje produkty bezpośrednio poprzez platformę oraz budować
-              rozpoznawalność swojej marki. Dodatkowo platforma wspiera partnerów poprzez działania marketingowe, takie
-              jak kampanie internetowe czy materiały promocyjne. Dzięki temu producenci mogą docierać do nowych klientów
-              w bardziej efektywny sposób.
-            </p>
-            <p>
-              Ardrop pozwala także na budowanie długofalowych relacji z branżą gastronomiczną. Wraz z rozwojem platformy
-              możliwości promocji i sprzedaży produktów będą stopniowo rozszerzane.
+              Restauracje i hotele mogą przeglądać ofertę wielu producentów, składać zamówienia w jednym panelu, wracać
+              do historii zakupów i porządkować dokumenty związane z dostawami.
             </p>
           </div>
-
-          <aside class="producers-visual" aria-label="Wizualizacja sekcji korzyści dla producentów">
-            <img src="images/laptop.png" />
-          </aside>
-        </div>
-      </div>
-    </section>
-
-    <section class="knowledge">
-      <div class="container">
-        <div class="knowledge-head">
-          <p class="knowledge-kicker">Wiedza dla gastronomii</p>
-          <h2>Platforma wiedzy dla branży HoReCa</h2>
-        </div>
-
-        <div class="knowledge-layout">
-          <article class="knowledge-lead">
-            <p>
-              Ardrop to nie tylko marketplace produktów, ale także przestrzeń do dzielenia się wiedzą branżową.
-              Gastronomia jest dynamiczną branżą, w której restauratorzy często muszą podejmować szybkie decyzje
-              dotyczące kosztów, menu czy zarządzania lokalem. Dlatego ważne jest, aby mieli dostęp do rzetelnych
-              informacji i inspiracji.
-            </p>
-          </article>
-
-          <div class="knowledge-points">
-            <article class="knowledge-point">
-              <h3>Artykuły i materiały</h3>
-              <p>
-                Platforma rozwija sekcję wiedzy, w której publikowane będą artykuły i materiały dotyczące prowadzenia
-                biznesu gastronomicznego. Restauratorzy będą mogli znaleźć tam informacje o trendach kulinarnych,
-                optymalizacji kosztów czy nowych rozwiązaniach technologicznych dla gastronomii.
-              </p>
+          <div class="feature-list">
+            <article>
+              <span>01</span>
+              <h3>Jeden panel zakupowy</h3>
+              <p>Zamówienia od różnych partnerów bez kontaktowania się z każdą firmą osobno.</p>
             </article>
-
-            <article class="knowledge-point">
-              <h3>Webinary i eksperci</h3>
-              <p>
-                W planach są także webinary i spotkania online z ekspertami branżowymi. Takie wydarzenia pozwolą dzielić
-                się doświadczeniem i praktyczną wiedzą.
-              </p>
+            <article>
+              <span>02</span>
+              <h3>Historia i dokumenty</h3>
+              <p>Łatwy powrót do poprzednich zakupów oraz uporządkowane faktury i dokumenty.</p>
             </article>
-
-            <article class="knowledge-point">
-              <h3>Rozwój społeczności</h3>
-              <p>
-                Dzięki temu Ardrop ma stać się miejscem, które wspiera rozwój branży gastronomicznej. Wiedza dostępna na
-                platformie będzie rozwijana wraz z rozwojem społeczności użytkowników. Naszym celem jest stworzenie
-                przestrzeni, w której gastronomia może nie tylko kupować produkty, ale także rozwijać swój biznes.
-              </p>
-            
+            <article>
+              <span>03</span>
+              <h3>Nowe produkty</h3>
+              <p>Odkrywanie producentów i rozwiązań dopasowanych do potrzeb gastronomii.</p>
+            </article>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="tools">
-      <div class="container">
-        <div class="tools-head">
-          <p class="tools-kicker">Narzędzia dla gastronomii</p>
-          <h2>Narzędzia wspierające prowadzenie restauracji</h2>
-        </div>
-
-        <div class="tools-layout">
-          <div class="tools-lead">
+      <section class="media-band">
+        <div class="container media-grid">
+          <div>
+            <h2>Sprawdzeni producenci i dystrybutorzy</h2>
             <p>
-              Nowoczesna gastronomia coraz częściej korzysta z technologii, które pomagają lepiej zarządzać lokalem.
-              Ardrop rozwija zestaw narzędzi, które mają wspierać restauratorów w codziennych obowiązkach.
+              Partnerzy platformy są dobierani tak, aby zapewnić wysoką jakość oferty i stabilne warunki współpracy.
+              Producent otrzymuje przestrzeń do prezentacji produktów, budowania rozpoznawalności oraz dotarcia do
+              klientów z sektora HoReCa.
             </p>
+            <a class="button primary js-scroll js-contact-type" data-contact-type="partner" href="#kontakt"
+              >Zostań partnerem</a
+            >
           </div>
-
-          <div class="tools-points">
-            <h3>Analiza kosztów i planowanie menu</h3>
-            <p>
-              Jednym z obszarów rozwoju są narzędzia pomagające analizować koszty produktów i planować menu. Dzięki
-              temu restauratorzy mogą łatwiej kontrolować rentowność swoich dań i całego lokalu.
-            </p>
-            <h3>Cyfrowe menu i oferta lokalu</h3>
-            <p>
-              Platforma planuje także wprowadzenie narzędzi związanych z zarządzaniem menu oraz prezentacją oferty
-              restauracji w formie cyfrowej. Cyfrowe menu może być dostępne na ekranach w lokalu lub poprzez kody QR
-              dla gości, co pozwala szybko aktualizować ofertę i ceny.
-            </p>
-            <h3>Kolejne funkcje operacyjne</h3>
-            <p>
-              W kolejnych etapach platforma może również oferować funkcje wspierające planowanie zakupów i analizę
-              zużycia produktów. Wszystkie te narzędzia mają jeden cel - ułatwić prowadzenie biznesu gastronomicznego
-              i połączyć zakupy z praktycznym wsparciem dla restauracji.
-            </p>
-          </div>
+          <img src="images/block-phone.png" alt="Panel Ardrop na telefonie" />
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="growth">
-      <div class="container">
-        <div class="growth-head">
-          <p class="growth-kicker">Rozwój platformy</p>
-          <h2>Ardrop to projekt technologiczny, który stale się rozwija</h2>
-        </div>
-
-        <div class="growth-layout">
-          <div class="growth-summary">
-            <p>
-              Platforma Ardrop jest rozwijana jako długoterminowy projekt technologiczny dla branży gastronomicznej.
-              Naszym celem jest stworzenie miejsca, które łączy producentów, restauratorów i wiedzę branżową w jednym
-              ekosystemie.
-            </p>
-          </div>
-
-          <div class="growth-track">
-            <h3>Marketplace i partnerzy</h3>
-            <p>
-              Obecnie platforma koncentruje się na rozwijaniu marketplace produktów oraz budowaniu sieci partnerów.
-              W kolejnych etapach planujemy wprowadzać nowe funkcjonalności wspierające prowadzenie restauracji.
-            </p>
-            <h3>Technologia i edukacja</h3>
-            <p>
-              Rozwój platformy będzie obejmował zarówno narzędzia technologiczne, jak i działania związane z edukacją
-              branży. Chcemy, aby Ardrop był miejscem, do którego restauratorzy wracają nie tylko po zakupy, ale
-              także po wiedzę i inspiracje.
-            </p>
-            <h3>Kompleksowy ekosystem HoReCa</h3>
-            <p>
-              Platforma będzie stopniowo rozszerzana o kolejne kategorie produktów oraz nowych partnerów. Dzięki temu
-              oferta będzie coraz bardziej kompleksowa, a równolegle rozwijane będą narzędzia wspierające zarządzanie
-              lokalem gastronomicznym. Naszą ambicją jest stworzenie platformy, która stanie się naturalnym punktem
-              spotkania dla branży HoReCa.
-            </p>
+      <section class="process">
+        <div class="container">
+          <h2>Rozwój platformy to wynik procesu</h2>
+          <div class="steps" aria-label="Proces Ardrop">
+            <article>
+              <span>1</span><strong>Partnerzy</strong>
+              <p>Rozwijamy sieć producentów i dystrybutorów.</p>
+            </article>
+            <article>
+              <span>2</span><strong>Marketplace</strong>
+              <p>Porządkujemy zakupy w jednym ekosystemie.</p>
+            </article>
+            <article>
+              <span>3</span><strong>Narzędzia</strong>
+              <p>Dodajemy funkcje wspierające pracę lokalu.</p>
+            </article>
+            <article>
+              <span>4</span><strong>Wiedza</strong>
+              <p>Budujemy miejsce dla materiałów i ekspertów HoReCa.</p>
+            </article>
+            <article>
+              <span>5</span><strong>Skala</strong>
+              <p>Rozszerzamy kategorie produktów i obsługę branży.</p>
+            </article>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-        <section class="contact" id="kontakt">
-      <div class="container">
-        <div class="contact-layout">
-          <div class="contact-content">
-            <p class="contact-kicker">Kontakt</p>
-            <h2>Porozmawiajmy o współpracy</h2>
+      <section class="cards-section">
+        <div class="container">
+          <h2>Narzędzia i wiedza dla gastronomii</h2>
+          <div class="cards">
+            <article>
+              <h3>Analiza kosztów i planowanie menu</h3>
+              <p>Narzędzia pomagające kontrolować rentowność dań, koszty produktów i kolejne zakupy.</p>
+            </article>
+            <article>
+              <h3>Cyfrowe menu i oferta lokalu</h3>
+              <p>Rozwiązania do prezentacji oferty restauracji oraz szybkiej aktualizacji cen i pozycji.</p>
+            </article>
+            <article>
+              <h3>Artykuły, webinary i eksperci</h3>
+              <p>Przestrzeń dla trendów, inspiracji i praktycznej wiedzy o prowadzeniu gastronomii.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta-band">
+        <div class="container cta-grid">
+          <div>
+            <h2>Masz potencjał, my mamy strategię. Razem zwiększymy sprzedaż</h2>
             <p>
-              Wypełnij formularz, a odezwiemy się z propozycją dopasowaną do Twojego biznesu.
-              Obsługujemy restauracje, hotele oraz producentów i dystrybutorów.
+              Ardrop łączy zakupy, partnerów, wiedzę i narzędzia w jednym miejscu, aby gastronomia mogła rozwijać biznes
+              bez rozproszenia procesów.
             </p>
-            <ul class="contact-list">
-              <li>wdrożenie dla restauracji i hoteli</li>
-              <li>współpraca dla producentów i dystrybutorów</li>
-              <li>szybki kontakt zwrotny od zespołu Ardrop</li>
-            </ul>
+            <a class="button primary js-scroll" href="#kontakt">Porozmawiajmy</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="founders">
+        <div class="container founders-grid">
+          <div class="founders-copy">
+            <p class="eyebrow">Projekt Aromatycznie</p>
+            <h2>Ardrop rozwijają ludzie, którzy znają sprzedaż do gastronomii od środka</h2>
+            <p>
+              Ardrop to projekt tworzony przez zespół Aromatycznie. Na co dzień pracujemy z produktami, sprzedażą i
+              klientami HoReCa, dlatego budujemy platformę z perspektywy realnych potrzeb producentów, dystrybutorów,
+              restauracji i hoteli.
+            </p>
+            <p>
+              Aromatycznie zasila Ardrop doświadczeniem operacyjnym, produktowym i sprzedażowym. Dzięki temu platforma
+              nie powstaje w oderwaniu od rynku, tylko jako narzędzie wspierające codzienną współpracę w branży.
+            </p>
+          </div>
+          <div class="founders-people" aria-label="Prezesi Aromatycznie odpowiedzialni za projekt Ardrop">
+            <article class="founder-card">
+              <img src="images/prezes1.png" alt="Prezes Aromatycznie" />
+              <div>
+                <h3>Prezes Aromatycznie</h3>
+                <p>Współtwórca projektu Ardrop</p>
+              </div>
+            </article>
+            <article class="founder-card">
+              <img src="images/prezes2.png" alt="Prezes Aromatycznie" />
+              <div>
+                <h3>Prezes Aromatycznie</h3>
+                <p>Współtwórca projektu Ardrop</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="faq-contact" id="kontakt">
+        <div class="container contact-grid">
+          <div>
+            <p class="eyebrow">Kontakt</p>
+            <h2>Skorzystaj z bezpłatnej konsultacji</h2>
+            <p>
+              Wypełnij formularz, a odezwiemy się z propozycją dopasowaną do Twojego biznesu. Obsługujemy restauracje,
+              hotele oraz producentów i dystrybutorów.
+            </p>
+            <div class="faq">
+              <h3>Najczęstsze tematy rozmowy</h3>
+              <p>Wdrożenie dla restauracji i hoteli</p>
+              <p>Współpraca dla producentów i dystrybutorów</p>
+              <p>Promocja produktów w kanale HoReCa</p>
+            </div>
           </div>
           <div class="contact-form-wrap">
             <form id="contactForm" class="contact-form" novalidate>
-              <label>
-                Typ zgłoszenia
-                <select name="lead_type" id="leadType" required>
+              <label
+                >Typ zgłoszenia<select name="lead_type" id="leadType" required>
                   <option value="kontakt">Kontakt ogólny</option>
                   <option value="partner">Chcę zostać partnerem</option>
-                </select>
-              </label>
-              <label>
-                Imię i nazwisko
-                <input type="text" name="full_name" required />
-              </label>
-              <label>
-                Nazwa firmy
-                <input type="text" name="company_name" required />
-              </label>
-              <label>
-                Telefon
-                <input type="tel" name="phone" required />
-              </label>
-              <label>
-                E-mail
-                <input type="email" name="email" required />
-              </label>
-              <label>
-                Wiadomość
-                <textarea name="message" rows="5" required></textarea>
-              </label>
-              <label class="contact-consent">
-                <input type="checkbox" name="consent" required />
-                <span>Wyrażam zgodę na kontakt zwrotny w sprawie przesłanego zgłoszenia.</span>
-              </label>
+                </select></label
+              >
+              <label>Imię i nazwisko<input type="text" name="full_name" required /></label>
+              <label>Nazwa firmy<input type="text" name="company_name" required /></label>
+              <label>Telefon<input type="tel" name="phone" required /></label>
+              <label>E-mail<input type="email" name="email" required /></label>
+              <label>Wiadomość<textarea name="message" rows="5" required></textarea></label>
+              <label class="contact-consent"
+                ><input type="checkbox" name="consent" required /><span
+                  >Wyrażam zgodę na kontakt zwrotny w sprawie przesłanego zgłoszenia.</span
+                ></label
+              >
               <button type="submit" class="contact-submit">Wyślij zgłoszenie</button>
             </form>
             <div id="contactStatus" class="contact-status" aria-live="polite"></div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
+
     <footer>
-      <div>
-        <div class="link">Tel: <a href="tel:+48510462291">+48 510 462 291</a></div>
-        <div class="link">Tel2: <a href="tel:+48509043258">+48 509 043 258</a></div>
-        <div class="link">Mail: <a href="mailto:kontakt@ardrop.pl">kontakt@ardrop.pl</a></div>
+      <div class="footer-grid">
+        <div>
+          <img src="images/logo_negatyw.png" alt="Ardrop" />
+          <p>Platforma zakupów i narzędzi dla branży HoReCa.</p>
+        </div>
+        <div>
+          <h3>Kontakt</h3>
+          <a href="tel:+48510462291">+48 510 462 291</a>
+          <a href="tel:+48509043258">+48 509 043 258</a>
+          <a href="mailto:kontakt@ardrop.pl">kontakt@ardrop.pl</a>
+        </div>
+        <div>
+          <h3>Platforma</h3>
+          <a href="https://app.ardrop.pl/">Logowanie</a>
+          <a class="js-scroll" href="#kontakt">Kontakt</a>
+          <a class="js-scroll js-contact-type" data-contact-type="partner" href="#kontakt">Zostań partnerem</a>
+          <a href="Polityka_Prywatnosci_Ardrop.pdf" target="_blank" rel="noopener">Polityka prywatności</a>
+          <a href="Regulamin_Platformy_Ardrop.pdf" target="_blank" rel="noopener">Regulamin platformy</a>
+        </div>
       </div>
-      <img src="./images/logo.png" />
       <div class="copyright">Copyright by <b>Odev.pl</b></div>
     </footer>
 
-        <script>
-      const HEADER_HEIGHT = 100;
+    <script>
+      const HEADER_HEIGHT = 92;
       const leadTypeInput = document.querySelector('#leadType');
       const contactForm = document.querySelector('#contactForm');
       const contactStatus = document.querySelector('#contactStatus');
+
       document.querySelectorAll('.js-scroll').forEach((link) => {
         link.addEventListener('click', (e) => {
           e.preventDefault();
@@ -386,6 +299,7 @@
           window.scrollTo({ top: y, behavior: 'smooth' });
         });
       });
+
       if (contactForm) {
         contactForm.addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -400,17 +314,11 @@
           const submitButton = contactForm.querySelector('button[type="submit"]');
           if (submitButton) submitButton.disabled = true;
           try {
-            const response = await fetch('mail.php', {
-              method: 'POST',
-              body: new FormData(contactForm),
-            });
+            const response = await fetch('mail.php', { method: 'POST', body: new FormData(contactForm) });
             const data = await response.json().catch(() => ({}));
-            if (!response.ok || !data.success) {
-              throw new Error(data.message || 'Nie udało się wysłać formularza.');
-            }
+            if (!response.ok || !data.success) throw new Error(data.message || 'Nie udało się wysłać formularza.');
             contactForm.innerHTML =
               '<p class="contact-success">Dziękujemy. Formularz został wysłany. Skontaktujemy się z Tobą najszybciej jak to możliwe.</p>';
-            contactStatus.textContent = '';
           } catch (error) {
             contactStatus.classList.add('is-error');
             contactStatus.textContent = error.message || 'Wystąpił błąd podczas wysyłki.';
@@ -422,6 +330,3 @@
     </script>
   </body>
 </html>
-
-
-

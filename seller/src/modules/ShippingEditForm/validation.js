@@ -26,6 +26,7 @@ const optionalNumber = (label, integer = false) =>
 export const shippingValidationSchema = yup.object({
   name: yup.string().trim().required('Podaj nazwe metody'),
   isActive: yup.boolean(),
+  vatRate: optionalNumber('VAT').max(100, 'VAT musi byc liczba od 0 do 100'),
   priceNet: optionalNumber('Cena netto'),
   priceGross: optionalNumber('Cena brutto'),
   freeShippingAmountGross: optionalNumber('Prog darmowej dostawy'),

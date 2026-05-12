@@ -5,6 +5,10 @@ import FetchWrapper from "components/FetchWrapper";
 import { useNotification } from "components/GlobalNotification/useNotification";
 import { useNavigate } from "react-router-dom";
 import ShippingMethodsService from "services/shippingMethods";
+import {
+  calculateGrossFromNet,
+  calculateNetFromGross,
+} from "utils/priceCalculations";
 import { initialValues } from "./initialValues";
 import { shippingValidationSchema } from "./validation";
 
@@ -72,7 +76,7 @@ const ShippingEditFormView = ({ payload, id = "new" }) => {
       validateOnChange={false}
       validateOnBlur={false}
     >
-      {({ isSubmitting }) => (
+      {({ isSubmitting, values, setFieldValue }) => (
         <div className="sellerSettingsForm sellerForm">
           <section className="sellerFormSection">
             <div className="sellerCheckboxRow">
@@ -82,12 +86,43 @@ const ShippingEditFormView = ({ payload, id = "new" }) => {
             <div className="form-container">
               <Input id="name" placeholder="Nazwa metody" />
               <Input
+                id="vatRate"
+                placeholder="VAT (%)"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                size="sm"
+                onChange={(event) => {
+                  const nextVatRate = event.target.value;
+                  setFieldValue("vatRate", nextVatRate);
+
+                  if (values.priceGross !== "") {
+                    setFieldValue("priceNet", calculateNetFromGross(values.priceGross, nextVatRate));
+                    return;
+                  }
+
+                  if (values.priceNet !== "") {
+                    setFieldValue("priceGross", calculateGrossFromNet(values.priceNet, nextVatRate));
+                  }
+                }}
+              />
+              <Input
                 id="priceNet"
                 placeholder="Cena netto"
                 type="number"
                 step="0.01"
                 min="0"
                 size="sm"
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  setFieldValue("priceNet", nextValue);
+                  if (nextValue === "") {
+                    setFieldValue("priceGross", "");
+                    return;
+                  }
+                  setFieldValue("priceGross", calculateGrossFromNet(nextValue, values.vatRate));
+                }}
               />
               <Input
                 id="priceGross"
@@ -96,6 +131,15 @@ const ShippingEditFormView = ({ payload, id = "new" }) => {
                 step="0.01"
                 min="0"
                 size="sm"
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  setFieldValue("priceGross", nextValue);
+                  if (nextValue === "") {
+                    setFieldValue("priceNet", "");
+                    return;
+                  }
+                  setFieldValue("priceNet", calculateNetFromGross(nextValue, values.vatRate));
+                }}
               />
               <Input
                 id="freeShippingAmountGross"

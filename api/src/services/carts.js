@@ -23,6 +23,120 @@ const getCartShipmentCapabilities = async (trx = db) => {
   return cartShipmentCapabilitiesCache;
 };
 
+const getSellerSalesSettingsBySellerIds = async (sellerIds, trx = db) => {
+  const normalizedSellerIds = [...new Set((sellerIds || []).map((value) => Number(value)).filter(Boolean))];
+  if (normalizedSellerIds.length === 0) return {};
+
+  const rows = await trx("seller_sales_settings")
+    .select("sellerId", "minimumOrderValueGross")
+    .whereIn("sellerId", normalizedSellerIds);
+
+  return rows.reduce((acc, row) => {
+    acc[Number(row.sellerId)] = {
+      minimumOrderValueGross:
+        row.minimumOrderValueGross === null || row.minimumOrderValueGross === undefined
+          ? null
+          : Number(row.minimumOrderValueGross),
+    };
+    return acc;
+  }, {});
+};
+
+const getReadySellerIds = async (sellerIds, trx = db) => {
+  const normalizedSellerIds = [...new Set((sellerIds || []).map((value) => Number(value)).filter(Boolean))];
+  if (normalizedSellerIds.length === 0) return new Set();
+
+  const rows = await trx("seller_settings as ss")
+    .distinct("ss.sellerId")
+    .whereIn("ss.sellerId", normalizedSellerIds)
+    .whereNotNull("ss.payoutAccountHolder")
+    .where("ss.payoutAccountHolder", "<>", "")
+    .whereNotNull("ss.payoutBankAccount")
+    .where("ss.payoutBankAccount", "<>", "")
+    .whereNotNull("ss.payoutBankName")
+    .where("ss.payoutBankName", "<>", "")
+    .whereExists(function hasActiveShippingMethod() {
+      this.select(trx.raw("1"))
+        .from("seller_shipping_methods as ssm")
+        .whereRaw("ssm.sellerId = ss.sellerId")
+        .where("ssm.isActive", 1);
+    });
+
+  return new Set(rows.map((row) => Number(row.sellerId)));
+};
+
+const sanitizeCartItems = async ({ cartId }, trx = db) => {
+  const normalizedCartId = Number(cartId);
+  if (!normalizedCartId) return { removedItemIds: [] };
+
+  const items = await trx("cart_items")
+    .select("id", "productId", "variantId", "sellerId")
+    .where({ cartId: normalizedCartId })
+    .orderBy("id", "asc");
+
+  if (items.length === 0) return { removedItemIds: [] };
+
+  const productIds = [...new Set(items.map((item) => Number(item.productId)).filter(Boolean))];
+  const variantIds = [...new Set(items.map((item) => Number(item.variantId)).filter(Boolean))];
+  const sellerIds = [...new Set(items.map((item) => Number(item.sellerId)).filter(Boolean))];
+
+  const [products, variants, readySellerIds] = await Promise.all([
+    trx("products").select("id", "sellerId", "status").whereIn("id", productIds),
+    variantIds.length > 0
+      ? trx("product_variants").select("id", "productId", "status").whereIn("id", variantIds)
+      : Promise.resolve([]),
+    getReadySellerIds(sellerIds, trx),
+  ]);
+
+  const productsById = products.reduce((acc, product) => {
+    acc[Number(product.id)] = product;
+    return acc;
+  }, {});
+  const variantsById = variants.reduce((acc, variant) => {
+    acc[Number(variant.id)] = variant;
+    return acc;
+  }, {});
+
+  const invalidItemIds = items
+    .filter((item) => {
+      const product = productsById[Number(item.productId)];
+      if (!product || product.status !== "active") return true;
+      if (Number(product.sellerId) !== Number(item.sellerId)) return true;
+      if (!readySellerIds.has(Number(item.sellerId))) return true;
+
+      if (!item.variantId) return false;
+
+      const variant = variantsById[Number(item.variantId)];
+      if (!variant || variant.status !== "active") return true;
+      if (Number(variant.productId) !== Number(item.productId)) return true;
+
+      return false;
+    })
+    .map((item) => Number(item.id));
+
+  if (invalidItemIds.length === 0) return { removedItemIds: [] };
+
+  await trx("cart_items").where({ cartId: normalizedCartId }).whereIn("id", invalidItemIds).del();
+
+  const remainingSellerRows = await trx("cart_items")
+    .distinct("sellerId")
+    .where({ cartId: normalizedCartId });
+  const remainingSellerIds = new Set(
+    remainingSellerRows.map((row) => Number(row.sellerId)).filter(Boolean),
+  );
+
+  await trx("cart_shipments")
+    .where({ cartId: normalizedCartId })
+    .modify((query) => {
+      if (remainingSellerIds.size > 0) {
+        query.whereNotIn("sellerId", [...remainingSellerIds]);
+      }
+    })
+    .del();
+
+  return { removedItemIds: invalidItemIds };
+};
+
 const resolveScope = async ({ userId, role, clientId }) => {
   if (role === "CLIENT") {
     const client = await db("clients").select("id").where({ userId }).first();
@@ -265,10 +379,16 @@ const buildCartResponse = async ({ cart }, trx = db) => {
     };
   });
 
+  const sellerSalesSettingsBySellerId = await getSellerSalesSettingsBySellerIds(
+    groupedShipments.map((shipment) => shipment.sellerId),
+    trx,
+  );
+
   const discountEvaluation = await discountRulesService.evaluateShipmentDiscounts(
     {
       clientId: cart.clientId,
       shipments: groupedShipments,
+      couponCode: cart.couponCode || null,
     },
     trx,
   );
@@ -282,10 +402,13 @@ const buildCartResponse = async ({ cart }, trx = db) => {
       ...shipment,
       appliedDiscount: shipmentDiscount?.appliedRule || null,
       appliedDiscountSnapshot: shipmentDiscount?.snapshot || null,
+      minimumOrderValueGross:
+        sellerSalesSettingsBySellerId[Number(shipment.sellerId)]?.minimumOrderValueGross ?? null,
       totals: {
         ...shipment.totals,
         discountNet,
         discountGross,
+        itemsGrossAfterDiscount: roundMoney(shipment.totals.itemsGross - discountGross),
         totalNetAfterDiscount: roundMoney(shipment.totals.totalNet - discountNet),
         totalGrossAfterDiscount: roundMoney(shipment.totals.totalGross - discountGross),
       },
@@ -294,6 +417,7 @@ const buildCartResponse = async ({ cart }, trx = db) => {
 
   return {
     ...cart,
+    couponCode: cart.couponCode || null,
     items: normalizedItems,
     discountNet: roundMoney(discountEvaluation.totals.discountNet),
     discountGross: roundMoney(discountEvaluation.totals.discountGross),
@@ -503,6 +627,7 @@ const recalculateShipmentsForCart = async ({ cartId }, trx = db) => {
 };
 
 const recalculateTotals = async ({ cartId }, trx = db) => {
+  await sanitizeCartItems({ cartId }, trx);
   await recalculateShipmentsForCart({ cartId }, trx);
 
   const totalsRow = await trx("cart_items")
@@ -540,6 +665,7 @@ const recalculateTotals = async ({ cartId }, trx = db) => {
         sellerId: Number(shipment.sellerId),
         items: itemsBySellerId[Number(shipment.sellerId)] || [],
       })),
+      couponCode: cart.couponCode || null,
     },
     trx,
   );
@@ -593,6 +719,7 @@ const getAvailableShippingMethodsForSeller = async ({ sellerId }) => {
       "id",
       "sellerId",
       "name",
+      "vatRate",
       "priceNet",
       "priceGross",
       "freeShippingAmountGross",
@@ -609,6 +736,7 @@ const getAvailableShippingMethodsForSeller = async ({ sellerId }) => {
     id: Number(row.id),
     sellerId: Number(row.sellerId),
     name: row.name || "",
+    vatRate: row.vatRate === null || row.vatRate === undefined ? 23 : Number(row.vatRate),
     priceNet: row.priceNet === null || row.priceNet === undefined ? null : Number(row.priceNet),
     priceGross:
       row.priceGross === null || row.priceGross === undefined ? null : Number(row.priceGross),
@@ -996,4 +1124,5 @@ module.exports = {
   clearCurrentCart,
   updateCurrentCartShipment,
   updateCurrentCartMeta,
+  sanitizeCartItems,
 };

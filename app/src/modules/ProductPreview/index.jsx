@@ -99,6 +99,9 @@ const ProductPreviewView = ({ payload }) => {
   const unitLabel = formatUnitLabel(normalizedUnit);
   const unitShort = formatUnitShort(normalizedUnit);
   const stockQuantity = Number(source.stockQuantity ?? 0);
+  const normalizedQuantity = Math.max(1, Number(quantity) || 1);
+  const totalNetPrice = Number(source.netPrice || 0) * normalizedQuantity;
+  const totalGrossPrice = Number(source.grossPrice || 0) * normalizedQuantity;
 
   return (
     <section className="productPreview">
@@ -141,9 +144,9 @@ const ProductPreviewView = ({ payload }) => {
 
         <aside className="productPreviewSidebar">
           <section className="productPreviewCard">
-            <p className="productPreviewPriceGross">{formatPrice(source.grossPrice)}</p>
+            <p className="productPreviewPriceGross">{formatPrice(totalGrossPrice)}</p>
             <p className="productPreviewPriceMeta">
-              Netto: <strong>{formatPrice(source.netPrice)}</strong>
+              Netto: <strong>{formatPrice(totalNetPrice)}</strong>
             </p>
             <p className="productPreviewPriceMeta">
               VAT: <strong>{hasVatRate ? `${vatRate}%` : "-"}</strong>

@@ -19,4 +19,10 @@ export const payoutSettingsValidationSchema = yup.object({
     .min(1, "Termin platnosci musi wynosic co najmniej 1 dzien")
     .max(365, "Termin platnosci nie moze przekraczac 365 dni")
     .required("Podaj termin platnosci w dniach"),
+  minimumOrderValueGross: yup
+    .number()
+    .transform((value, originalValue) => (String(originalValue || "").trim() === "" ? null : value))
+    .nullable()
+    .typeError("Minimalna kwota zamowienia musi byc liczba")
+    .min(0, "Minimalna kwota zamowienia musi byc liczba >= 0"),
 });

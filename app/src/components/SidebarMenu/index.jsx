@@ -180,6 +180,18 @@ const SidebarMenu = ({ config }) => {
           <p className="sidebarMenuCategoriesEmpty">Brak kategorii.</p>
         )}
       </section>
+
+      <nav className="sidebarMenuNav" aria-label="Uslugi">
+        <NavLink
+          to="/forms/ddd"
+          className={({ isActive }) =>
+            `sidebarMenuItem${isActive ? ' sidebarMenuItemActive' : ''}`
+          }
+        >
+          <i className="fa-solid fa-shield-virus" aria-hidden="true" />
+          <span>Dezynfekcja / Dezynsekcja / Deratyzacja</span>
+        </NavLink>
+      </nav>
     </aside>
   )
 }

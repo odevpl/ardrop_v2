@@ -1,8 +1,11 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const path = require("path");
 const authMiddleware = require("./middlewares/auth.middleware");
+const rateLimit = require("./middlewares/rate-limit.middleware");
 const authController = require("./controllers/auth");
+const contactController = require("./controllers/contact");
 const sellerController = require("./controllers/sellers");
 const usersController = require("./controllers/users");
 const clientsController = require("./controllers/clients");
@@ -46,6 +49,9 @@ app.use(
   cors({
     origin(origin, callback) {
       if (!origin) {
+        if (process.env.NODE_ENV === "production") {
+          return callback(new Error("Not allowed by CORS"));
+        }
         return callback(null, true);
       }
 
@@ -58,6 +64,7 @@ app.use(
     credentials: true,
   }),
 );
+app.use(helmet());
 app.use(express.json());
 app.use("/uploads", express.static(path.resolve(__dirname, "../uploads")));
 
@@ -77,6 +84,8 @@ app.use((req, res, next) => {
   const isPublicResetPassword =
     req.method === "POST" && req.path === "/auth/reset-password";
   const isPublicMe = req.method === "GET" && req.path === "/auth/me";
+  const isPublicContact =
+    req.method === "POST" && /^\/contact\/[^/]+$/.test(req.path);
 
   if (
     isPublicHealth ||
@@ -86,7 +95,8 @@ app.use((req, res, next) => {
     isPublicActivate ||
     isPublicForgotPassword ||
     isPublicResetPassword ||
-    isPublicMe
+    isPublicMe ||
+    isPublicContact
   ) {
     return next();
   }
@@ -94,7 +104,20 @@ app.use((req, res, next) => {
   return authMiddleware(req, res, next);
 });
 
+app.use(
+  "/auth/login",
+  rateLimit({ keyPrefix: "auth:login:app", limit: 10, windowMs: 15 * 60 * 1000 }),
+);
+app.use(
+  "/auth/register",
+  rateLimit({ keyPrefix: "auth:register:app", limit: 5, windowMs: 60 * 60 * 1000 }),
+);
+app.use(
+  "/auth/forgot-password",
+  rateLimit({ keyPrefix: "auth:forgot:app", limit: 5, windowMs: 60 * 60 * 1000 }),
+);
 app.use("/auth", authController);
+app.use("/", contactController);
 app.use("/", sellerController);
 app.use("/", usersController);
 app.use("/", clientsController);

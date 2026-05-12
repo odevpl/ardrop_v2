@@ -8,7 +8,7 @@ import Popup2 from "components/Popup2";
 import { useNavigate } from "react-router-dom";
 import ProductsService from "services/products";
 import SellerSettingsService from "services/sellerSettings";
-import { EMPTY_RULE, initialValues, mapRuleToValues } from "./initialValues";
+import { initialValues } from "./initialValues";
 import {
   DISCOUNT_RULE_TYPE_OPTIONS,
   getThresholdLabel,
@@ -27,9 +27,11 @@ const buildRuleConfig = (values) => {
         : Number(values.thresholdValue)
       : null,
     discountPercent: visibility.showDiscountPercent
-      ? values.discountPercent === ""
-        ? null
-        : Number(values.discountPercent)
+      ? Number(values.discountPercent)
+      : null,
+    couponCode: visibility.showCouponCode ? String(values.couponCode || "").trim().toUpperCase() : null,
+    usageLimitPerClient: visibility.showUsageLimitPerClient
+      ? Number(values.usageLimitPerClient || 0)
       : null,
     bonusLabel: visibility.showBonusLabel ? values.bonusLabel || null : null,
     selectedVariantIds: visibility.showVariantPicker
@@ -41,6 +43,8 @@ const buildRuleConfig = (values) => {
 };
 const normalizeRuleType = (value) => String(value || "").trim();
 const getRuleTypeOptions = () => Object.entries(DISCOUNT_RULE_TYPE_OPTIONS);
+const isSupportedRuleType = (ruleType) =>
+  Object.prototype.hasOwnProperty.call(DISCOUNT_RULE_TYPE_OPTIONS, ruleType);
 const getMainProductImage = (product) => {
   const images = Array.isArray(product?.images) ? product.images : [];
   return images.find((image) => Boolean(image?.isMain)) || images[0] || null;
@@ -220,7 +224,7 @@ const DiscountEditFormView = ({ payload, actualId = "new" }) => {
 
   const handleSubmit = async (values, formikHelpers) => {
     const currentRules = Array.isArray(sellerSettings?.discountRules)
-      ? sellerSettings.discountRules
+      ? sellerSettings.discountRules.filter((rule) => isSupportedRuleType(rule?.ruleType))
       : [];
 
     const nextRule = {
@@ -251,6 +255,14 @@ const DiscountEditFormView = ({ payload, actualId = "new" }) => {
             rule?.config?.discountPercent === null || rule?.config?.discountPercent === undefined
               ? null
               : Number(rule.config.discountPercent),
+          couponCode: rule?.config?.couponCode
+            ? String(rule.config.couponCode).trim().toUpperCase()
+            : null,
+          usageLimitPerClient:
+            rule?.config?.usageLimitPerClient === null ||
+            rule?.config?.usageLimitPerClient === undefined
+              ? null
+              : Number(rule.config.usageLimitPerClient),
           bonusLabel: rule?.config?.bonusLabel || null,
           selectedVariantIds: Array.isArray(rule?.config?.selectedVariantIds)
             ? rule.config.selectedVariantIds.map((item) => Number(item)).filter(Boolean)
@@ -272,20 +284,9 @@ const DiscountEditFormView = ({ payload, actualId = "new" }) => {
       ? responsePayload.discountRules
       : [];
 
-    if (isNew) {
-      const savedRule = savedRules[savedRules.length - 1];
-      notification.success("Rabat zapisany");
-      navigate(`/discounts/${savedRule.id}`, { replace: true });
-      return;
-    }
-
-    const savedRule = savedRules.find(
-      (rule) => Number(rule.id) === Number(actualId),
-    );
-    const nextValues = savedRule ? mapRuleToValues(savedRule) : { ...EMPTY_RULE };
-    formikHelpers.resetForm({ values: nextValues });
     formikHelpers.setSubmitting(false);
     notification.success("Rabat zapisany");
+    navigate("/discounts");
   };
 
   const handleDelete = async () => {
@@ -295,7 +296,7 @@ const DiscountEditFormView = ({ payload, actualId = "new" }) => {
     }
 
     const currentRules = Array.isArray(sellerSettings?.discountRules)
-      ? sellerSettings.discountRules
+      ? sellerSettings.discountRules.filter((rule) => isSupportedRuleType(rule?.ruleType))
       : [];
     const nextRules = currentRules.filter(
       (rule) => Number(rule.id) !== Number(actualId),
@@ -315,6 +316,14 @@ const DiscountEditFormView = ({ payload, actualId = "new" }) => {
             rule?.config?.discountPercent === null || rule?.config?.discountPercent === undefined
               ? null
               : Number(rule.config.discountPercent),
+          couponCode: rule?.config?.couponCode
+            ? String(rule.config.couponCode).trim().toUpperCase()
+            : null,
+          usageLimitPerClient:
+            rule?.config?.usageLimitPerClient === null ||
+            rule?.config?.usageLimitPerClient === undefined
+              ? null
+              : Number(rule.config.usageLimitPerClient),
           bonusLabel: rule?.config?.bonusLabel || null,
           selectedVariantIds: Array.isArray(rule?.config?.selectedVariantIds)
             ? rule.config.selectedVariantIds.map((item) => Number(item)).filter(Boolean)
@@ -358,6 +367,8 @@ const DiscountEditFormView = ({ payload, actualId = "new" }) => {
                     setFieldValue("ruleType", nextRuleType);
                     setFieldValue("thresholdValue", "");
                     setFieldValue("discountPercent", "");
+                    setFieldValue("couponCode", "");
+                    setFieldValue("usageLimitPerClient", "0");
                     setFieldValue("bonusLabel", "");
                     setFieldValue("selectedVariantIds", []);
                     setFieldValue("variantSearch", "");
@@ -391,6 +402,18 @@ const DiscountEditFormView = ({ payload, actualId = "new" }) => {
                   step="0.01"
                   min="0"
                   max="100"
+                />
+              )}
+              {getRuleFieldVisibility(values.ruleType).showCouponCode && (
+                <Input id="couponCode" placeholder="Kod rabatowy" />
+              )}
+              {getRuleFieldVisibility(values.ruleType).showUsageLimitPerClient && (
+                <Input
+                  id="usageLimitPerClient"
+                  placeholder="Liczba uzyc na konto (0 = bez limitu)"
+                  type="number"
+                  min="0"
+                  step="1"
                 />
               )}
               {getRuleFieldVisibility(values.ruleType).showBonusLabel && (

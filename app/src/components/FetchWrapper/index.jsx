@@ -11,9 +11,13 @@ const FetchWrapper = ({
   connector,
   filters: defaultFilters = {},
   syncSearchParams = true,
+  syncSearchParamKeys = PAGINATION_FILTER_KEYS,
   ...props
 }) => {
   const [searchParams, setSearchParams] = useSearchParams()
+  const activeSearchParamKeys = Array.isArray(syncSearchParamKeys)
+    ? syncSearchParamKeys.filter((key) => Object.prototype.hasOwnProperty.call(defaultFilters, key))
+    : PAGINATION_FILTER_KEYS
   const getInitialFilters = () => {
     const mergedFilters = { ...defaultFilters }
 
@@ -21,20 +25,21 @@ const FetchWrapper = ({
       return mergedFilters
     }
 
-    PAGINATION_FILTER_KEYS.forEach((key) => {
-      if (!Object.prototype.hasOwnProperty.call(defaultFilters, key)) {
-        return
-      }
-
+    activeSearchParamKeys.forEach((key) => {
       const paramValue = searchParams.get(key)
       if (paramValue === null) {
         return
       }
 
-      const parsedValue = Number(paramValue)
-      if (!Number.isNaN(parsedValue)) {
-        mergedFilters[key] = parsedValue
+      if (PAGINATION_FILTER_KEYS.includes(key)) {
+        const parsedValue = Number(paramValue)
+        if (!Number.isNaN(parsedValue)) {
+          mergedFilters[key] = parsedValue
+        }
+        return
       }
+
+      mergedFilters[key] = paramValue
     })
 
     return mergedFilters
@@ -85,20 +90,12 @@ const FetchWrapper = ({
       return
     }
 
-    const hasPaginationFilters = PAGINATION_FILTER_KEYS.some((key) =>
-      Object.prototype.hasOwnProperty.call(defaultFilters, key),
-    )
-
-    if (!hasPaginationFilters) {
+    if (activeSearchParamKeys.length === 0) {
       return
     }
 
     const nextSearchParams = new URLSearchParams(searchParams)
-    PAGINATION_FILTER_KEYS.forEach((key) => {
-      if (!Object.prototype.hasOwnProperty.call(defaultFilters, key)) {
-        return
-      }
-
+    activeSearchParamKeys.forEach((key) => {
       const value = filters?.[key]
       if (value === undefined || value === null || value === '') {
         nextSearchParams.delete(key)
@@ -109,7 +106,7 @@ const FetchWrapper = ({
     if (nextSearchParams.toString() !== searchParams.toString()) {
       setSearchParams(nextSearchParams, { replace: true })
     }
-  }, [defaultFilters, filters, searchParams, setSearchParams, syncSearchParams])
+  }, [activeSearchParamKeys, filters, searchParams, setSearchParams, syncSearchParams])
 
   if (isLoading && !data) {
     return <LoadingSpinner />

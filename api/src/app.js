@@ -49,9 +49,6 @@ app.use(
   cors({
     origin(origin, callback) {
       if (!origin) {
-        if (process.env.NODE_ENV === "production") {
-          return callback(new Error("Not allowed by CORS"));
-        }
         return callback(null, true);
       }
 
@@ -64,7 +61,11 @@ app.use(
     credentials: true,
   }),
 );
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 app.use(express.json());
 app.use("/uploads", express.static(path.resolve(__dirname, "../uploads")));
 

@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const discountRulesService = require("./discount-rules");
+const campaignPricing = require("./campaign-pricing");
 
 const roundMoney = (value) => Number((Number(value) || 0).toFixed(2));
 
@@ -47,8 +48,11 @@ const getReadySellerIds = async (sellerIds, trx = db) => {
   if (normalizedSellerIds.length === 0) return new Set();
 
   const rows = await trx("seller_settings as ss")
+    .innerJoin("sellers as s", "s.id", "ss.sellerId")
+    .innerJoin("users as u", "u.id", "s.userId")
     .distinct("ss.sellerId")
     .whereIn("ss.sellerId", normalizedSellerIds)
+    .where("u.isActive", 1)
     .whereNotNull("ss.payoutAccountHolder")
     .where("ss.payoutAccountHolder", "<>", "")
     .whereNotNull("ss.payoutBankAccount")
@@ -240,34 +244,104 @@ const loadClientSpecialPrices = async ({ clientId, variantIds }, trx = db) => {
   }, {});
 };
 
-const resolveSpecialPricing = (pricingSource, specialPrice) => {
+const resolveSpecialPricing = async (pricingSource, specialPrice, trx = db) => {
+  let pricing;
+
   if (!specialPrice) {
-    return {
+    pricing = {
       unitNet: roundMoney(pricingSource.netPrice),
       unitGross: roundMoney(pricingSource.grossPrice),
       vatRate: roundMoney(pricingSource.vatRate),
     };
-  }
-
-  if (specialPrice.priceType === "amount") {
-    return {
+  } else if (specialPrice.priceType === "amount") {
+    pricing = {
       unitNet: roundMoney(specialPrice.specialNetPrice),
       unitGross: roundMoney(specialPrice.specialGrossPrice),
       vatRate: roundMoney(pricingSource.vatRate),
     };
+  } else {
+    const multiplier = 1 - Number(specialPrice.discountPercent || 0) / 100;
+
+    pricing = {
+      unitNet: roundMoney(
+        Number(specialPrice.originalNetPrice ?? pricingSource.netPrice) * multiplier,
+      ),
+      unitGross: roundMoney(
+        Number(specialPrice.originalGrossPrice ?? pricingSource.grossPrice) * multiplier,
+      ),
+      vatRate: roundMoney(specialPrice.originalVatRate ?? pricingSource.vatRate),
+    };
   }
 
-  const multiplier = 1 - Number(specialPrice.discountPercent || 0) / 100;
+  const campaignPrice = await campaignPricing.applyOpeningDiscount(
+    {
+      netPrice: pricing.unitNet,
+      grossPrice: pricing.unitGross,
+    },
+    trx,
+  );
 
   return {
-    unitNet: roundMoney(
-      Number(specialPrice.originalNetPrice ?? pricingSource.netPrice) * multiplier,
-    ),
-    unitGross: roundMoney(
-      Number(specialPrice.originalGrossPrice ?? pricingSource.grossPrice) * multiplier,
-    ),
-    vatRate: roundMoney(specialPrice.originalVatRate ?? pricingSource.vatRate),
+    ...pricing,
+    unitNet: campaignPrice.netPrice,
+    unitGross: campaignPrice.grossPrice,
+    originalUnitNet: campaignPrice.originalNetPrice,
+    originalUnitGross: campaignPrice.originalGrossPrice,
+    campaignDiscountPercent: campaignPrice.campaignDiscountPercent,
   };
+};
+
+const refreshCartItemPricing = async ({ cartId, clientId }, trx = db) => {
+  const items = await trx("cart_items as ci")
+    .innerJoin("products as p", "p.id", "ci.productId")
+    .leftJoin("product_variants as pv", "pv.id", "ci.variantId")
+    .select(
+      "ci.id",
+      "ci.quantity",
+      "ci.variantId",
+      "p.netPrice as productNetPrice",
+      "p.grossPrice as productGrossPrice",
+      "p.vatRate as productVatRate",
+      "pv.netPrice as variantNetPrice",
+      "pv.grossPrice as variantGrossPrice",
+      "pv.vatRate as variantVatRate",
+    )
+    .where("ci.cartId", Number(cartId));
+
+  if (items.length === 0) return;
+
+  const specialPricesByVariantId = await loadClientSpecialPrices(
+    {
+      clientId,
+      variantIds: items.map((item) => item.variantId),
+    },
+    trx,
+  );
+
+  for (const item of items) {
+    const pricingSource = {
+      netPrice: item.variantId ? item.variantNetPrice : item.productNetPrice,
+      grossPrice: item.variantId ? item.variantGrossPrice : item.productGrossPrice,
+      vatRate: item.variantId ? item.variantVatRate : item.productVatRate,
+    };
+    const pricing = await resolveSpecialPricing(
+      pricingSource,
+      item.variantId ? specialPricesByVariantId[Number(item.variantId)] : null,
+      trx,
+    );
+    const quantity = Number(item.quantity || 0);
+
+    await trx("cart_items")
+      .where({ id: Number(item.id) })
+      .update({
+        unitNet: pricing.unitNet,
+        unitGross: pricing.unitGross,
+        vatRate: pricing.vatRate,
+        lineNet: roundMoney(pricing.unitNet * quantity),
+        lineGross: roundMoney(pricing.unitGross * quantity),
+        updatedAt: trx.fn.now(),
+      });
+  }
 };
 
 const getCartShipments = async ({ cartId }, trx = db) => {
@@ -315,41 +389,11 @@ const buildCartResponse = async ({ cart }, trx = db) => {
     getCartShipments({ cartId: cart.id }, trx),
   ]);
 
-  const specialPricesByVariantId = await loadClientSpecialPrices(
-    {
-      clientId: cart.clientId,
-      variantIds: items.map((item) => item.variantId),
-    },
-    trx,
-  );
-
-  const normalizedItems = items.map((item) => {
-    const specialPrice = item.variantId
-      ? specialPricesByVariantId[Number(item.variantId)]
-      : null;
-
-    if (!specialPrice) {
-      return item;
-    }
-
-    const pricing = resolveSpecialPricing(
-      {
-        netPrice: item.unitNet,
-        grossPrice: item.unitGross,
-        vatRate: item.vatRate,
-      },
-      specialPrice,
-    );
-
-    return {
-      ...item,
-      unitNet: pricing.unitNet,
-      unitGross: pricing.unitGross,
-      vatRate: pricing.vatRate,
-      lineNet: roundMoney(pricing.unitNet * Number(item.quantity || 0)),
-      lineGross: roundMoney(pricing.unitGross * Number(item.quantity || 0)),
-    };
-  });
+  const normalizedItems = await Promise.all(items.map(async (item) => ({
+    ...item,
+    originalLineGrossBeforeCampaignDiscount:
+      await campaignPricing.getGrossBeforeOpeningDiscount(item.lineGross || 0, trx),
+  })));
 
   const itemsBySellerId = {};
   normalizedItems.forEach((item) => {
@@ -358,13 +402,23 @@ const buildCartResponse = async ({ cart }, trx = db) => {
     itemsBySellerId[sellerId].push(item);
   });
 
-  const groupedShipments = shipments.map((shipment) => {
+  const groupedShipments = await Promise.all(shipments.map(async (shipment) => {
     const shipmentItems = itemsBySellerId[shipment.sellerId] || [];
     const itemsNet = roundMoney(
       shipmentItems.reduce((sum, item) => sum + Number(item.lineNet || 0), 0),
     );
     const itemsGross = roundMoney(
       shipmentItems.reduce((sum, item) => sum + Number(item.lineGross || 0), 0),
+    );
+    const itemsGrossBeforeCampaignDiscount = roundMoney(
+      await shipmentItems.reduce(async (sumPromise, item) => {
+        const sum = await sumPromise;
+        const grossBeforeDiscount = await campaignPricing.getGrossBeforeOpeningDiscount(
+          item.lineGross || 0,
+          trx,
+        );
+        return sum + grossBeforeDiscount;
+      }, Promise.resolve(0)),
     );
 
     return {
@@ -373,11 +427,12 @@ const buildCartResponse = async ({ cart }, trx = db) => {
       totals: {
         itemsNet,
         itemsGross,
+        itemsGrossBeforeCampaignDiscount,
         totalNet: roundMoney(itemsNet + Number(shipment.shippingNet || 0)),
         totalGross: roundMoney(itemsGross + Number(shipment.shippingGross || 0)),
       },
     };
-  });
+  }));
 
   const sellerSalesSettingsBySellerId = await getSellerSalesSettingsBySellerIds(
     groupedShipments.map((shipment) => shipment.sellerId),
@@ -628,15 +683,16 @@ const recalculateShipmentsForCart = async ({ cartId }, trx = db) => {
 
 const recalculateTotals = async ({ cartId }, trx = db) => {
   await sanitizeCartItems({ cartId }, trx);
+  const cart = await trx("carts").where({ id: cartId }).first();
+  if (!cart) return null;
+
+  await refreshCartItemPricing({ cartId, clientId: cart.clientId }, trx);
   await recalculateShipmentsForCart({ cartId }, trx);
 
   const totalsRow = await trx("cart_items")
     .where({ cartId })
     .sum({ itemsNet: "lineNet", itemsGross: "lineGross" })
     .first();
-
-  const cart = await trx("carts").where({ id: cartId }).first();
-  if (!cart) return null;
 
   const shipmentTotalsRow = await trx("cart_shipments")
     .where({ cartId })
@@ -715,22 +771,25 @@ const getAvailableShippingMethodsForSeller = async ({ sellerId }) => {
   }
 
   const rows = await db("seller_shipping_methods")
+    .innerJoin("sellers as s", "s.id", "seller_shipping_methods.sellerId")
+    .innerJoin("users as u", "u.id", "s.userId")
     .select(
-      "id",
-      "sellerId",
-      "name",
-      "vatRate",
-      "priceNet",
-      "priceGross",
-      "freeShippingAmountGross",
-      "etaMinDays",
-      "etaMaxDays",
+      "seller_shipping_methods.id",
+      "seller_shipping_methods.sellerId",
+      "seller_shipping_methods.name",
+      "seller_shipping_methods.vatRate",
+      "seller_shipping_methods.priceNet",
+      "seller_shipping_methods.priceGross",
+      "seller_shipping_methods.freeShippingAmountGross",
+      "seller_shipping_methods.etaMinDays",
+      "seller_shipping_methods.etaMaxDays",
     )
     .where({
-      sellerId: normalizedSellerId,
-      isActive: 1,
+      "seller_shipping_methods.sellerId": normalizedSellerId,
+      "seller_shipping_methods.isActive": 1,
+      "u.isActive": 1,
     })
-    .orderBy("id", "asc");
+    .orderBy("seller_shipping_methods.id", "asc");
 
   return rows.map((row) => ({
     id: Number(row.id),
@@ -775,8 +834,19 @@ const addItemToCurrentCart = async ({
     }
 
     const product = await trx("products")
-      .select("id", "sellerId", "name", "netPrice", "grossPrice", "vatRate", "status")
-      .where({ id: targetProductId })
+      .innerJoin("sellers as s", "s.id", "products.sellerId")
+      .innerJoin("users as u", "u.id", "s.userId")
+      .select(
+        "products.id",
+        "products.sellerId",
+        "products.name",
+        "products.netPrice",
+        "products.grossPrice",
+        "products.vatRate",
+        "products.status",
+        "u.isActive as sellerUserIsActive",
+      )
+      .where("products.id", targetProductId)
       .first();
 
     if (!product) {
@@ -787,6 +857,12 @@ const addItemToCurrentCart = async ({
 
     if (product.status !== "active") {
       const error = new Error("Only active products can be added to cart");
+      error.status = 400;
+      throw error;
+    }
+
+    if (!product.sellerUserIsActive) {
+      const error = new Error("Seller is inactive");
       error.status = 400;
       throw error;
     }
@@ -848,9 +924,10 @@ const addItemToCurrentCart = async ({
       },
       trx,
     );
-    const pricing = resolveSpecialPricing(
+    const pricing = await resolveSpecialPricing(
       pricingSource,
       targetVariantId ? specialPricesByVariantId[targetVariantId] : null,
+      trx,
     );
 
     await ensureCartShipment({ cartId: cart.id, sellerId: product.sellerId }, trx);
@@ -1125,4 +1202,5 @@ module.exports = {
   updateCurrentCartShipment,
   updateCurrentCartMeta,
   sanitizeCartItems,
+  refreshCartItemPricing,
 };

@@ -19,6 +19,7 @@ const configController = require("./controllers/config");
 const deliveriesController = require("./controllers/deliveries");
 const ordersController = require("./controllers/orders");
 const marketingController = require("./controllers/marketing");
+const globalDiscountsController = require("./controllers/global-discounts");
 const sellerSettingsController = require("./controllers/seller-settings");
 const sellerFinancialHistoryController = require("./controllers/seller-financial-history");
 
@@ -33,6 +34,7 @@ const defaultOrigins = [
   "http://localhost:3001",
   "http://localhost:3002",
   "http://localhost:3003",
+  "https://ardrop.pl",
   "https://app.ardrop.pl",
   "https://seller.ardrop.pl",
   "https://admin.ardrop.pl",
@@ -44,15 +46,29 @@ const allowedOrigins = envOrigins
       .map((origin) => origin.trim())
       .filter(Boolean)
   : defaultOrigins;
+const effectiveAllowedOrigins = [...new Set([...allowedOrigins, "https://ardrop.pl"])];
+
+const isLocalOrigin = (origin = "") => {
+  try {
+    const url = new URL(origin);
+    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  } catch (error) {
+    return false;
+  }
+};
 
 app.use(
   cors({
     origin(origin, callback) {
+      if (process.env.NODE_ENV !== "production") {
+        return callback(null, true);
+      }
+
       if (!origin) {
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
+      if (effectiveAllowedOrigins.includes(origin) || isLocalOrigin(origin)) {
         return callback(null, true);
       }
 
@@ -87,6 +103,8 @@ app.use((req, res, next) => {
   const isPublicMe = req.method === "GET" && req.path === "/auth/me";
   const isPublicContact =
     req.method === "POST" && /^\/contact\/[^/]+$/.test(req.path);
+  const isPublicLandingProducts =
+    req.method === "GET" && req.path === "/products/landing";
 
   if (
     isPublicHealth ||
@@ -97,7 +115,8 @@ app.use((req, res, next) => {
     isPublicForgotPassword ||
     isPublicResetPassword ||
     isPublicMe ||
-    isPublicContact
+    isPublicContact ||
+    isPublicLandingProducts
   ) {
     return next();
   }
@@ -132,6 +151,7 @@ app.use("/", clientSpecialPricesRouter);
 app.use("/", deliveriesController);
 app.use("/", ordersController);
 app.use("/", marketingController);
+app.use("/", globalDiscountsController);
 app.use("/", sellerSettingsController);
 app.use("/", sellerFinancialHistoryController);
 

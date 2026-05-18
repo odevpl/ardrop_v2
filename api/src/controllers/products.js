@@ -37,6 +37,55 @@ const withImageUrls = (req, product) => {
   };
 };
 
+const isLocalRequest = (req) => {
+  const host = String(req.get("host") || "").toLowerCase();
+  return host.startsWith("localhost") || host.startsWith("127.0.0.1") || host.startsWith("[::1]");
+};
+
+const isAllowedLandingSource = (req) => {
+  if (process.env.NODE_ENV !== "production" || isLocalRequest(req)) {
+    return true;
+  }
+
+  const source = req.get("origin") || req.get("referer") || "";
+  if (!source) return false;
+
+  try {
+    return new URL(source).origin === "https://ardrop.pl";
+  } catch (error) {
+    return false;
+  }
+};
+
+const withLandingImageUrl = (req, product) => {
+  const baseUrl = getBaseUrl(req);
+  const imageFileName = product.imageFileName;
+
+  return {
+    id: product.id,
+    title: product.title,
+    description: product.description,
+    netPrice: product.netPrice,
+    grossPrice: product.grossPrice,
+    imageUrl: imageFileName ? `${baseUrl}/uploads/images/${imageFileName}` : null,
+    imageAlt: product.imageAlt,
+    sellerCompanyName: product.sellerCompanyName,
+    variantId: product.variantId,
+    variantTitle: product.variantTitle,
+  };
+};
+
+router.get("/products/landing", async (req, res) => {
+  if (!isAllowedLandingSource(req)) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  const products = await productsService.getLandingProducts({ limit: 8 });
+  res.status(200).json({
+    data: products.map((product) => withLandingImageUrl(req, product)),
+  });
+});
+
 router.get(
   "/products",
   roleMiddleware("ADMIN", "SELLER", "CLIENT"),

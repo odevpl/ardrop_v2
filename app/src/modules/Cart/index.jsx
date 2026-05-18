@@ -265,8 +265,10 @@ const Cart = () => {
       shipments.filter((shipment) => {
         const minimumOrderValueGross = Number(shipment?.minimumOrderValueGross || 0);
         if (minimumOrderValueGross <= 0) return false;
-        const itemsGrossAfterDiscount = Number(shipment?.totals?.itemsGrossAfterDiscount || 0);
-        return itemsGrossAfterDiscount < minimumOrderValueGross;
+        const itemsGrossBeforeCampaignDiscount = Number(
+          shipment?.totals?.itemsGrossBeforeCampaignDiscount ?? shipment?.totals?.itemsGross ?? 0,
+        );
+        return itemsGrossBeforeCampaignDiscount < minimumOrderValueGross;
       }),
     [shipments],
   );
@@ -583,8 +585,16 @@ const Cart = () => {
                               </td>
                               <td>
                                 <div className="cartPriceCell cartPriceCellWithDelete">
-                                  <span className="cartPriceValue">
-                                    {formatPrice(item.lineGross)} zl
+                                  <span className="cartPriceStack">
+                                    {Number(item.originalLineGrossBeforeCampaignDiscount || 0) >
+                                    Number(item.lineGross || 0) ? (
+                                      <span className="cartOriginalPriceValue">
+                                        {formatPrice(item.originalLineGrossBeforeCampaignDiscount)} zl
+                                      </span>
+                                    ) : null}
+                                    <span className="cartPriceValue">
+                                      {formatPrice(item.lineGross)} zl
+                                    </span>
                                   </span>
                                   <button
                                     type="button"
@@ -634,7 +644,11 @@ const Cart = () => {
                           </div>
                         ) : null}
                         {Number(shipment?.minimumOrderValueGross || 0) > 0 &&
-                        Number(shipment?.totals?.itemsGrossAfterDiscount || 0) <
+                        Number(
+                          shipment?.totals?.itemsGrossBeforeCampaignDiscount ??
+                            shipment?.totals?.itemsGross ??
+                            0,
+                        ) <
                           Number(shipment?.minimumOrderValueGross || 0) ? (
                           <div className="cartShippingMethodsAlert" role="alert">
                             <strong>Nie osiagnieto minimalnego progu zakupu.</strong>
@@ -643,7 +657,11 @@ const Cart = () => {
                               {formatPrice(shipment.minimumOrderValueGross)} zl. Brakuje{" "}
                               {formatPrice(
                                 Number(shipment.minimumOrderValueGross) -
-                                  Number(shipment?.totals?.itemsGrossAfterDiscount || 0),
+                                  Number(
+                                    shipment?.totals?.itemsGrossBeforeCampaignDiscount ??
+                                      shipment?.totals?.itemsGross ??
+                                      0,
+                                  ),
                               )}{" "}
                               zl.
                             </span>

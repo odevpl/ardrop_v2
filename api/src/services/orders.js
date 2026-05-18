@@ -2,6 +2,7 @@ const db = require("../config/db");
 const sellerFinancialHistoryService = require("./seller-financial-history");
 const discountRulesService = require("./discount-rules");
 const cartsService = require("./carts");
+const campaignPricing = require("./campaign-pricing");
 const {
   ORDER_STATUSES,
   PAYMENT_STATUSES,
@@ -422,6 +423,10 @@ const createOrderFromCurrentCart = async (
     }
 
     await cartsService.sanitizeCartItems({ cartId: cart.id }, trx);
+    await cartsService.refreshCartItemPricing(
+      { cartId: cart.id, clientId: resolvedClientId },
+      trx,
+    );
 
     const cartItems = await trx("cart_items")
       .where({ cartId: Number(cart.id) })
@@ -547,17 +552,26 @@ const createOrderFromCurrentCart = async (
       const itemsGross = roundMoney(
         sellerItems.reduce((sum, item) => sum + Number(item.lineGross || 0), 0),
       );
+      const itemsGrossBeforeCampaignDiscount = roundMoney(
+        await sellerItems.reduce(async (sumPromise, item) => {
+          const sum = await sumPromise;
+          const grossBeforeDiscount = await campaignPricing.getGrossBeforeOpeningDiscount(
+            item.lineGross || 0,
+            trx,
+          );
+          return sum + grossBeforeDiscount;
+        }, Promise.resolve(0)),
+      );
       const shipmentDiscount = discountEvaluation.bySellerId[sellerId] || null;
       const discountNet = roundMoney(shipmentDiscount?.discountNet || 0);
       const discountGross = roundMoney(shipmentDiscount?.discountGross || 0);
       const minimumOrderValueGross =
         sellerSalesSettingsBySellerId[sellerId]?.minimumOrderValueGross ?? null;
-      const itemsGrossAfterDiscount = roundMoney(itemsGross - discountGross);
 
       if (
         minimumOrderValueGross !== null &&
         minimumOrderValueGross !== undefined &&
-        itemsGrossAfterDiscount < Number(minimumOrderValueGross)
+        itemsGrossBeforeCampaignDiscount < Number(minimumOrderValueGross)
       ) {
         const error = new Error(
           `Minimalna wartosc zamowienia dla sprzedawcy ${shipment?.seller?.companyName || sellerId} wynosi ${Number(minimumOrderValueGross).toFixed(2)} zl`,

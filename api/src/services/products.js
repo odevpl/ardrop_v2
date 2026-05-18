@@ -1,6 +1,7 @@
 const db = require("../config/db");
 const { assignProductCategories, getCategoriesForProductIds } = require("./categories");
 const { deleteAllProductImages } = require("./product-images");
+const campaignPricing = require("./campaign-pricing");
 
 const PRODUCT_UNITS = ["pcs", "g", "l"];
 
@@ -71,6 +72,14 @@ const resolveClientIdByUserId = async (userId) => {
 const roundMoney = (value) => Number((Number(value) || 0).toFixed(2));
 
 const applyClientSellerReadinessFilter = (query) => {
+  query.whereExists(function hasActiveSellerUser() {
+    this.select(db.raw("1"))
+      .from("sellers as active_sellers")
+      .innerJoin("users as active_seller_users", "active_sellers.userId", "active_seller_users.id")
+      .whereRaw("active_sellers.id = products.sellerId")
+      .where("active_seller_users.isActive", 1);
+  });
+
   query.whereExists(function hasCompletePayoutAndShipping() {
     this.select(db.raw("1"))
       .from("seller_settings as ss")
@@ -119,24 +128,25 @@ const loadClientSpecialPricesByVariantIds = async ({ userId, role, variantIds })
 };
 
 const applyClientSpecialPricesToVariants = async ({ userId, role, variantsByProductId }) => {
-  if (role !== "CLIENT") return variantsByProductId;
-
   const variantIds = Object.values(variantsByProductId)
     .flat()
     .map((variant) => Number(variant.id));
+
+  if (role !== "CLIENT") return variantsByProductId;
+
   const specialPricesByVariantId = await loadClientSpecialPricesByVariantIds({
     userId,
     role,
     variantIds,
   });
 
-  return Object.entries(variantsByProductId).reduce((acc, [productId, variants]) => {
-    acc[Number(productId)] = variants.map((variant) => {
+  const entries = await Promise.all(Object.entries(variantsByProductId).map(async ([productId, variants]) => {
+    const mappedVariants = await Promise.all(variants.map(async (variant) => {
       const specialPrice = specialPricesByVariantId[Number(variant.id)];
-      if (!specialPrice) return variant;
+      let pricedVariant = variant;
 
-      if (specialPrice.priceType === "amount") {
-        return {
+      if (specialPrice?.priceType === "amount") {
+        pricedVariant = {
           ...variant,
           netPrice: roundMoney(specialPrice.specialNetPrice),
           grossPrice: roundMoney(specialPrice.specialGrossPrice),
@@ -144,22 +154,62 @@ const applyClientSpecialPricesToVariants = async ({ userId, role, variantsByProd
           originalGrossPrice: roundMoney(variant.grossPrice),
           specialPriceType: specialPrice.priceType,
         };
+      } else if (specialPrice?.priceType === "percent") {
+        const multiplier = 1 - Number(specialPrice.discountPercent || 0) / 100;
+
+        pricedVariant = {
+          ...variant,
+          netPrice: roundMoney(Number(variant.netPrice) * multiplier),
+          grossPrice: roundMoney(Number(variant.grossPrice) * multiplier),
+          originalNetPrice: roundMoney(variant.netPrice),
+          originalGrossPrice: roundMoney(variant.grossPrice),
+          specialPriceType: specialPrice.priceType,
+          discountPercent: roundMoney(specialPrice.discountPercent),
+        };
       }
 
-      const multiplier = 1 - Number(specialPrice.discountPercent || 0) / 100;
+      const campaignPrice = await campaignPricing.applyOpeningDiscount({
+        netPrice: pricedVariant.netPrice,
+        grossPrice: pricedVariant.grossPrice,
+      });
 
       return {
-        ...variant,
-        netPrice: roundMoney(Number(variant.netPrice) * multiplier),
-        grossPrice: roundMoney(Number(variant.grossPrice) * multiplier),
-        originalNetPrice: roundMoney(variant.netPrice),
-        originalGrossPrice: roundMoney(variant.grossPrice),
-        specialPriceType: specialPrice.priceType,
-        discountPercent: roundMoney(specialPrice.discountPercent),
+        ...pricedVariant,
+        netPrice: campaignPrice.netPrice,
+        grossPrice: campaignPrice.grossPrice,
+        originalNetPrice: pricedVariant.originalNetPrice ?? campaignPrice.originalNetPrice,
+        originalGrossPrice: pricedVariant.originalGrossPrice ?? campaignPrice.originalGrossPrice,
+        campaignDiscountPercent: campaignPrice.campaignDiscountPercent,
+        campaignDiscountType: campaignPrice.campaignDiscountType,
       };
-    });
+    }));
+
+    return [Number(productId), mappedVariants];
+  }));
+
+  return entries.reduce((acc, [productId, variants]) => {
+    acc[productId] = variants;
     return acc;
   }, {});
+};
+
+const applyClientCampaignPriceToProduct = async (product, role) => {
+  if (role !== "CLIENT") return product;
+
+  const campaignPrice = await campaignPricing.applyOpeningDiscount({
+    netPrice: product.netPrice,
+    grossPrice: product.grossPrice,
+  });
+
+  return {
+    ...product,
+    netPrice: campaignPrice.netPrice,
+    grossPrice: campaignPrice.grossPrice,
+    originalNetPrice: product.originalNetPrice ?? campaignPrice.originalNetPrice,
+    originalGrossPrice: product.originalGrossPrice ?? campaignPrice.originalGrossPrice,
+    campaignDiscountPercent: campaignPrice.campaignDiscountPercent,
+    campaignDiscountType: campaignPrice.campaignDiscountType,
+  };
 };
 
 const syncProductStatusWithVariants = async ({ trx, productId }) => {
@@ -455,11 +505,11 @@ const getProducts = async ({
     data.map((product) => Number(product.id)),
   );
 
-  const normalizedData = data.map((product) => ({
-    ...product,
+  const normalizedData = await Promise.all(data.map(async (product) => ({
+    ...(await applyClientCampaignPriceToProduct(product, role)),
     variants: variantsByProductId[Number(product.id)] || [],
     categories: categoriesByProductId[Number(product.id)] || [],
-  }));
+  })));
 
   return {
     data: normalizedData,
@@ -531,7 +581,7 @@ const getProductById = async ({ userId, role, productId }) => {
   const categoriesByProductId = await getCategoriesForProductIds([Number(productId)]);
 
   return {
-    ...product,
+    ...(await applyClientCampaignPriceToProduct(product, role)),
     images,
     variants: variantsByProductId[Number(product.id)] || [],
     categories: categoriesByProductId[Number(product.id)] || [],
@@ -587,12 +637,89 @@ const getSuggestedProducts = async ({ limit = 10, role, userId }) => {
     products.map((product) => Number(product.id)),
   );
 
-  return products.map((product) => ({
-    ...product,
+  return Promise.all(products.map(async (product) => ({
+    ...(await applyClientCampaignPriceToProduct(product, role)),
     images: imagesByProductId[Number(product.id)] || [],
     variants: variantsByProductId[Number(product.id)] || [],
     categories: categoriesByProductId[Number(product.id)] || [],
-  }));
+  })));
+};
+
+const getLandingProducts = async ({ limit = 8 } = {}) => {
+  const normalizedLimit = Number(limit) > 0 ? Math.min(Number(limit), 8) : 8;
+
+  const products = await db("products")
+    .select(
+      "products.id",
+      "products.name",
+      "products.description",
+      "products.netPrice",
+      "products.grossPrice",
+      "products.sellerId",
+      "sellers.companyName as sellerCompanyName",
+    )
+    .innerJoin("sellers", "products.sellerId", "sellers.id")
+    .innerJoin("users", "sellers.userId", "users.id")
+    .where("products.status", "active")
+    .where("users.isActive", 1)
+    .whereExists(function hasActiveVariant() {
+      this.select(db.raw("1"))
+        .from("product_variants as pv")
+        .whereRaw("pv.productId = products.id")
+        .where("pv.status", "active");
+    })
+    .orderByRaw("RAND()")
+    .limit(normalizedLimit);
+
+  if (products.length === 0) {
+    return [];
+  }
+
+  const productIds = products.map((product) => Number(product.id));
+  const images = await db("products_image")
+    .select("id", "productId", "fileName", "alt", "isMain", "position")
+    .whereIn("productId", productIds)
+    .orderByRaw("isMain desc")
+    .orderBy("position", "asc")
+    .orderBy("id", "asc");
+
+  const variants = await db("product_variants")
+    .select("id", "productId", "name", "netPrice", "grossPrice", "isDefault", "position")
+    .whereIn("productId", productIds)
+    .where("status", "active")
+    .orderByRaw("isDefault desc")
+    .orderBy("position", "asc")
+    .orderBy("id", "asc");
+
+  const imageByProductId = images.reduce((acc, image) => {
+    const key = Number(image.productId);
+    if (!acc[key]) acc[key] = image;
+    return acc;
+  }, {});
+
+  const variantByProductId = variants.reduce((acc, variant) => {
+    const key = Number(variant.productId);
+    if (!acc[key]) acc[key] = variant;
+    return acc;
+  }, {});
+
+  return products.map((product) => {
+    const variant = variantByProductId[Number(product.id)] || null;
+    const image = imageByProductId[Number(product.id)] || null;
+
+    return {
+      id: Number(product.id),
+      title: product.name,
+      description: product.description || "",
+      netPrice: roundMoney(variant?.netPrice ?? product.netPrice),
+      grossPrice: roundMoney(variant?.grossPrice ?? product.grossPrice),
+      imageFileName: image?.fileName || null,
+      imageAlt: image?.alt || product.name,
+      sellerCompanyName: product.sellerCompanyName,
+      variantId: variant ? Number(variant.id) : null,
+      variantTitle: variant?.name || null,
+    };
+  });
 };
 
 const createProduct = async ({
@@ -997,6 +1124,7 @@ const deleteProduct = async ({ userId, role, productId }) => {
 module.exports = {
   getProducts,
   getSuggestedProducts,
+  getLandingProducts,
   getProductById,
   createProduct,
   updateProduct,

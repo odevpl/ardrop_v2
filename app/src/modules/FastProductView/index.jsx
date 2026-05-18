@@ -71,6 +71,9 @@ const FastProductViewBody = ({ payload, onClose }) => {
   }
 
   const source = selectedVariant || product;
+  const hasOriginalGrossPrice =
+    Number(source.originalGrossPrice || 0) > Number(source.grossPrice || 0);
+  const discountPercent = source.campaignDiscountPercent || product.campaignDiscountPercent;
 
   return (
     <section className="fastProductView">
@@ -89,7 +92,17 @@ const FastProductViewBody = ({ payload, onClose }) => {
           <p className="fastProductViewPriceLabel">Netto</p>
           <p className="fastProductViewPriceValue">{formatPrice(source.netPrice)}</p>
           <p className="fastProductViewPriceLabel">Brutto</p>
+          {hasOriginalGrossPrice ? (
+            <p className="fastProductViewOriginalPrice">
+              {formatPrice(source.originalGrossPrice)}
+            </p>
+          ) : null}
           <p className="fastProductViewPriceValue">{formatPrice(source.grossPrice)}</p>
+          {hasOriginalGrossPrice && discountPercent ? (
+            <p className="fastProductViewDiscountBadge">
+              -{Number(discountPercent).toFixed(0)}%
+            </p>
+          ) : null}
         </div>
 
         {activeVariants.length > 0 ? (

@@ -52,6 +52,16 @@
         </div>
       </section>
 
+      <section class="landing-products" aria-labelledby="landingProductsTitle">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">Produkty partnerów</p>
+            <h2 id="landingProductsTitle">Odkryj produkty dostępne na platformie</h2>
+          </div>
+          <div id="landingProductsGrid" class="landing-products-grid" aria-live="polite"></div>
+        </div>
+      </section>
+
       <section class="intro" id="dlaczego">
         <div class="container narrow">
           <h2>Dlaczego Ardrop?</h2>
@@ -304,9 +314,91 @@
 
     <script>
       const HEADER_HEIGHT = 92;
+      const API_BASE_URL = window.location.hostname === 'ardrop.pl' ? 'https://api.ardrop.pl' : 'http://localhost:8000';
+      const APP_URL = 'https://app.ardrop.pl/';
       const leadTypeInput = document.querySelector('#leadType');
       const contactForm = document.querySelector('#contactForm');
       const contactStatus = document.querySelector('#contactStatus');
+      const landingProductsGrid = document.querySelector('#landingProductsGrid');
+
+      const formatPrice = (value) =>
+        new Intl.NumberFormat('pl-PL', {
+          style: 'currency',
+          currency: 'PLN',
+        }).format(Number(value) || 0);
+
+      const truncateText = (value, maxLength = 92) => {
+        const text = String(value || '').trim();
+        if (text.length <= maxLength) return text;
+        return `${text.slice(0, maxLength).trim()}...`;
+      };
+
+      const createProductCard = (product) => {
+        const card = document.createElement('a');
+        card.className = 'landing-product-card';
+        card.href = APP_URL;
+        card.setAttribute('aria-label', `Przejdź do platformy Ardrop: ${product.title || 'produkt'}`);
+
+        const imageWrap = document.createElement('div');
+        imageWrap.className = 'landing-product-image';
+
+        if (product.imageUrl) {
+          const image = document.createElement('img');
+          image.src = product.imageUrl;
+          image.alt = product.imageAlt || product.title || 'Produkt';
+          image.loading = 'lazy';
+          imageWrap.appendChild(image);
+        }
+
+        const body = document.createElement('div');
+        body.className = 'landing-product-body';
+
+        const title = document.createElement('h3');
+        title.textContent = product.title || 'Produkt';
+
+        const description = document.createElement('p');
+        description.textContent = truncateText(product.description || product.sellerCompanyName || 'Produkt partnera Ardrop');
+
+        const prices = document.createElement('div');
+        prices.className = 'landing-product-prices';
+
+        const netPrice = document.createElement('strong');
+        netPrice.textContent = `${formatPrice(product.netPrice)} netto`;
+
+        const grossPrice = document.createElement('span');
+        grossPrice.textContent = `${formatPrice(product.grossPrice)} brutto`;
+
+        prices.append(netPrice, grossPrice);
+        body.append(title, description, prices);
+        card.append(imageWrap, body);
+
+        return card;
+      };
+
+      const loadLandingProducts = async () => {
+        if (!landingProductsGrid) return;
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/products/landing`);
+          if (!response.ok) throw new Error('Nie udało się pobrać produktów.');
+
+          const payload = await response.json();
+          const products = Array.isArray(payload.data) ? payload.data : [];
+
+          landingProductsGrid.innerHTML = '';
+          products.forEach((product) => {
+            landingProductsGrid.appendChild(createProductCard(product));
+          });
+
+          if (products.length === 0) {
+            landingProductsGrid.innerHTML = '<p class="landing-products-empty">Produkty partnerów pojawią się tutaj wkrótce.</p>';
+          }
+        } catch (error) {
+          landingProductsGrid.innerHTML = '<p class="landing-products-empty">Produkty partnerów pojawią się tutaj wkrótce.</p>';
+        }
+      };
+
+      loadLandingProducts();
 
       document.querySelectorAll('.js-scroll').forEach((link) => {
         link.addEventListener('click', (e) => {

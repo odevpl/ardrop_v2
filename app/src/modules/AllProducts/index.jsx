@@ -20,6 +20,9 @@ const formatPrice = (value) => {
 const formatNetGross = (netPrice, grossPrice) =>
   `${formatPrice(netPrice)} netto / ${formatPrice(grossPrice)} brutto`;
 
+const hasOriginalPrice = (item) =>
+  Number(item?.originalGrossPrice || 0) > Number(item?.grossPrice || 0);
+
 const getMainImage = (product) => {
   if (!Array.isArray(product.images) || product.images.length === 0) return null;
   return product.images.find((image) => Number(image.isMain) === 1) || product.images[0];
@@ -119,6 +122,14 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
             inlineCartConfig?.variantId ?? (defaultVariant ? Number(defaultVariant.id) : null);
           const displayGrossPrice = defaultVariant?.grossPrice ?? product.grossPrice;
           const displayNetPrice = defaultVariant?.netPrice ?? product.netPrice;
+          const displayOriginalGrossPrice =
+            defaultVariant?.originalGrossPrice ?? product.originalGrossPrice;
+          const displayDiscountPercent =
+            defaultVariant?.campaignDiscountPercent ?? product.campaignDiscountPercent;
+          const showOriginalPrice = hasOriginalPrice({
+            originalGrossPrice: displayOriginalGrossPrice,
+            grossPrice: displayGrossPrice,
+          });
 
           return (
             <article
@@ -234,7 +245,19 @@ const AllProductsView = ({ payload, filters, setFilters }) => {
                 ) : null}
               </div>
 
-              <p className="allProductsPrice">{formatPrice(displayGrossPrice)}</p>
+              <div className="allProductsPriceBlock">
+                {showOriginalPrice ? (
+                  <p className="allProductsOriginalPrice">
+                    {formatPrice(displayOriginalGrossPrice)}
+                  </p>
+                ) : null}
+                <p className="allProductsPrice">{formatPrice(displayGrossPrice)}</p>
+                {showOriginalPrice && displayDiscountPercent ? (
+                  <span className="allProductsDiscountBadge">
+                    -{Number(displayDiscountPercent).toFixed(0)}%
+                  </span>
+                ) : null}
+              </div>
               <p className="allProductsMessage">{formatPrice(displayNetPrice)} netto</p>
               <h3 className="allProductsName">{product.name}</h3>
               <div className="allProductsActions" onClick={(event) => event.stopPropagation()}>

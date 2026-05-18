@@ -94,6 +94,30 @@
   color: #005ec7;
 }
 
+.allProductsPriceBlock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.allProductsOriginalPrice {
+  margin: 0 0 4px;
+  color: #6b7280;
+  font-size: 0.86rem;
+  text-decoration: line-through;
+}
+
+.allProductsDiscountBadge {
+  margin-bottom: 4px;
+  border-radius: 6px;
+  background: #b42318;
+  color: #ffffff;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 .allProductsName {
   margin: 0;
   font-size: 0.95rem;

@@ -102,6 +102,9 @@ const ProductPreviewView = ({ payload }) => {
   const normalizedQuantity = Math.max(1, Number(quantity) || 1);
   const totalNetPrice = Number(source.netPrice || 0) * normalizedQuantity;
   const totalGrossPrice = Number(source.grossPrice || 0) * normalizedQuantity;
+  const originalGrossPrice = Number(source.originalGrossPrice || 0) * normalizedQuantity;
+  const hasOriginalGrossPrice = originalGrossPrice > totalGrossPrice;
+  const discountPercent = source.campaignDiscountPercent || product.campaignDiscountPercent;
 
   return (
     <section className="productPreview">
@@ -144,7 +147,17 @@ const ProductPreviewView = ({ payload }) => {
 
         <aside className="productPreviewSidebar">
           <section className="productPreviewCard">
-            <p className="productPreviewPriceGross">{formatPrice(totalGrossPrice)}</p>
+            <div className="productPreviewPriceBlock">
+              {hasOriginalGrossPrice ? (
+                <p className="productPreviewOriginalPrice">{formatPrice(originalGrossPrice)}</p>
+              ) : null}
+              <p className="productPreviewPriceGross">{formatPrice(totalGrossPrice)}</p>
+              {hasOriginalGrossPrice && discountPercent ? (
+                <span className="productPreviewDiscountBadge">
+                  -{Number(discountPercent).toFixed(0)}%
+                </span>
+              ) : null}
+            </div>
             <p className="productPreviewPriceMeta">
               Netto: <strong>{formatPrice(totalNetPrice)}</strong>
             </p>

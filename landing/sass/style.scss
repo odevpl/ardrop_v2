@@ -383,6 +383,114 @@ section {
   }
 }
 
+.landing-products {
+  background: var(--soft);
+}
+
+.section-heading {
+  max-width: 760px;
+  margin: 0 auto 34px;
+  display: grid;
+  gap: 12px;
+  text-align: center;
+}
+
+.landing-products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.landing-product-card {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 190px 1fr;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(16, 40, 68, 0.07);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 38px rgba(16, 40, 68, 0.12);
+  }
+}
+
+.landing-product-image {
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: #fff;
+
+  img {
+    width: 100%;
+    height: 154px;
+    object-fit: contain;
+  }
+}
+
+.landing-product-body {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 16px;
+
+  h3 {
+    overflow: hidden;
+    display: -webkit-box;
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.25;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  p {
+    overflow: hidden;
+    display: -webkit-box;
+    min-height: 42px;
+    color: #6d8298;
+    font-size: 13px;
+    line-height: 1.45;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+}
+
+.landing-product-prices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 2px;
+
+  strong {
+    color: var(--blue);
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  span {
+    color: #8a9bad;
+    font-size: 12px;
+    font-weight: 700;
+  }
+}
+
+.landing-products-empty {
+  grid-column: 1 / -1;
+  padding: 22px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid var(--line);
+  text-align: center;
+}
+
 .process {
   background: #fff;
   text-align: center;
@@ -727,9 +835,18 @@ footer {
 
   .steps,
   .cards,
+  .landing-products-grid,
   .founders-grid,
   footer .footer-grid {
     grid-template-columns: 1fr;
+  }
+
+  .landing-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    .landing-product-card:nth-child(n + 5) {
+      display: none;
+    }
   }
 
   .founders-people {
@@ -764,6 +881,14 @@ footer {
 
   .feature-list article {
     grid-template-columns: 1fr;
+  }
+
+  .landing-products-grid {
+    grid-template-columns: 1fr;
+
+    .landing-product-card:nth-child(n + 4) {
+      display: none;
+    }
   }
 
   .ambassador-photo {

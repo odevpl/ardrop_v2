@@ -9,21 +9,7 @@ const roundMoney = (value) => Number((Number(value) || 0).toFixed(2));
 
 const ensureSchema = async (trx = db) => {
   if (schemaReady) return;
-
-  const hasTable = await trx.schema.hasTable("global_discount_rules");
-  if (!hasTable) {
-    await trx.schema.createTable("global_discount_rules", (table) => {
-      table.increments("id").primary();
-      table.string("name", 120).notNullable();
-      table.decimal("discountPercent", 8, 2).notNullable().defaultTo(0);
-      table.boolean("isActive").notNullable().defaultTo(false);
-      table.timestamp("startsAt").nullable();
-      table.timestamp("endsAt").nullable();
-      table.timestamp("createdAt").notNullable().defaultTo(trx.fn.now());
-      table.timestamp("updatedAt").notNullable().defaultTo(trx.fn.now());
-    });
-  }
-
+  await trx.schema.hasTable("global_discount_rules");
   schemaReady = true;
 };
 
